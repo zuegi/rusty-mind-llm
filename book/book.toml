@@ -1,0 +1,7 @@
+[book]
+title = "Ein GPT-2 LLM in Rust von Grund auf"
+language = "de"
+src = "src"
+
+[build]
+build-dir = "../target/book"

@@ -1,0 +1,38 @@
+Vokabulargrösse: 50257
+
+Text:      "Hello world"
+IDs:       [15496, 995]
+Stücke:    ["Hello", " world"]
+Zeichen/Bytes/Token: 11/11/2
+Roundtrip: true
+
+Text:      "The quick brown fox jumps over the lazy dog."
+IDs:       [464, 2068, 7586, 21831, 18045, 625, 262, 16931, 3290, 13]
+Stücke:    ["The", " quick", " brown", " fox", " jumps", " over", " the", " lazy", " dog", "."]
+Zeichen/Bytes/Token: 44/44/10
+Roundtrip: true
+
+Text:      "Grüezi mit Umlauten: äöü"
+IDs:       [8642, 9116, 8471, 72, 10255, 471, 4029, 2306, 268, 25, 6184, 97, 9101, 9116]
+Stücke:    ["Gr", "ü", "ez", "i", " mit", " U", "ml", "aut", "en", ":", " �", "�", "ö", "ü"]
+Zeichen/Bytes/Token: 24/28/14
+Roundtrip: true
+
+Text:      "Emoji: 🙂"
+IDs:       [36, 5908, 7285, 25, 32485]
+Stücke:    ["E", "mo", "ji", ":", " 🙂"]
+Zeichen/Bytes/Token: 8/11/5
+Roundtrip: true
+
+Text:      "Antidisestablishmentarianism"
+IDs:       [13217, 29207, 44390, 3699, 1042]
+Stücke:    ["Ant", "idis", "establishment", "arian", "ism"]
+Zeichen/Bytes/Token: 28/28/5
+Roundtrip: true
+
+Text:      "Ende<|endoftext|>"
+IDs:       [12915, 68, 50256]
+Stücke:    ["End", "e", "<|endoftext|>"]
+Zeichen/Bytes/Token: 17/17/3
+Roundtrip: true
+
