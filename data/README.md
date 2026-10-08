@@ -10,9 +10,12 @@ Vorgesehen ist "The Verdict" (Edith Wharton, 1908), bereitgestellt als Kaggle-Da
 
 Laut Kaggle-Metadaten steht der Datensatz unter Apache 2.0 (Autor: Md. Golam Mostofa).
 
-Der Projektbesitzer hat den Text aus dem Buch "Build a Large Language Model (From
-Scratch)" von Sebastian Raschka, wo er als lizenzfrei bezeichnet wird. Diese Angabe ist
-hier nicht unabhängig geprüft. Solange das so bleibt, liegt der Text nicht im Repository.
+Der Text selbst ist gemeinfrei: Edith Wharton starb 1937, "The Verdict" erschien 1908.
+Er ist auch bei Project Gutenberg (<https://www.gutenberg.org/ebooks/306>) und Wikisource
+(<https://en.wikisource.org/wiki/The_Verdict>) verfügbar. Der Projektbesitzer kennt ihn
+zudem aus Sebastian Raschkas Buch "Build a Large Language Model (From Scratch)". Die
+Datei im Datensatz kann vom Original abweichen; die Rechtslage wurde nicht juristisch
+geprüft. Der Text liegt vorerst nicht im Repository.
 
 ## Verwendung
 
