@@ -1,0 +1,9 @@
+Token gesamt: 318, Training: 286, Validierung: 32
+Fenster (Länge 8): 35
+
+Fenster 0, Eingabe: "Der Hund läuft d"
+Fenster 0, Ziel:    " Hund läuft durch"
+
+Batches pro Epoche (Grösse 2): 17
+Erster Batch, Eingabe: [[1658, 11, 3318, 28654, 7245, 571, 268, 1976], [1406, 13331, 13, 1703, 2275, 437, 842, 3262]]
+Erster Batch, Ziel:    [[11, 3318, 28654, 7245, 571, 268, 1976, 84], [13331, 13, 1703, 2275, 437, 842, 3262, 1658]]
