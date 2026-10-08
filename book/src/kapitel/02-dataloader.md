@@ -129,8 +129,8 @@ cargo run -p training --example ch02 -- pfad/zum/text.txt
 {{#include ../../../crates/training/examples/ch02.rs}}
 ```
 
-Als Trainingstext ist "The Verdict" von Edith Wharton vorgesehen. Er liegt nicht im
-Repository. Herkunft, Lizenzhinweis und Download-Schritte stehen in `data/README.md`.
+Als Trainingstext ist "The Verdict" von Edith Wharton vorgesehen. Er ist gemeinfrei und
+liegt im Repository. Herkunft und Hinweise stehen in `data/README.md`.
 Mit der Datei `data/the-verdict.txt` lautet der Aufruf:
 
 ```bash
@@ -178,8 +178,8 @@ cargo test -p training
 ## Grenzen
 
 - Der Beispieltext in der Demo ist sehr kurz und nur zum Anschauen gedacht. Für echtes
-  Training braucht es einen längeren Text, den man per Pfad übergibt. Wir packen keinen
-  Text ins Repository.
+  Training braucht es einen längeren Text, den man per Pfad übergibt, zum Beispiel
+  `data/the-verdict.txt`.
 - Wenige Token bedeuten wenige Fenster. Bei einem kleinen Korpus lernt das Modell vor allem
   auswendig und verallgemeinert nicht.
 - Die Ausgabe in `ausgaben/ch02.txt` ist ein Schnappschuss. Neu erzeugen mit
