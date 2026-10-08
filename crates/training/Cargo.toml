@@ -2,6 +2,7 @@
 name = "training"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
 [dependencies]
 tiktoken-rs = "0.12"
