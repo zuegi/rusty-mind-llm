@@ -129,6 +129,14 @@ cargo run -p training --example ch02 -- pfad/zum/text.txt
 {{#include ../../../crates/training/examples/ch02.rs}}
 ```
 
+Als Trainingstext ist "The Verdict" von Edith Wharton vorgesehen. Er liegt nicht im
+Repository. Herkunft, Lizenzhinweis und Download-Schritte stehen in `data/README.md`.
+Mit der Datei `data/the-verdict.txt` lautet der Aufruf:
+
+```bash
+cargo run -p training --example ch02 -- data/the-verdict.txt
+```
+
 Ausgabe mit dem eingebauten Beispieltext:
 
 ```text
