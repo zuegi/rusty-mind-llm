@@ -1,0 +1,11 @@
+[package]
+name = "model"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+burn = { version = "0.21", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+burn = { version = "0.21", default-features = false, features = ["std", "ndarray", "autodiff"] }

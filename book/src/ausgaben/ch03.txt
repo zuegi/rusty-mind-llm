@@ -1,0 +1,21 @@
+Vokabular: 0=Der, 1=Hund, 2=Katze, 3=rennt, 4=.
+Eingabe: [1, 1, 3, 0, 2, 4]
+Eingabeform: [2, 3]
+Token-Vektoren, Form [2, 3, 4]:
+  Fenster 0, Position 0: [0.2, -0.1, 0.4, 0.3]
+  Fenster 0, Position 1: [0.2, -0.1, 0.4, 0.3]
+  Fenster 0, Position 2: [0.0, 0.2, -0.3, 0.4]
+  Fenster 1, Position 0: [0.1, 0.0, 0.2, -0.1]
+  Fenster 1, Position 1: [-0.2, 0.3, 0.1, 0.0]
+  Fenster 1, Position 2: [0.1, -0.2, 0.0, 0.2]
+Positions-Vektoren (für jedes Fenster), Form [1, 3, 4]:
+  Fenster 0, Position 0: [0.0, 0.2, -0.1, 0.1]
+  Fenster 0, Position 1: [0.1, 0.0, 0.2, 0.0]
+  Fenster 0, Position 2: [0.0, -0.1, 0.0, 0.2]
+Summe, Form [2, 3, 4]:
+  Fenster 0, Position 0: [0.2, 0.1, 0.3, 0.4]
+  Fenster 0, Position 1: [0.3, -0.1, 0.6, 0.3]
+  Fenster 0, Position 2: [0.0, 0.1, -0.3, 0.6]
+  Fenster 1, Position 0: [0.1, 0.2, 0.1, 0.0]
+  Fenster 1, Position 1: [-0.1, 0.3, 0.3, 0.0]
+  Fenster 1, Position 2: [0.1, -0.3, 0.0, 0.4]
