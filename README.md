@@ -19,9 +19,15 @@ Bisher umgesetzt:
 - **Embedding:** Lernbare Token- und absolute Positions-Embeddings mit Burn
   nachschlagen und addieren. Eine Mini-Demo mit festen Gewichten macht die
   Berechnung nachprüfbar.
+- **Autograd:** Gradienten mit Burns Autodiff berechnen, auch für die
+  Embedding-Tabellen.
+- **Attention, erste zwei Lernschritte:** Feste Token-Vektoren vergleichen,
+  Softmax-Gewichte berechnen und Kontext-Vektoren bilden; danach einen
+  trainierbaren Kopf mit Q/K/V-Projektionen und skalierten Scores verwenden.
 
-Attention, die vollständige GPT-Architektur und eine Trainingsschleife sind
-noch nicht umgesetzt. Die Embedding-Demo ist bewusst noch nicht mit dem
+Kausale Maskierung, Multi-Head Attention,
+die vollständige GPT-Architektur und eine Trainingsschleife sind noch nicht
+umgesetzt. Die Embedding-Demo ist bewusst noch nicht mit dem
 echten Tokenizer und DataLoader verbunden.
 
 ## Projektstruktur
@@ -29,7 +35,7 @@ echten Tokenizer und DataLoader verbunden.
 ```text
 crates/
   training/   Tokenizer, Datenaufbereitung und Demos für Kapitel 1 und 2
-  model/      Burn-Modellbausteine und Embedding-Demo für Kapitel 3
+  model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 5
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
 ```
@@ -53,6 +59,15 @@ cargo run -p training --example ch02
 
 # Kapitel 3: Token- und Positions-Embedding
 cargo run -p model --example ch03
+
+# Kapitel 4: Gradienten mit Burn-Autodiff
+cargo run -p model --example ch04
+
+# Kapitel 5: Ein Attention-Kopf mit festen Vektoren
+cargo run -p model --example ch05
+
+# Kapitel 5, Schritt 2: Q/K/V-Projektionen und skalierte Scores
+cargo run -p model --example ch05_projections
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
@@ -85,6 +100,12 @@ bauen.
 
 ```bash
 cargo test --workspace
+
+# Tests der Attention-Demo
+cargo test -p model --example ch05
+
+# Tests des trainierbaren Attention-Kopfes
+cargo test -p model --test attention
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,

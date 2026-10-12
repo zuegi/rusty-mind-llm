@@ -1,0 +1,12 @@
+Eingabe X = Query = Key = Value, Form [2, 2]:
+  Token 0: [1.000, 0.000]
+  Token 1: [0.000, 1.000]
+Scores, Form [2, 2]:
+  Token 0: [1.000, 0.000]
+  Token 1: [0.000, 1.000]
+Attention-Gewichte, Form [2, 2]:
+  Token 0: [0.731, 0.269]
+  Token 1: [0.269, 0.731]
+Kontext-Vektoren, Form [2, 2]:
+  Token 0: [0.731, 0.269]
+  Token 1: [0.269, 0.731]
