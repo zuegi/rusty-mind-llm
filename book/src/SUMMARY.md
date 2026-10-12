@@ -7,6 +7,7 @@
 - [1. Tokenisierung](kapitel/01-tokenisierung.md)
 - [2. DataLoader](kapitel/02-dataloader.md)
 - [3. Embedding](kapitel/03-embedding.md)
+- [4. Autograd](kapitel/04-autograd.md)
 
 # Exkurse
 
@@ -17,3 +18,4 @@
 - [Rust: Grundlagen für den DataLoader](exkurse/rust-grundlagen-dataloader.md)
 - [Rust: Grundlagen für das Embedding](exkurse/rust-grundlagen-embedding.md)
 - [Burn: Die Bausteine](exkurse/burn-grundlagen.md)
+- [Ableitungen für Programmierer](exkurse/ableitungen.md)
