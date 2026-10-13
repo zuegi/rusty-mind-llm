@@ -1,0 +1,6 @@
+Eingabe:        Form [1, 3, 2]
+nach expand:    Form [1, 3, 8]
+nach GELU:      Form [1, 3, 8]
+nach contract:  Form [1, 3, 2]
+Token 0 und Token 2 gleich: true
+Parameter: 42

@@ -1,0 +1,5 @@
+Schichten  Gradient ohne Residual  Gradient mit Residual
+        1               1.000e-1                  1.100
+        2               1.000e-2                  1.210
+        5               1.000e-5                  1.611
+       10              1.000e-10                  2.594
