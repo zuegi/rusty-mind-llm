@@ -10,6 +10,7 @@
 - [4. Autograd](kapitel/04-autograd.md)
 - [5. Attention und Multi-Head Attention](kapitel/05-attention.md)
 - [6. Der Transformer-Block](kapitel/06-transformer-block.md)
+- [7. GPT: Das Sprachmodell](kapitel/07-gpt.md)
 
 # Exkurse
 

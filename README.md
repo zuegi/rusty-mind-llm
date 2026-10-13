@@ -24,11 +24,11 @@ Bisher umgesetzt:
 - **Attention, erste zwei Lernschritte:** Feste Token-Vektoren vergleichen,
   Softmax-Gewichte berechnen und Kontext-Vektoren bilden; danach einen
   trainierbaren Kopf mit Q/K/V-Projektionen und skalierten Scores verwenden.
+- **GPT-Sprachmodell:** Embedding, Transformer-Blöcke und eine separate
+  Ausgabeprojektion zu Logits für jedes Vokabular-Token zusammensetzen.
 
-Kausale Maskierung, Multi-Head Attention,
-die vollständige GPT-Architektur und eine Trainingsschleife sind noch nicht
-umgesetzt. Die Embedding-Demo ist bewusst noch nicht mit dem
-echten Tokenizer und DataLoader verbunden.
+Eine Trainingsschleife ist noch nicht umgesetzt. Die Embedding-Demo ist bewusst
+noch nicht mit dem echten Tokenizer und DataLoader verbunden.
 
 ## Projektstruktur
 
@@ -84,6 +84,9 @@ cargo run -p model --example ch06_residual
 
 # Kapitel 6, Schritt 6: Mehrere Blöcke hinter dem Embedding
 cargo run -p model --example ch06
+
+# Kapitel 7: GPT-Modell mit Ausgabe-Logits
+cargo run -p model --example ch07
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
@@ -123,6 +126,9 @@ cargo test -p model --example ch05
 
 # Tests des trainierbaren Attention-Kopfes
 cargo test -p model --test attention
+
+# GPT-Modell: Formen, Parameter und Gradienten
+cargo test -p model --test gpt
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
