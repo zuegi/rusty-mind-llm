@@ -1,0 +1,10 @@
+Embedding x, Form [1, 4, 8], Token 0 (erste 4): [-0.306, -0.486, 1.475, 0.898]
+nach Block 1, Form [1, 4, 8], Token 0 (erste 4): [-0.237, -0.653, 0.865, 1.487]
+nach Block 2, Form [1, 4, 8], Token 0 (erste 4): [-0.837, 0.123, 1.263, 1.559]
+nach Block 3, Form [1, 4, 8], Token 0 (erste 4): [-1.633, 0.098, 1.095, 1.815]
+Parameter in 3 Blöcken: 2520
+Letztes Token geändert (4 → 9):
+  Token 0: Ausgabe unverändert: true
+  Token 1: Ausgabe unverändert: true
+  Token 2: Ausgabe unverändert: true
+  Token 3: Ausgabe unverändert: false

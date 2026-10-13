@@ -9,6 +9,7 @@
 - [3. Embedding](kapitel/03-embedding.md)
 - [4. Autograd](kapitel/04-autograd.md)
 - [5. Attention und Multi-Head Attention](kapitel/05-attention.md)
+- [6. Der Transformer-Block](kapitel/06-transformer-block.md)
 
 # Exkurse
 
@@ -19,6 +20,7 @@
 - [Rust: Grundlagen für den DataLoader](exkurse/rust-grundlagen-dataloader.md)
 - [Rust: Grundlagen für das Embedding](exkurse/rust-grundlagen-embedding.md)
 - [Burn: Die Bausteine](exkurse/burn-grundlagen.md)
+- [Aktivierungsfunktionen und GELU](exkurse/aktivierung-gelu.md)
 - [Ableitungen für Programmierer](exkurse/ableitungen.md)
 - [Warum Attention durch die Quadratwurzel teilt](exkurse/attention-skalierung.md)
 - [BERT vs. GPT: Bidirektionale vs. kausale Attention](exkurse/bert-vs-gpt.md)

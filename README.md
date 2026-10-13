@@ -71,6 +71,19 @@ cargo run -p model --example ch05_projections
 
 # Kapitel 5, Schritt 4: Multi-Head Attention mit Burn
 cargo run -p model --example ch05_multi_head
+
+# Kapitel 6, Schritt 1: LayerNorm mit festen Zahlen
+cargo run -p model --example ch06_layer_norm
+
+# Kapitel 6, Schritt 2: GELU und Feed-Forward-Netz
+cargo run -p model --example ch06_gelu
+cargo run -p model --example ch06_feed_forward
+
+# Kapitel 6, Schritt 3: Gradienten mit und ohne Residual-Verbindung
+cargo run -p model --example ch06_residual
+
+# Kapitel 6, Schritt 6: Mehrere Blöcke hinter dem Embedding
+cargo run -p model --example ch06
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
@@ -88,10 +101,11 @@ Die Dokumentation liegt in [book/src](book/src). Einstieg:
 [Inhaltsverzeichnis](book/src/SUMMARY.md).
 
 Für die lokale HTML-Ausgabe wird zusätzlich
-[mdBook](https://rust-lang.github.io/mdBook/) benötigt:
+[mdBook](https://rust-lang.github.io/mdBook/) und das Plugin
+[mdbook-mermaid](https://github.com/badboy/mdbook-mermaid) (für Diagramme) benötigt:
 
 ```bash
-cargo install mdbook --locked
+cargo install mdbook mdbook-mermaid --locked
 mdbook serve book --port 3000
 ```
 
