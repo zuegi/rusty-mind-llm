@@ -122,6 +122,15 @@ impl Dataset {
         &self.windows[index]
     }
 
+    // ANCHOR: evaluation_batches
+    /// Fenster in Originalreihenfolge, einschliesslich des letzten Teil-Batches.
+    pub fn batches(&self, batch_size: usize) -> Vec<Batch> {
+        assert!(batch_size > 0, "batch_size muss größer als 0 sein");
+        let order: Vec<usize> = (0..self.windows.len()).collect();
+        order.chunks(batch_size).map(|indices| self.batch_of(indices)).collect()
+    }
+    // ANCHOR_END: evaluation_batches
+
     // ANCHOR: epoch
     /// Eine Epoche: Fenster mit festem Seed mischen und zu Batches bündeln.
     /// Ein unvollständiger letzter Batch wird verworfen.

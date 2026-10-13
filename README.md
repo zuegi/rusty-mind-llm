@@ -30,15 +30,17 @@ Bisher umgesetzt:
 - **Loss und erster Trainingsschritt:** Cross-Entropy über die verschobenen
   DataLoader-Ziele, Burn-Autograd und genau ein SGD-Update für das GPT-Modell.
 
-Als Nächstes folgen Trainingsschleife und Validierung, danach Checkpoints
-und Textgenerierung. `model` enthält bewusst nur
+- **Trainingsschleife und Validierung:** Mehrere Epochen mit erhaltenem
+  Optimizer; Loss-Messung auf getrennten Daten ohne Gewichtsupdates.
+
+Als Nächstes folgen Checkpoints und Textgenerierung. `model` enthält bewusst nur
 Modellberechnung; Trainingsinfrastruktur bleibt im Crate `training`.
 
 ## Projektstruktur
 
 ```text
 crates/
-  training/   Tokenizer, Daten, Loss, SGD-Schritt; Demos für Kapitel 1, 2 und 8
+  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2, 8 und 9
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -97,6 +99,9 @@ cargo run -p training --example ch08_loss
 
 # Kapitel 8: Genau ein SGD-Schritt auf einem Mini-Batch
 cargo run -p training --example ch08
+
+# Kapitel 9: Trainingsschleife und getrennte Validierung
+cargo run -p training --example ch09
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
@@ -142,6 +147,9 @@ cargo test -p model --test gpt
 
 # Cross-Entropy, Batch-Tensoren und genau ein SGD-Update
 cargo test -p training --test ch08
+
+# Trainingsschleife und Auswertung ohne Gewichtsupdates
+cargo test -p training --test ch09
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,

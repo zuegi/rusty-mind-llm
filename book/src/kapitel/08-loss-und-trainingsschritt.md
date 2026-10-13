@@ -288,6 +288,28 @@ Burn berechnet den Loss und seine Gradienten aus den ursprünglichen Logits.
 
 ## Die Ziele sind bereits verschoben
 
+**„Verschobene Token-Ziele“ bedeutet: Zu jeder Eingabeposition gehört das
+nächste Token im Text als Ziel.** Die Zielfolge beginnt ein Token später
+als die Eingabefolge.
+
+Nehmen wir zur Vereinfachung wieder an, jedes Wort sei ein Token:
+
+```text
+Text:     „Der Hund bellt laut“
+Eingabe:  [Der,  Hund,  bellt]
+Ziele:    [Hund, bellt, laut ]
+```
+
+Das Modell soll drei Vorhersagen lernen:
+
+- Nach „Der“ soll es „Hund“ vorhersagen.
+- Nach „Der Hund“ soll es „bellt“ vorhersagen.
+- Nach „Der Hund bellt“ soll es „laut“ vorhersagen.
+
+Eingaben und Ziele sind gleich lang. Das Ziel der letzten Position kommt
+aus dem Text direkt nach dem Eingabefenster. Deshalb braucht der DataLoader
+für ein Fenster mit drei Eingabetokens mindestens vier Tokens im Text.
+
 Wir benutzen `Dataset` und `Batch` aus Kapitel 2. Der kleine Token-Strom der
 Trainingsdemo enthält nur IDs aus einem künstlichen Vokabular mit fünf
 Einträgen. Das ist **nicht** der GPT-2-Tokenizer:
@@ -505,6 +527,7 @@ Softmax-minus-Ziel-Regel und prüfen für Embedding, Attention-Projektion und
 Ausgabeprojektion das tatsächliche SGD-Update. Ungültige Batch-Formen und
 Lernraten werden explizit abgelehnt.
 
-**Nächster Lernschritt:** Mehrere Batches und Epochen durchlaufen, den
+**Nächster Lernschritt:** [Kapitel 9: Trainingsschleife und
+Validierung](09-trainingsschleife-und-validierung.md). Mehrere Batches und Epochen durchlaufen, den
 Optimizer erhalten und Training von Validierung unterscheiden.
 Checkpoints und Textgenerierung bleiben ein späteres Kapitel.
