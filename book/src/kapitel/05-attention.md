@@ -1657,10 +1657,254 @@ Fällen **exakt identisch** sein.
 cargo test -p model --test attention future_tokens_do_not_influence_earlier_outputs
 ```
 
-## Was als Nächstes kommt
+```bash
+cargo test -p model --test attention future_tokens_do_not_influence_earlier_outputs
+```
 
-Jetzt haben wir einen vollständigen, kausalen Attention-Kopf verstanden:
-Projektionen, Skalierung, Maskierung, Softmax und gewichtete Summe.
+## Schritt 4: Multi-Head Attention
 
-Im nächsten Schritt bündeln wir mehrere solcher Köpfe zu **Multi-Head Attention**
-(Schritt 4).
+Bisher hat unser Modell einen einzigen Attention-Kopf (`SelfAttention`).
+Dieser Kopf kann pro Token nur **einen einzigen Fokus** gleichzeitig legen.
+
+### Das Problem: Ein einziger Fokus reicht nicht
+
+Betrachte den Satz:
+> „Die Katze fraß die Maus, weil **sie** hungrig war.“
+
+Um das Wort **„sie“** richtig in seinen Kontext einzubetten, muss ein
+Sprachmodell zwei Fragen gleichzeitig beantworten:
+
+1. **Grammatik (Syntax):** Welches Substantiv passt zum Pronomen „sie“?
+   $\to$ „Katze“ oder „Maus“.
+2. **Bedeutung / Kausalität:** Wer war hungrig und fraß wen?
+   $\to$ „Katze“.
+
+Ein einzelner Attention-Kopf berechnet pro Query genau eine Zeile
+Attention-Gewichte. Er muss sich entscheiden: Schaut er auf das nächste
+Nomen, das Prädikat oder das Subjekt?
+
+Mit **Multi-Head Attention** (mehreren Köpfen) lösen wir dieses Problem:
+- **Kopf 1** spezialisiert sich auf grammatische Bezüge.
+- **Kopf 2** spezialisiert sich auf kausale Zusammenhänge.
+
+Beide Köpfe betrachten denselben Satz parallel, aber mit unterschiedlichen
+„Brillen“.
+
+### Das Prinzip: Aufteilen, parallel rechnen, zusammenführen
+
+1. **Aufteilen:** Wir teilen die Modell-Dimension $d_{model}$ (z. B. 4)
+   auf $h$ Köpfe auf (z. B. 2 Köpfe à Head-Breite 2). Der Rechenaufwand bleibt
+   damit fast genau gleich wie bei einem einzigen großen Kopf.
+2. **Parallele Attention:** Jeder Kopf rechnet unabhängig seine eigene
+   kausale Attention (mit eigenen $W_Q, W_K, W_V$-Matrizen).
+3. **Zusammenkleben (Concat):** Die Teilergebnisse beider Köpfe werden
+   hintereinandergehängt. Aus zweimal Breite 2 wird wieder die volle Breite 4.
+4. **Mischen (Output-Projektion $W_O$):** Eine abschließende lineare Schicht
+   vermischt die Erkenntnisse aller Köpfe miteinander.
+
+```text
+                  Eingabe [Batch, Tokens, 4]
+                 /                          \
+          Kopf 1 (Breite 2)          Kopf 2 (Breite 2)
+                 \                          /
+                  Zusammenkleben (Concat)
+                             ↓
+                    Breite 4 (nebeneinander)
+                             ↓
+                  Output-Projektion W_O
+                             ↓
+                  Ausgabe [Batch, Tokens, 4]
+```
+
+### Die Handrechnung für 2 Köpfe
+
+Betrachten wir zwei Tokens (Position 0 und 1) mit Einbettungsbreite 4:
+
+#### 1. Unabhängige Köpfe rechnen
+
+Jeder Kopf erzeugt für jedes Token einen Kontext-Vektor der Head-Breite 2:
+
+**Kopf 1** liefert:
+- Token 0: `[2.0, 0.0]`
+- Token 1: `[1.0, 1.5]`
+
+**Kopf 2** liefert:
+- Token 0: `[0.0, 1.0]`
+- Token 1: `[2.0, 0.5]`
+
+#### 2. Zusammenkleben (Concat)
+
+Wir hängen die Vektoren pro Token einfach nebeneinander:
+
+```text
+Token 0:  [2.0, 0.0]  +  [0.0, 1.0]  ->  [2.0, 0.0,  0.0, 1.0]
+          \________/     \________/      \________/  \________/
+            Kopf 1         Kopf 2          Kopf 1      Kopf 2
+
+Token 1:  [1.0, 1.5]  +  [2.0, 0.5]  ->  [1.0, 1.5,  2.0, 0.5]
+```
+
+Form vorher je Kopf: `[1, 2, 2]`.
+Form nach Concat: `[1, 2, 4]`. Die Dimension 4 ist wieder hergestellt.
+
+#### 3. Warum Concat allein nicht reicht: Die Output-Projektion $W_O$
+
+Nach dem Concat liegen die Zahlen nur nebeneinander im selben Array:
+- Platz 1 und 2 gehören stur zu Kopf 1.
+- Platz 3 und 4 gehören stur zu Kopf 2.
+
+Die Köpfe haben noch nicht miteinander gesprochen! Wenn die nächste Schicht
+des Modells eine Entscheidung treffen soll, die beide Köpfe gleichzeitig
+braucht (z. B. Subjekt aus Kopf 1 und Verneinung aus Kopf 2 kombinieren),
+fehlt die Verbindung.
+
+Die lineare Schicht $W_O$ ist eine $4 \times 4$ Matrix. Sie wirkt wie ein
+**Chefredakteur**: Sie liest die Berichte beider Experten, gewichtet deren
+Aussagen und erzeugt die finale Zusammenfassung für die nächste Schicht.
+
+Beispielrechnung für Token 0 mit einer festen $W_O$-Matrix:
+
+```text
+Eingabe: [2.0, 0.0, 0.0, 1.0]
+
+         Spalte 1    Spalte 2    Spalte 3    Spalte 4
+Kopf 1-A:    1           0           1           0
+Kopf 1-B:    0           1           0           1
+Kopf 2-A:    1           0          -1           0
+Kopf 2-B:    0           1           0          -1
+```
+
+Für Ausgabekomponente 1:
+```text
+  2.0 * 1  (Kopf 1-A)
++ 0.0 * 0  (Kopf 1-B)
++ 0.0 * 1  (Kopf 2-A)
++ 1.0 * 0  (Kopf 2-B)
+= 2.0
+```
+
+Für Ausgabekomponente 2:
+```text
+  2.0 * 0 + 0.0 * 1 + 0.0 * 0 + 1.0 * 1 = 1.0
+```
+
+Das Ergebnis für Token 0 ist `[2.0, 1.0, 2.0, -1.0]`. Es hat wieder
+Länge 4, enthält aber jetzt Informationen aus beiden Köpfen in
+gemeinsamer Repräsentation.
+
+### Multi-Head Attention in Burn: Zwei Wege
+
+Im Code bieten wir beide Varianten an:
+1. **`NaiveMultiHeadAttention` (didaktisch):** Eine Liste von `SelfAttention`-Köpfen,
+   die nacheinander rechnen, mit `Tensor::cat` verkettet und per $W_O$ gemischt werden.
+   Deckungsgleich mit der Handrechnung.
+2. **`MultiHeadAttention` (produktiv & optimiert):** Eine einzige gemeinsame
+   Projektionsmatrix, parallele 4D-Tensoroperationen über alle Köpfe und
+   Batch-Dimensionen hinweg. Das ist der Standard für GPU-Training.
+
+Beide berechnen mathematisch exakt dasselbe Ergebnis!
+
+#### 1. Der didaktische Weg (`NaiveMultiHeadAttention`)
+
+Hier entspricht jede Zeile Code unserer Handrechnung:
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:naive_mha}}
+```
+
+Die Schritte in `forward`:
+- Jeder Kopf in `self.heads` rechnet unabhängig seine eigene Attention:
+  `head.forward(input.clone())`.
+- `Tensor::cat(head_outputs, 2)` hängt die Ausgaben entlang der Merkmalsachse
+  aneinander (`[1, 2, 2] + [1, 2, 2] -> [1, 2, 4]`).
+- `self.output_projection.forward(...)` wendet die $W_O$-Matrix an.
+
+#### 2. Der produktive Weg (`MultiHeadAttention` mit 4D-Reshape)
+
+Warum optimieren? Eine Schleife über Köpfe führt viele kleine Kernel-Aufrufe
+auf der GPU aus. Viel schneller ist es, **alle Köpfe in einem einzigen großen
+Tensor parallel** zu berechnen.
+
+Die Struktur verwendet gemeinsame Projektionen für die volle Breite:
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:mha_config}}
+```
+
+Die Vorwärtsrechnung formt die Tensoren geschickt um:
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:mha_forward}}
+```
+
+Wie funktioniert der 4D-Trick?
+
+1. **Gemeinsam projizieren:** `query`, `key` und `value` projizieren von
+   `[Batch, Tokens, EmbeddingDim]` direkt in `[Batch, Tokens, EmbeddingDim]`.
+   Die Kanäle aller Köpfe liegen bereits nebeneinander.
+2. **Form aufteilen (`project_and_split`):**
+   - `.reshape([Batch, Tokens, Heads, HeadDim])`: Trennt die flache
+     Merkmalsachse in Köpfe und Kopf-Breite auf.
+   - `.swap_dims(1, 2)`: Tauscht Achse 1 und 2 $\to$
+     `[Batch, Heads, Tokens, HeadDim]`.
+   - Jetzt verhält sich jede Kopf-Ebene wie ein eigener Batch!
+3. **Paralleles Matmul:**
+   - `q.matmul(k.swap_dims(2, 3))` berechnet alle Scores für alle Köpfe
+     und alle Batches in einer einzigen GPU-Operation.
+   - Form: `[Batch, Heads, Tokens, Tokens]`.
+4. **Kausale Maske:** Die 2D-Maske `[Tokens, Tokens]` wird per `.unsqueeze()`
+   auf `[1, 1, Tokens, Tokens]` erweitert. Burn broadcastet sie automatisch
+   über alle Batches und Köpfe.
+5. **Zurückformen:**
+   - Nach `weights.matmul(v)` haben wir `[Batch, Heads, Tokens, HeadDim]`.
+   - `.swap_dims(1, 2)` $\to$ `[Batch, Tokens, Heads, HeadDim]`.
+   - `.reshape([Batch, Tokens, EmbeddingDim])` klebt die Köpfe wieder zusammen.
+6. **Output-Projektion:** `self.output_projection.forward(merged)`.
+
+### Der Beweis: Beide Wege sind numerisch identisch
+
+In `crates/model/tests/attention.rs` verifizieren wir, dass die optimierte
+4D-Variante und die didaktische Einzelschritt-Variante auf dieselben Zahlen
+führen:
+
+```rust,ignore
+{{#include ../../../crates/model/tests/attention.rs:test_mha_equivalence}}
+```
+
+```bash
+cargo test -p model --test attention naive_and_batched_multi_head_attention_are_numerically_equivalent
+```
+
+### Die Ausgabe der Demo
+
+Das Beispiel `crates/model/examples/ch05_multi_head.rs` führt beide
+Varianten aus:
+
+```bash
+cargo run -p model --example ch05_multi_head
+```
+
+```text
+{{#include ../ausgaben/ch05_multi_head.txt}}
+```
+
+Beide liefern Tensoren der Form `[1, 2, 4]`. Für das weitere Training und
+die Transformer-Blöcke in Kapitel 6 nutzen wir die produktive `MultiHeadAttention`.
+
+## Zusammenfassung von Kapitel 5
+
+In diesem Kapitel haben wir das Herzstück moderner Sprachmodelle schrittweise
+aufgebaut:
+
+1. **Einfache Attention:** Vergleichen (Scores via Skalarprodukt), Gewichten
+   (Softmax) und Mischen (gewichtete Summe).
+2. **Projektionen & Skalierung:** Eigene Rollen durch $W_Q, W_K, W_V$ und
+   stabilisierende Division durch $\sqrt{d_k}$.
+3. **Kausale Maskierung:** Verhindert den Blick in die Zukunft durch
+   $-\infty$-Scores vor dem Softmax.
+4. **Multi-Head Attention:** Parallele Köpfe mit Teilbreiten, zusammengeführt
+   über Concat und eine Output-Projektion $W_O$.
+
+Damit ist das Attention-Modul vollständig. Im nächsten Kapitel setzen wir die
+einzelnen Schichten (Embedding, Multi-Head Attention, Feedforward-Netz und
+Layer-Norm) zu einem vollständigen **Transformer-Block** zusammen.
