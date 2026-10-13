@@ -21,27 +21,29 @@ Bisher umgesetzt:
   Berechnung nachprüfbar.
 - **Autograd:** Gradienten mit Burns Autodiff berechnen, auch für die
   Embedding-Tabellen.
-- **Attention, erste zwei Lernschritte:** Feste Token-Vektoren vergleichen,
-  Softmax-Gewichte berechnen und Kontext-Vektoren bilden; danach einen
-  trainierbaren Kopf mit Q/K/V-Projektionen und skalierten Scores verwenden.
-- **GPT-Sprachmodell:** Embedding, Transformer-Blöcke und eine separate
-  Ausgabeprojektion zu Logits für jedes Vokabular-Token zusammensetzen.
+- **Attention:** Kausale Self-Attention mit Q/K/V-Projektionen, skalierten
+  Scores und Multi-Head Attention.
+- **Transformer-Block:** Pre-LayerNorm, Feed-Forward-Netz und
+  Residual-Verbindungen zu mehreren Blöcken zusammensetzen.
+- **GPT-Sprachmodell:** `GptEmbedding`, Transformer-Blöcke und separate
+  Ausgabeprojektion liefern Logits `[Batch, Position, Vokabular]`.
 
-Eine Trainingsschleife ist noch nicht umgesetzt. Die Embedding-Demo ist bewusst
-noch nicht mit dem echten Tokenizer und DataLoader verbunden.
+Als Nächstes folgen Cross-Entropy über die DataLoader-Ziele, Optimizer und
+Trainingsschleife sowie Textgenerierung. `model` enthält bewusst nur
+Modellberechnung; Trainingsinfrastruktur bleibt im Crate `training`.
 
 ## Projektstruktur
 
 ```text
 crates/
   training/   Tokenizer, Datenaufbereitung und Demos für Kapitel 1 und 2
-  model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 5
+  model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
 ```
 
 Modellberechnung und Training bleiben getrennt: `model` hängt nicht von
-`training` ab. Die spätere Trainingslogik gehört in den Trainingsbereich.
+`training` ab. Die Trainingslogik gehört in den Trainingsbereich.
 Das Projekt ist ein Cargo-Workspace; Demo und Tests des Modells verwenden
 Burns CPU-Backend `NdArray<f32>` und benötigen keine GPU.
 
@@ -132,8 +134,8 @@ cargo test -p model --test gpt
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
-Tensorformen und die Lernbarkeit der Embedding-Gewichte. Sie ersetzen kein
-vollständiges Modelltraining.
+kausale Attention, Tensorformen, Parameterzahlen und Gradientenfluss. Sie
+ersetzen kein vollständiges Modelltraining.
 
 ## Architektur und Quellen
 
