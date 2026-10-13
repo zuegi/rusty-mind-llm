@@ -43,11 +43,12 @@ Wir erarbeiten diesen Baustein in kleinen Schritten:
 4. Mehrere Köpfe und eine gemeinsame Ausgabeprojektion.
 5. Anschluss an das Embedding und Gradienten mit Burns Autodiff.
 
-Dieses Kapitel enthält bisher **Schritte 1 und 2**. Die erste Demo zeigt die
+Dieses Kapitel enthält bisher **Schritte 1 bis 3**. Die erste Demo zeigt die
 Grundrechnung mit festen Vektoren. Die zweite verwendet einen trainierbaren
-Attention-Kopf mit Q/K/V-Projektionen und Skalierung. Noch fehlen Zukunftsmaske
-und mehrere Köpfe. Training und Optimizer folgen später; wir implementieren
-kein eigenes Autograd.
+Attention-Kopf mit Q/K/V-Projektionen und Skalierung. Schritt 3 ergänzt
+die kausale Maske, damit Tokens nicht in die Zukunft schauen. Noch fehlen
+mehrere Köpfe. Training und Optimizer folgen später; wir implementieren kein
+eigenes Autograd.
 
 ### Was du jetzt verstehen solltest
 
@@ -1251,7 +1252,7 @@ verwendet werden. Query und Key bekommen deshalb jeweils `input.clone()`;
 erst Value bekommt das Original. Bei Burn teilt ein Tensor-Clone die
 zugrunde liegenden Daten, statt sofort alle Zahlen zu kopieren.
 
-#### Vergleichen und skalieren
+#### Vergleichen, skalieren und maskieren
 
 `key.swap_dims(1, 2)` tauscht für jedes Fenster die Token- und Vektorachse.
 Aus `[Batch, Tokens, Head-Breite]` wird `[Batch, Head-Breite, Tokens]`.
@@ -1270,6 +1271,14 @@ Grössen der Matrixmultiplikation müssen übereinstimmen: hier jeweils `2`.
 `(head_dim as f64).sqrt()` liefert den Skalierungsfaktor. `as f64` wandelt die
 Ganzzahlbreite in eine Gleitkommazahl um; `.sqrt()` berechnet deren Quadratwurzel.
 Durch diesen Faktor teilen wir sämtliche Scores.
+
+Danach folgt die **kausale Maskierung**:
+`Tensor::ones(...).triu(1).bool().unsqueeze()` erzeugt eine obere Dreiecksmatrix,
+die überall dort `true` ist, wo eine Position in die Zukunft schauen würde
+(über der Hauptdiagonale). `mask_fill(mask, f32::NEG_INFINITY)` ersetzt diese
+Zukunftswerte durch $-\infty$. Wenn die Sequenz nur ein einzelnes Token hat
+(`context_length == 1`), gibt es keine Zukunft — die Maskierung kann übersprungen
+werden.
 
 Die Batch-Achse bleibt bei diesen Operationen unverändert. `matmul` rechnet
 jedes Fenster separat; Fenster tauschen keine Informationen aus.
@@ -1429,10 +1438,229 @@ Fähigkeiten: Attention verstehen, Formen lesen und Rust-Code verfolgen.
 Eine Unsicherheit bei Ownership bedeutet nicht, dass du Attention nicht
 verstanden hast.
 
+## Schritt 3: Kausale Maskierung (Causal Masking)
+
+### Das Problem: Der Blick in die Zukunft
+
+In unseren bisherigen Rechnungen berechnet Token A (`[1, 0]`) seine Attention
+auch über Token B (`[0, 1]`). Bei zwei Tokens an den Positionen 0 und 1:
+
+```text
+Position 0: "Der"
+Position 1: "Hund"
+```
+
+Im autoregressiven Sprachmodell (wie GPT) ist die Aufgabe: **Vorhersage des
+nächsten Tokens**. Wenn Position 0 ("Der") bereits Informationen von Position 1
+("Hund") aufnehmen darf, "sieht" das Modell die Zukunft. Beim echten Erzeugen
+von Text existiert Position 1 aber noch gar nicht!
+
+Das Modell würde lernen, auf zukünftige Wörter zu schauen, statt aus dem
+bisherigen Kontext das nächste Wort vorherzusagen.
+
+*(Hinweis: Modelle wie **BERT** arbeiten anders: Sie generieren keinen Text,
+sondern füllen Lücken im Satz und dürfen deshalb in beide Richtungen schauen.
+Den genauen Unterschied beleuchtet der Exkurs
+[BERT vs. GPT: Bidirektionale vs. kausale Attention](../exkurse/bert-vs-gpt.md).)*
+
+### Die Lösung: Vor Softmax auf $-\infty$ setzen
+
+Wir müssen verhindern, dass Position $i$ Informationen von Positionen $j > i$
+erhält. Können wir die unerlaubten Gewichte nicht einfach nach dem Softmax auf 0
+setzen?
+
+Nein: Softmax normalisiert die Zeile so, dass die Summe aller Anteile exakt 1
+ergibt. Wenn wir danach Werte auf 0 setzen, stimmt die Summe nicht mehr:
+
+```text
+Gewichte vor Nullsetzen:  [0.33, 0.67]  Summe: 1.0
+Nach Nullsetzen von B:    [0.33, 0.00]  Summe: nur noch 0.33!
+```
+
+Die verbleibenden Quellen müssten wieder auf 100 % hochskaliert werden.
+Viel eleganter und mathematisch sauber ist es, das **vor dem Softmax** zu tun:
+
+Erinnerung an Softmax:
+
+```text
+Gewicht j = exp(Score j) / Summe aller exp(Scores) dieser Zeile
+```
+
+Was macht die Exponentialfunktion `exp(x)` mit verschiedenen Werten?
+
+```text
+exp(0)   = 1.0
+exp(1)   = ungefähr 2.718
+exp(-10) = ungefähr 0.000045
+exp(-inf) = 0.0
+```
+
+Wenn ein Score vor dem Softmax $-\infty$ (Minus Unendlich) ist, wird sein
+Zählerterm exakt `0.0`. Dadurch erhält jede Zukunftsposition **automatisch
+genau 0 % Aufmerksamkeit**, und die Summe der erlaubten Positionen bleibt
+exakt 1!
+
+### Die Maske als Matrix
+
+Für eine Sequenz der Länge 2 sieht die Erlaubnis so aus:
+
+```text
+                 Quelle 0    Quelle 1
+Suchender 0:     erlaubt     ZUKUNFT (-inf)
+Suchender 1:     erlaubt     erlaubt
+```
+
+Für drei Tokens:
+
+```text
+                 Quelle 0    Quelle 1    Quelle 2
+Suchender 0:     erlaubt     -inf        -inf
+Suchender 1:     erlaubt     erlaubt     -inf
+Suchender 2:     erlaubt     erlaubt     erlaubt
+```
+
+Die erlaubten Einträge bilden ein Dreieck unten links (untere Dreiecksmatrix).
+Jede Position $i$ darf nur Quellen $j \le i$ sehen.
+
+### Die Handrechnung mit Maske
+
+Nehmen wir die skalierten Scores aus Schritt 2:
+
+```text
+            Quelle 0  Quelle 1
+Query 0:      0.000     0.707
+Query 1:      0.707     0.707
+```
+
+Jetzt wenden wir die Maske an. Score `[0, 1]` (Query 0 gegen Quelle 1) ist
+Zukunft und wird durch $-\infty$ ersetzt:
+
+```text
+Maskierte Scores:
+            Quelle 0  Quelle 1
+Query 0:      0.000     -inf
+Query 1:      0.707     0.707
+```
+
+#### Softmax für Query 0 (Position 0)
+
+```text
+Quelle 0: exp(0)    = 1.0
+Quelle 1: exp(-inf) = 0.0
+Summe               = 1.0 + 0.0 = 1.0
+
+Anteil Quelle 0 = 1.0 / 1.0 = 1.0  (100 %)
+Anteil Quelle 1 = 0.0 / 1.0 = 0.0  (0 %)
+```
+
+Ohne Maske waren es noch `[0.330, 0.670]`. Durch die Maske konzentriert sich
+Position 0 zu 100 % auf sich selbst!
+
+#### Softmax für Query 1 (Position 1)
+
+Position 1 darf beide Quellen sehen. Hier ändert sich nichts:
+
+```text
+Anteil Quelle 0 = 0.5 (50 %)
+Anteil Quelle 1 = 0.5 (50 %)
+```
+
+Die maskierten Attention-Gewichte lauten:
+
+```text
+           Anteil Quelle 0   Anteil Quelle 1
+Query 0          1.0               0.0
+Query 1          0.5               0.5
+```
+
+### Neuer Kontext mit Maske
+
+Unsere Value-Vektoren waren:
+
+```text
+Value 0 = [2, 0]
+Value 1 = [0, 3]
+```
+
+**Kontext für Position 0:**
+
+```text
+1.0 * [2, 0] + 0.0 * [0, 3] = [2, 0]
+```
+
+Position 0 gibt exakt ihren eigenen Value-Vektor weiter. Sie erfährt rein gar
+nichts von Position 1.
+
+**Kontext für Position 1:**
+
+```text
+0.5 * [2, 0] + 0.5 * [0, 3] = [1, 1.5]
+```
+
+Position 1 kombiniert Vergangenheit und Gegenwart zu gleichen Teilen.
+
+### Kausale Maskierung in Rust mit Burn
+
+Wie sieht diese Maskierung im echten Code von `crates/model/src/attention.rs` aus?
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:causal_mask}}
+```
+
+Die Zeilen im Detail:
+
+1. **`if context_length > 1`**: Bei einem einzelnen Token (`context_length == 1`)
+   gibt es keine Zukunft. Die Maskierung kann übersprungen werden.
+2. **`Tensor::<B, 2>::ones([context_length, context_length], ...)`**: Erzeugt
+   eine quadratische 2D-Matrix aus Einsen.
+3. **`.triu(1)`** (*upper triangular*): Behält nur Werte **oberhalb** der
+   Hauptdiagonale (Offset 1) und setzt Diagonale sowie untere Werte auf 0.
+   Das sind genau die verbotenen Zukunftspositionen.
+4. **`.bool()`**: Wandelt die Matrix in Wahrheitswerte (`true` für Zukunft,
+   `false` für Gegenwart und Vergangenheit).
+5. **`.unsqueeze()`**: Fügt die Batch-Dimension hinzu, damit die Form `[1, context_length, context_length]`
+   zum 3D-Score-Tensor passt (Broadcasting über alle Batches).
+6. **`scores.mask_fill(mask, f32::NEG_INFINITY)`**: Ersetzt alle `true`-Stellen
+   durch $-\infty$.
+
+### Die Ausgabe der Demo mit Maske
+
+Wenn wir die Demo `ch05_projections` laufen lassen, sehen wir genau das
+Ergebnis unserer Handrechnung:
+
+```text
+{{#include ../ausgaben/ch05_projections.txt}}
+```
+
+Position 0 liefert `[2.000, 0.000]` (nur eigener Value).
+Position 1 liefert `[1.000, 1.500]` (Mischung aus Token 0 und Token 1).
+
+### Kausalität mit einem Test beweisen
+
+Um sicherzugehen, dass frühere Tokens nicht durch spätere Tokens beeinflusst
+werden, testen wir das Verhalten in `crates/model/tests/attention.rs`:
+
+```rust,ignore
+{{#include ../../../crates/model/tests/attention.rs:test_causal}}
+```
+
+Die Idee des Tests:
+Wir übergeben zwei Sequenzen an `forward`.
+- Sequenz A hat 2 Tokens.
+- Sequenz B hat dieselben 2 Tokens und zusätzlich ein drittes Token mit extremen
+  Zahlenwerten (`[99.0, -99.0]`).
+
+Dank der kausalen Maskierung müssen die Ausgaben für Token 0 und Token 1 in beiden
+Fällen **exakt identisch** sein.
+
+```bash
+cargo test -p model --test attention future_tokens_do_not_influence_earlier_outputs
+```
+
 ## Was als Nächstes kommt
 
-Aktuell sieht A auch B, obwohl B später in der Sequenz steht. Für die
-Vorhersage des nächsten Tokens wäre das unerlaubte Zukunftsinformation.
+Jetzt haben wir einen vollständigen, kausalen Attention-Kopf verstanden:
+Projektionen, Skalierung, Maskierung, Softmax und gewichtete Summe.
 
-Der nächste Lernschritt ergänzt eine kausale Maske vor Softmax. Danach teilen
-wir die Rechnung auf mehrere Köpfe auf und führen ihre Ausgaben wieder zusammen.
+Im nächsten Schritt bündeln wir mehrere solcher Köpfe zu **Multi-Head Attention**
+(Schritt 4).

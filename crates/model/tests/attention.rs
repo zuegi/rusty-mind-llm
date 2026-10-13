@@ -20,7 +20,7 @@ fn fixed_attention<B: burn::tensor::backend::Backend>() -> SelfAttention<B> {
 }
 
 #[test]
-fn projects_each_role_and_uses_scaled_scores() {
+fn projects_each_role_and_uses_scaled_causal_scores() {
     let attention = fixed_attention::<Cpu>();
     let input = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default());
     let query = attention.query.forward(input.clone());
@@ -39,7 +39,10 @@ fn projects_each_role_and_uses_scaled_scores() {
         .into_data()
         .to_vec::<f32>()
         .unwrap();
-    let expected = [0.660_476_9, 2.009_284_7, 1.0, 1.5];
+    // Mit kausaler Maske:
+    // Position 0 sieht nur Position 0 -> [2.0, 0.0]
+    // Position 1 sieht Position 0 und 1 -> [1.0, 1.5]
+    let expected = [2.0, 0.0, 1.0, 1.5];
     for (actual, expected) in output.iter().zip(expected) {
         assert!(
             (actual - expected).abs() < TOLERANCE,
@@ -111,6 +114,32 @@ fn one_token_returns_its_value() {
         .into_data()
         .assert_eq(&attention.value.forward(input).into_data(), true);
 }
+
+// ANCHOR: test_causal
+#[test]
+fn future_tokens_do_not_influence_earlier_outputs() {
+    let attention = fixed_attention::<Cpu>();
+    // Erste Sequenz: zwei Tokens
+    let seq_a = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default());
+    // Zweite Sequenz: dieselben ersten zwei Tokens, aber ein drittes beliebiges Token angehängt
+    let seq_b = Tensor::from_data(
+        [[[1.0, 0.0], [0.0, 1.0], [99.0, -99.0]]],
+        &Default::default(),
+    );
+    let out_a = attention.forward(seq_a);
+    let out_b = attention.forward(seq_b);
+
+    // Position 0 und 1 müssen bei beiden Sequenzen exakt identisch sein!
+    let out_a_vec = out_a.into_data().to_vec::<f32>().unwrap();
+    let out_b_vec = out_b.into_data().to_vec::<f32>().unwrap();
+    for i in 0..4 {
+        assert!(
+            (out_a_vec[i] - out_b_vec[i]).abs() < TOLERANCE,
+            "Zukunft beeinflusst Vergangenheit bei Index {i}"
+        );
+    }
+}
+// ANCHOR_END: test_causal
 
 #[test]
 #[should_panic(expected = "embedding_dim must be positive")]

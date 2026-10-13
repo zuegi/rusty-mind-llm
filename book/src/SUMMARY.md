@@ -21,3 +21,4 @@
 - [Burn: Die Bausteine](exkurse/burn-grundlagen.md)
 - [Ableitungen für Programmierer](exkurse/ableitungen.md)
 - [Warum Attention durch die Quadratwurzel teilt](exkurse/attention-skalierung.md)
+- [BERT vs. GPT: Bidirektionale vs. kausale Attention](exkurse/bert-vs-gpt.md)

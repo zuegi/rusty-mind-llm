@@ -55,7 +55,16 @@ impl<B: Backend> SelfAttention<B> {
         let query = self.query.forward(input.clone());
         let key = self.key.forward(input.clone());
         let value = self.value.forward(input);
-        let scores = query.matmul(key.swap_dims(1, 2)) / (head_dim as f64).sqrt();
+// ANCHOR: causal_mask
+        let mut scores = query.matmul(key.swap_dims(1, 2)) / (head_dim as f64).sqrt();
+        if context_length > 1 {
+            let mask = Tensor::<B, 2>::ones([context_length, context_length], &scores.device())
+                .triu(1)
+                .bool()
+                .unsqueeze();
+            scores = scores.mask_fill(mask, f32::NEG_INFINITY);
+        }
+// ANCHOR_END: causal_mask
         let weights = softmax(scores, 2);
         weights.matmul(value)
     }
