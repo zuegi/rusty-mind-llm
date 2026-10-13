@@ -1,0 +1,15 @@
+Eingabe, Form [1, 2, 4]:
+  Token 0: [1.000, 0.000, 0.500, -0.500]
+  Token 1: [0.000, 1.000, -0.500, 0.500]
+Didaktisch: Kopf 0 (Head-Dim 2), Form [1, 2, 2]:
+  Token 0: [-0.201, -0.342]
+  Token 1: [-0.054, -0.306]
+Didaktisch: Kopf 1 (Head-Dim 2), Form [1, 2, 2]:
+  Token 0: [-0.740, -0.109]
+  Token 1: [-0.265, -0.042]
+Didaktisch: Gesamtausgabe, Form [1, 2, 4]:
+  Token 0: [-0.005, -0.215, 0.257, 0.439]
+  Token 1: [-0.044, -0.017, 0.190, 0.182]
+Optimiert: Gesamtausgabe (4D-Batched), Form [1, 2, 4]:
+  Token 0: [0.187, 0.237, -0.049, 0.119]
+  Token 1: [0.169, 0.153, 0.025, 0.006]

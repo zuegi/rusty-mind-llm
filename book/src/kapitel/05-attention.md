@@ -43,11 +43,12 @@ Wir erarbeiten diesen Baustein in kleinen Schritten:
 4. Mehrere Köpfe und eine gemeinsame Ausgabeprojektion.
 5. Anschluss an das Embedding und Gradienten mit Burns Autodiff.
 
-Dieses Kapitel enthält bisher **Schritte 1 und 2**. Die erste Demo zeigt die
+Dieses Kapitel enthält bisher **Schritte 1 bis 3**. Die erste Demo zeigt die
 Grundrechnung mit festen Vektoren. Die zweite verwendet einen trainierbaren
-Attention-Kopf mit Q/K/V-Projektionen und Skalierung. Noch fehlen Zukunftsmaske
-und mehrere Köpfe. Training und Optimizer folgen später; wir implementieren
-kein eigenes Autograd.
+Attention-Kopf mit Q/K/V-Projektionen und Skalierung. Schritt 3 ergänzt
+die kausale Maske, damit Tokens nicht in die Zukunft schauen. Noch fehlen
+mehrere Köpfe. Training und Optimizer folgen später; wir implementieren kein
+eigenes Autograd.
 
 ### Was du jetzt verstehen solltest
 
@@ -1251,7 +1252,7 @@ verwendet werden. Query und Key bekommen deshalb jeweils `input.clone()`;
 erst Value bekommt das Original. Bei Burn teilt ein Tensor-Clone die
 zugrunde liegenden Daten, statt sofort alle Zahlen zu kopieren.
 
-#### Vergleichen und skalieren
+#### Vergleichen, skalieren und maskieren
 
 `key.swap_dims(1, 2)` tauscht für jedes Fenster die Token- und Vektorachse.
 Aus `[Batch, Tokens, Head-Breite]` wird `[Batch, Head-Breite, Tokens]`.
@@ -1270,6 +1271,14 @@ Grössen der Matrixmultiplikation müssen übereinstimmen: hier jeweils `2`.
 `(head_dim as f64).sqrt()` liefert den Skalierungsfaktor. `as f64` wandelt die
 Ganzzahlbreite in eine Gleitkommazahl um; `.sqrt()` berechnet deren Quadratwurzel.
 Durch diesen Faktor teilen wir sämtliche Scores.
+
+Danach folgt die **kausale Maskierung**:
+`Tensor::ones(...).triu(1).bool().unsqueeze()` erzeugt eine obere Dreiecksmatrix,
+die überall dort `true` ist, wo eine Position in die Zukunft schauen würde
+(über der Hauptdiagonale). `mask_fill(mask, f32::NEG_INFINITY)` ersetzt diese
+Zukunftswerte durch $-\infty$. Wenn die Sequenz nur ein einzelnes Token hat
+(`context_length == 1`), gibt es keine Zukunft — die Maskierung kann übersprungen
+werden.
 
 Die Batch-Achse bleibt bei diesen Operationen unverändert. `matmul` rechnet
 jedes Fenster separat; Fenster tauschen keine Informationen aus.
@@ -1429,10 +1438,473 @@ Fähigkeiten: Attention verstehen, Formen lesen und Rust-Code verfolgen.
 Eine Unsicherheit bei Ownership bedeutet nicht, dass du Attention nicht
 verstanden hast.
 
-## Was als Nächstes kommt
+## Schritt 3: Kausale Maskierung (Causal Masking)
 
-Aktuell sieht A auch B, obwohl B später in der Sequenz steht. Für die
-Vorhersage des nächsten Tokens wäre das unerlaubte Zukunftsinformation.
+### Das Problem: Der Blick in die Zukunft
 
-Der nächste Lernschritt ergänzt eine kausale Maske vor Softmax. Danach teilen
-wir die Rechnung auf mehrere Köpfe auf und führen ihre Ausgaben wieder zusammen.
+In unseren bisherigen Rechnungen berechnet Token A (`[1, 0]`) seine Attention
+auch über Token B (`[0, 1]`). Bei zwei Tokens an den Positionen 0 und 1:
+
+```text
+Position 0: "Der"
+Position 1: "Hund"
+```
+
+Im autoregressiven Sprachmodell (wie GPT) ist die Aufgabe: **Vorhersage des
+nächsten Tokens**. Wenn Position 0 ("Der") bereits Informationen von Position 1
+("Hund") aufnehmen darf, "sieht" das Modell die Zukunft. Beim echten Erzeugen
+von Text existiert Position 1 aber noch gar nicht!
+
+Das Modell würde lernen, auf zukünftige Wörter zu schauen, statt aus dem
+bisherigen Kontext das nächste Wort vorherzusagen.
+
+*(Hinweis: Modelle wie **BERT** arbeiten anders: Sie generieren keinen Text,
+sondern füllen Lücken im Satz und dürfen deshalb in beide Richtungen schauen.
+Den genauen Unterschied beleuchtet der Exkurs
+[BERT vs. GPT: Bidirektionale vs. kausale Attention](../exkurse/bert-vs-gpt.md).)*
+
+### Die Lösung: Vor Softmax auf $-\infty$ setzen
+
+Wir müssen verhindern, dass Position $i$ Informationen von Positionen $j > i$
+erhält. Können wir die unerlaubten Gewichte nicht einfach nach dem Softmax auf 0
+setzen?
+
+Nein: Softmax normalisiert die Zeile so, dass die Summe aller Anteile exakt 1
+ergibt. Wenn wir danach Werte auf 0 setzen, stimmt die Summe nicht mehr:
+
+```text
+Gewichte vor Nullsetzen:  [0.33, 0.67]  Summe: 1.0
+Nach Nullsetzen von B:    [0.33, 0.00]  Summe: nur noch 0.33!
+```
+
+Die verbleibenden Quellen müssten wieder auf 100 % hochskaliert werden.
+Viel eleganter und mathematisch sauber ist es, das **vor dem Softmax** zu tun:
+
+Erinnerung an Softmax:
+
+```text
+Gewicht j = exp(Score j) / Summe aller exp(Scores) dieser Zeile
+```
+
+Was macht die Exponentialfunktion `exp(x)` mit verschiedenen Werten?
+
+```text
+exp(0)   = 1.0
+exp(1)   = ungefähr 2.718
+exp(-10) = ungefähr 0.000045
+exp(-inf) = 0.0
+```
+
+Wenn ein Score vor dem Softmax $-\infty$ (Minus Unendlich) ist, wird sein
+Zählerterm exakt `0.0`. Dadurch erhält jede Zukunftsposition **automatisch
+genau 0 % Aufmerksamkeit**, und die Summe der erlaubten Positionen bleibt
+exakt 1!
+
+### Die Maske als Matrix
+
+Für eine Sequenz der Länge 2 sieht die Erlaubnis so aus:
+
+```text
+                 Quelle 0    Quelle 1
+Suchender 0:     erlaubt     ZUKUNFT (-inf)
+Suchender 1:     erlaubt     erlaubt
+```
+
+Für drei Tokens:
+
+```text
+                 Quelle 0    Quelle 1    Quelle 2
+Suchender 0:     erlaubt     -inf        -inf
+Suchender 1:     erlaubt     erlaubt     -inf
+Suchender 2:     erlaubt     erlaubt     erlaubt
+```
+
+Die erlaubten Einträge bilden ein Dreieck unten links (untere Dreiecksmatrix).
+Jede Position $i$ darf nur Quellen $j \le i$ sehen.
+
+### Die Handrechnung mit Maske
+
+Nehmen wir die skalierten Scores aus Schritt 2:
+
+```text
+            Quelle 0  Quelle 1
+Query 0:      0.000     0.707
+Query 1:      0.707     0.707
+```
+
+Jetzt wenden wir die Maske an. Score `[0, 1]` (Query 0 gegen Quelle 1) ist
+Zukunft und wird durch $-\infty$ ersetzt:
+
+```text
+Maskierte Scores:
+            Quelle 0  Quelle 1
+Query 0:      0.000     -inf
+Query 1:      0.707     0.707
+```
+
+#### Softmax für Query 0 (Position 0)
+
+```text
+Quelle 0: exp(0)    = 1.0
+Quelle 1: exp(-inf) = 0.0
+Summe               = 1.0 + 0.0 = 1.0
+
+Anteil Quelle 0 = 1.0 / 1.0 = 1.0  (100 %)
+Anteil Quelle 1 = 0.0 / 1.0 = 0.0  (0 %)
+```
+
+Ohne Maske waren es noch `[0.330, 0.670]`. Durch die Maske konzentriert sich
+Position 0 zu 100 % auf sich selbst!
+
+#### Softmax für Query 1 (Position 1)
+
+Position 1 darf beide Quellen sehen. Hier ändert sich nichts:
+
+```text
+Anteil Quelle 0 = 0.5 (50 %)
+Anteil Quelle 1 = 0.5 (50 %)
+```
+
+Die maskierten Attention-Gewichte lauten:
+
+```text
+           Anteil Quelle 0   Anteil Quelle 1
+Query 0          1.0               0.0
+Query 1          0.5               0.5
+```
+
+### Neuer Kontext mit Maske
+
+Unsere Value-Vektoren waren:
+
+```text
+Value 0 = [2, 0]
+Value 1 = [0, 3]
+```
+
+**Kontext für Position 0:**
+
+```text
+1.0 * [2, 0] + 0.0 * [0, 3] = [2, 0]
+```
+
+Position 0 gibt exakt ihren eigenen Value-Vektor weiter. Sie erfährt rein gar
+nichts von Position 1.
+
+**Kontext für Position 1:**
+
+```text
+0.5 * [2, 0] + 0.5 * [0, 3] = [1, 1.5]
+```
+
+Position 1 kombiniert Vergangenheit und Gegenwart zu gleichen Teilen.
+
+### Kausale Maskierung in Rust mit Burn
+
+Wie sieht diese Maskierung im echten Code von `crates/model/src/attention.rs` aus?
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:causal_mask}}
+```
+
+Die Zeilen im Detail:
+
+1. **`if context_length > 1`**: Bei einem einzelnen Token (`context_length == 1`)
+   gibt es keine Zukunft. Die Maskierung kann übersprungen werden.
+2. **`Tensor::<B, 2>::ones([context_length, context_length], ...)`**: Erzeugt
+   eine quadratische 2D-Matrix aus Einsen.
+3. **`.triu(1)`** (*upper triangular*): Behält nur Werte **oberhalb** der
+   Hauptdiagonale (Offset 1) und setzt Diagonale sowie untere Werte auf 0.
+   Das sind genau die verbotenen Zukunftspositionen.
+4. **`.bool()`**: Wandelt die Matrix in Wahrheitswerte (`true` für Zukunft,
+   `false` für Gegenwart und Vergangenheit).
+5. **`.unsqueeze()`**: Fügt die Batch-Dimension hinzu, damit die Form `[1, context_length, context_length]`
+   zum 3D-Score-Tensor passt (Broadcasting über alle Batches).
+6. **`scores.mask_fill(mask, f32::NEG_INFINITY)`**: Ersetzt alle `true`-Stellen
+   durch $-\infty$.
+
+### Die Ausgabe der Demo mit Maske
+
+Wenn wir die Demo `ch05_projections` laufen lassen, sehen wir genau das
+Ergebnis unserer Handrechnung:
+
+```text
+{{#include ../ausgaben/ch05_projections.txt}}
+```
+
+Position 0 liefert `[2.000, 0.000]` (nur eigener Value).
+Position 1 liefert `[1.000, 1.500]` (Mischung aus Token 0 und Token 1).
+
+### Kausalität mit einem Test beweisen
+
+Um sicherzugehen, dass frühere Tokens nicht durch spätere Tokens beeinflusst
+werden, testen wir das Verhalten in `crates/model/tests/attention.rs`:
+
+```rust,ignore
+{{#include ../../../crates/model/tests/attention.rs:test_causal}}
+```
+
+Die Idee des Tests:
+Wir übergeben zwei Sequenzen an `forward`.
+- Sequenz A hat 2 Tokens.
+- Sequenz B hat dieselben 2 Tokens und zusätzlich ein drittes Token mit extremen
+  Zahlenwerten (`[99.0, -99.0]`).
+
+Dank der kausalen Maskierung müssen die Ausgaben für Token 0 und Token 1 in beiden
+Fällen **exakt identisch** sein.
+
+```bash
+cargo test -p model --test attention future_tokens_do_not_influence_earlier_outputs
+```
+
+```bash
+cargo test -p model --test attention future_tokens_do_not_influence_earlier_outputs
+```
+
+## Schritt 4: Multi-Head Attention
+
+Bisher hat unser Modell einen einzigen Attention-Kopf (`SelfAttention`).
+Dieser Kopf kann pro Token nur **einen einzigen Fokus** gleichzeitig legen.
+
+### Das Problem: Ein einziger Fokus reicht nicht
+
+Betrachte den Satz:
+> „Die Katze fraß die Maus, weil **sie** hungrig war.“
+
+Um das Wort **„sie“** richtig in seinen Kontext einzubetten, muss ein
+Sprachmodell zwei Fragen gleichzeitig beantworten:
+
+1. **Grammatik (Syntax):** Welches Substantiv passt zum Pronomen „sie“?
+   $\to$ „Katze“ oder „Maus“.
+2. **Bedeutung / Kausalität:** Wer war hungrig und fraß wen?
+   $\to$ „Katze“.
+
+Ein einzelner Attention-Kopf berechnet pro Query genau eine Zeile
+Attention-Gewichte. Er muss sich entscheiden: Schaut er auf das nächste
+Nomen, das Prädikat oder das Subjekt?
+
+Mit **Multi-Head Attention** (mehreren Köpfen) lösen wir dieses Problem:
+- **Kopf 1** spezialisiert sich auf grammatische Bezüge.
+- **Kopf 2** spezialisiert sich auf kausale Zusammenhänge.
+
+Beide Köpfe betrachten denselben Satz parallel, aber mit unterschiedlichen
+„Brillen“.
+
+### Das Prinzip: Aufteilen, parallel rechnen, zusammenführen
+
+1. **Aufteilen:** Wir teilen die Modell-Dimension $d_{model}$ (z. B. 4)
+   auf $h$ Köpfe auf (z. B. 2 Köpfe à Head-Breite 2). Der Rechenaufwand bleibt
+   damit fast genau gleich wie bei einem einzigen großen Kopf.
+2. **Parallele Attention:** Jeder Kopf rechnet unabhängig seine eigene
+   kausale Attention (mit eigenen $W_Q, W_K, W_V$-Matrizen).
+3. **Zusammenkleben (Concat):** Die Teilergebnisse beider Köpfe werden
+   hintereinandergehängt. Aus zweimal Breite 2 wird wieder die volle Breite 4.
+4. **Mischen (Output-Projektion $W_O$):** Eine abschließende lineare Schicht
+   vermischt die Erkenntnisse aller Köpfe miteinander.
+
+```text
+                  Eingabe [Batch, Tokens, 4]
+                 /                          \
+          Kopf 1 (Breite 2)          Kopf 2 (Breite 2)
+                 \                          /
+                  Zusammenkleben (Concat)
+                             ↓
+                    Breite 4 (nebeneinander)
+                             ↓
+                  Output-Projektion W_O
+                             ↓
+                  Ausgabe [Batch, Tokens, 4]
+```
+
+### Die Handrechnung für 2 Köpfe
+
+Betrachten wir zwei Tokens (Position 0 und 1) mit Einbettungsbreite 4:
+
+#### 1. Unabhängige Köpfe rechnen
+
+Jeder Kopf erzeugt für jedes Token einen Kontext-Vektor der Head-Breite 2:
+
+**Kopf 1** liefert:
+- Token 0: `[2.0, 0.0]`
+- Token 1: `[1.0, 1.5]`
+
+**Kopf 2** liefert:
+- Token 0: `[0.0, 1.0]`
+- Token 1: `[2.0, 0.5]`
+
+#### 2. Zusammenkleben (Concat)
+
+Wir hängen die Vektoren pro Token einfach nebeneinander:
+
+```text
+Token 0:  [2.0, 0.0]  +  [0.0, 1.0]  ->  [2.0, 0.0,  0.0, 1.0]
+          \________/     \________/      \________/  \________/
+            Kopf 1         Kopf 2          Kopf 1      Kopf 2
+
+Token 1:  [1.0, 1.5]  +  [2.0, 0.5]  ->  [1.0, 1.5,  2.0, 0.5]
+```
+
+Form vorher je Kopf: `[1, 2, 2]`.
+Form nach Concat: `[1, 2, 4]`. Die Dimension 4 ist wieder hergestellt.
+
+#### 3. Warum Concat allein nicht reicht: Die Output-Projektion $W_O$
+
+Nach dem Concat liegen die Zahlen nur nebeneinander im selben Array:
+- Platz 1 und 2 gehören stur zu Kopf 1.
+- Platz 3 und 4 gehören stur zu Kopf 2.
+
+Die Köpfe haben noch nicht miteinander gesprochen! Wenn die nächste Schicht
+des Modells eine Entscheidung treffen soll, die beide Köpfe gleichzeitig
+braucht (z. B. Subjekt aus Kopf 1 und Verneinung aus Kopf 2 kombinieren),
+fehlt die Verbindung.
+
+Die lineare Schicht $W_O$ ist eine $4 \times 4$ Matrix. Sie wirkt wie ein
+**Chefredakteur**: Sie liest die Berichte beider Experten, gewichtet deren
+Aussagen und erzeugt die finale Zusammenfassung für die nächste Schicht.
+
+Beispielrechnung für Token 0 mit einer festen $W_O$-Matrix:
+
+```text
+Eingabe: [2.0, 0.0, 0.0, 1.0]
+
+         Spalte 1    Spalte 2    Spalte 3    Spalte 4
+Kopf 1-A:    1           0           1           0
+Kopf 1-B:    0           1           0           1
+Kopf 2-A:    1           0          -1           0
+Kopf 2-B:    0           1           0          -1
+```
+
+Für Ausgabekomponente 1:
+```text
+  2.0 * 1  (Kopf 1-A)
++ 0.0 * 0  (Kopf 1-B)
++ 0.0 * 1  (Kopf 2-A)
++ 1.0 * 0  (Kopf 2-B)
+= 2.0
+```
+
+Für Ausgabekomponente 2:
+```text
+  2.0 * 0 + 0.0 * 1 + 0.0 * 0 + 1.0 * 1 = 1.0
+```
+
+Das Ergebnis für Token 0 ist `[2.0, 1.0, 2.0, -1.0]`. Es hat wieder
+Länge 4, enthält aber jetzt Informationen aus beiden Köpfen in
+gemeinsamer Repräsentation.
+
+### Multi-Head Attention in Burn: Zwei Wege
+
+Im Code bieten wir beide Varianten an:
+1. **`NaiveMultiHeadAttention` (didaktisch):** Eine Liste von `SelfAttention`-Köpfen,
+   die nacheinander rechnen, mit `Tensor::cat` verkettet und per $W_O$ gemischt werden.
+   Deckungsgleich mit der Handrechnung.
+2. **`MultiHeadAttention` (produktiv & optimiert):** Eine einzige gemeinsame
+   Projektionsmatrix, parallele 4D-Tensoroperationen über alle Köpfe und
+   Batch-Dimensionen hinweg. Das ist der Standard für GPU-Training.
+
+Beide berechnen mathematisch exakt dasselbe Ergebnis!
+
+#### 1. Der didaktische Weg (`NaiveMultiHeadAttention`)
+
+Hier entspricht jede Zeile Code unserer Handrechnung:
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:naive_mha}}
+```
+
+Die Schritte in `forward`:
+- Jeder Kopf in `self.heads` rechnet unabhängig seine eigene Attention:
+  `head.forward(input.clone())`.
+- `Tensor::cat(head_outputs, 2)` hängt die Ausgaben entlang der Merkmalsachse
+  aneinander (`[1, 2, 2] + [1, 2, 2] -> [1, 2, 4]`).
+- `self.output_projection.forward(...)` wendet die $W_O$-Matrix an.
+
+#### 2. Der produktive Weg (`MultiHeadAttention` mit 4D-Reshape)
+
+Warum optimieren? Eine Schleife über Köpfe führt viele kleine Kernel-Aufrufe
+auf der GPU aus. Viel schneller ist es, **alle Köpfe in einem einzigen großen
+Tensor parallel** zu berechnen.
+
+Die Struktur verwendet gemeinsame Projektionen für die volle Breite:
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:mha_config}}
+```
+
+Die Vorwärtsrechnung formt die Tensoren geschickt um:
+
+```rust,ignore
+{{#include ../../../crates/model/src/attention.rs:mha_forward}}
+```
+
+Wie funktioniert der 4D-Trick?
+
+1. **Gemeinsam projizieren:** `query`, `key` und `value` projizieren von
+   `[Batch, Tokens, EmbeddingDim]` direkt in `[Batch, Tokens, EmbeddingDim]`.
+   Die Kanäle aller Köpfe liegen bereits nebeneinander.
+2. **Form aufteilen (`project_and_split`):**
+   - `.reshape([Batch, Tokens, Heads, HeadDim])`: Trennt die flache
+     Merkmalsachse in Köpfe und Kopf-Breite auf.
+   - `.swap_dims(1, 2)`: Tauscht Achse 1 und 2 $\to$
+     `[Batch, Heads, Tokens, HeadDim]`.
+   - Jetzt verhält sich jede Kopf-Ebene wie ein eigener Batch!
+3. **Paralleles Matmul:**
+   - `q.matmul(k.swap_dims(2, 3))` berechnet alle Scores für alle Köpfe
+     und alle Batches in einer einzigen GPU-Operation.
+   - Form: `[Batch, Heads, Tokens, Tokens]`.
+4. **Kausale Maske:** Die 2D-Maske `[Tokens, Tokens]` wird per `.unsqueeze()`
+   auf `[1, 1, Tokens, Tokens]` erweitert. Burn broadcastet sie automatisch
+   über alle Batches und Köpfe.
+5. **Zurückformen:**
+   - Nach `weights.matmul(v)` haben wir `[Batch, Heads, Tokens, HeadDim]`.
+   - `.swap_dims(1, 2)` $\to$ `[Batch, Tokens, Heads, HeadDim]`.
+   - `.reshape([Batch, Tokens, EmbeddingDim])` klebt die Köpfe wieder zusammen.
+6. **Output-Projektion:** `self.output_projection.forward(merged)`.
+
+### Der Beweis: Beide Wege sind numerisch identisch
+
+In `crates/model/tests/attention.rs` verifizieren wir, dass die optimierte
+4D-Variante und die didaktische Einzelschritt-Variante auf dieselben Zahlen
+führen:
+
+```rust,ignore
+{{#include ../../../crates/model/tests/attention.rs:test_mha_equivalence}}
+```
+
+```bash
+cargo test -p model --test attention naive_and_batched_multi_head_attention_are_numerically_equivalent
+```
+
+### Die Ausgabe der Demo
+
+Das Beispiel `crates/model/examples/ch05_multi_head.rs` führt beide
+Varianten aus:
+
+```bash
+cargo run -p model --example ch05_multi_head
+```
+
+```text
+{{#include ../ausgaben/ch05_multi_head.txt}}
+```
+
+Beide liefern Tensoren der Form `[1, 2, 4]`. Für das weitere Training und
+die Transformer-Blöcke in Kapitel 6 nutzen wir die produktive `MultiHeadAttention`.
+
+## Zusammenfassung von Kapitel 5
+
+In diesem Kapitel haben wir das Herzstück moderner Sprachmodelle schrittweise
+aufgebaut:
+
+1. **Einfache Attention:** Vergleichen (Scores via Skalarprodukt), Gewichten
+   (Softmax) und Mischen (gewichtete Summe).
+2. **Projektionen & Skalierung:** Eigene Rollen durch $W_Q, W_K, W_V$ und
+   stabilisierende Division durch $\sqrt{d_k}$.
+3. **Kausale Maskierung:** Verhindert den Blick in die Zukunft durch
+   $-\infty$-Scores vor dem Softmax.
+4. **Multi-Head Attention:** Parallele Köpfe mit Teilbreiten, zusammengeführt
+   über Concat und eine Output-Projektion $W_O$.
+
+Damit ist das Attention-Modul vollständig. Im nächsten Kapitel setzen wir die
+einzelnen Schichten (Embedding, Multi-Head Attention, Feedforward-Netz und
+Layer-Norm) zu einem vollständigen **Transformer-Block** zusammen.

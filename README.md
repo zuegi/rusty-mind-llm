@@ -68,6 +68,9 @@ cargo run -p model --example ch05
 
 # Kapitel 5, Schritt 2: Q/K/V-Projektionen und skalierte Scores
 cargo run -p model --example ch05_projections
+
+# Kapitel 5, Schritt 4: Multi-Head Attention mit Burn
+cargo run -p model --example ch05_multi_head
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:

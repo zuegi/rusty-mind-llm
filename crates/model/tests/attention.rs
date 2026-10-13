@@ -1,7 +1,9 @@
 use burn::backend::{Autodiff, NdArray};
 use burn::module::{Module, Param};
 use burn::tensor::{Tensor, TensorData};
-use model::attention::{SelfAttention, SelfAttentionConfig};
+use model::attention::{
+    MultiHeadAttentionConfig, NaiveMultiHeadAttentionConfig, SelfAttention, SelfAttentionConfig,
+};
 use model::embedding::GptEmbeddingConfig;
 
 type Cpu = NdArray<f32>;
@@ -20,7 +22,7 @@ fn fixed_attention<B: burn::tensor::backend::Backend>() -> SelfAttention<B> {
 }
 
 #[test]
-fn projects_each_role_and_uses_scaled_scores() {
+fn projects_each_role_and_uses_scaled_causal_scores() {
     let attention = fixed_attention::<Cpu>();
     let input = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default());
     let query = attention.query.forward(input.clone());
@@ -39,7 +41,10 @@ fn projects_each_role_and_uses_scaled_scores() {
         .into_data()
         .to_vec::<f32>()
         .unwrap();
-    let expected = [0.660_476_9, 2.009_284_7, 1.0, 1.5];
+    // Mit kausaler Maske:
+    // Position 0 sieht nur Position 0 -> [2.0, 0.0]
+    // Position 1 sieht Position 0 und 1 -> [1.0, 1.5]
+    let expected = [2.0, 0.0, 1.0, 1.5];
     for (actual, expected) in output.iter().zip(expected) {
         assert!(
             (actual - expected).abs() < TOLERANCE,
@@ -112,6 +117,32 @@ fn one_token_returns_its_value() {
         .assert_eq(&attention.value.forward(input).into_data(), true);
 }
 
+// ANCHOR: test_causal
+#[test]
+fn future_tokens_do_not_influence_earlier_outputs() {
+    let attention = fixed_attention::<Cpu>();
+    // Erste Sequenz: zwei Tokens
+    let seq_a = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default());
+    // Zweite Sequenz: dieselben ersten zwei Tokens, aber ein drittes beliebiges Token angehängt
+    let seq_b = Tensor::from_data(
+        [[[1.0, 0.0], [0.0, 1.0], [99.0, -99.0]]],
+        &Default::default(),
+    );
+    let out_a = attention.forward(seq_a);
+    let out_b = attention.forward(seq_b);
+
+    // Position 0 und 1 müssen bei beiden Sequenzen exakt identisch sein!
+    let out_a_vec = out_a.into_data().to_vec::<f32>().unwrap();
+    let out_b_vec = out_b.into_data().to_vec::<f32>().unwrap();
+    for i in 0..4 {
+        assert!(
+            (out_a_vec[i] - out_b_vec[i]).abs() < TOLERANCE,
+            "Zukunft beeinflusst Vergangenheit bei Index {i}"
+        );
+    }
+}
+// ANCHOR_END: test_causal
+
 #[test]
 #[should_panic(expected = "embedding_dim must be positive")]
 fn rejects_zero_embedding_dimension() {
@@ -140,4 +171,78 @@ fn rejects_empty_batch() {
 #[should_panic(expected = "embedding dimension mismatch")]
 fn rejects_wrong_embedding_dimension() {
     fixed_attention::<Cpu>().forward(Tensor::zeros([1, 2, 3], &Default::default()));
+}
+
+#[test]
+fn multi_head_attention_preserves_shape_and_propagates_gradients() {
+    type Diff = Autodiff<Cpu>;
+    let device = Default::default();
+    let mha = MultiHeadAttentionConfig::new(4, 2).init::<Diff>(&device);
+
+    let input = Tensor::<Diff, 3>::ones([2, 3, 4], &device).require_grad();
+    let output = mha.forward(input.clone());
+
+    assert_eq!(output.dims(), [2, 3, 4]);
+
+    let loss = output.sum();
+    let grads = loss.backward();
+    let input_grad = input.grad(&grads).expect("Gradient für Eingabe fehlt");
+    assert_eq!(input_grad.dims(), [2, 3, 4]);
+    for val in input_grad.into_data().to_vec::<f32>().unwrap() {
+        assert!(val.is_finite());
+    }
+}
+
+// ANCHOR: test_mha_equivalence
+#[test]
+fn naive_and_batched_multi_head_attention_are_numerically_equivalent() {
+    let device = Default::default();
+    let embedding_dim = 4;
+    let num_heads = 2;
+    let head_dim = 2;
+
+    let batched = MultiHeadAttentionConfig::new(embedding_dim, num_heads).init::<Cpu>(&device);
+    let mut naive =
+        NaiveMultiHeadAttentionConfig::new(embedding_dim, num_heads).init::<Cpu>(&device);
+
+    naive.output_projection.weight = Param::from_tensor(batched.output_projection.weight.val());
+
+    // Kopiere Teilgewichte der gemeinsamen Projektionen in die einzelnen Köpfe
+    let q_w = batched.query.weight.val();
+    let k_w = batched.key.weight.val();
+    let v_w = batched.value.weight.val();
+
+    for h in 0..num_heads {
+        let start = h * head_dim;
+        let end = start + head_dim;
+        naive.heads[h].query.weight =
+            Param::from_tensor(q_w.clone().slice([0..embedding_dim, start..end]));
+        naive.heads[h].key.weight =
+            Param::from_tensor(k_w.clone().slice([0..embedding_dim, start..end]));
+        naive.heads[h].value.weight =
+            Param::from_tensor(v_w.clone().slice([0..embedding_dim, start..end]));
+    }
+
+    let input = Tensor::<Cpu, 3>::from_data(
+        [[[1.0, 0.5, -0.2, 0.8], [0.2, -0.7, 0.3, 1.1]]],
+        &device,
+    );
+
+    let out_batched = batched.forward(input.clone()).into_data().to_vec::<f32>().unwrap();
+    let out_naive = naive.forward(input).into_data().to_vec::<f32>().unwrap();
+
+    assert_eq!(out_batched.len(), out_naive.len());
+    for (i, (b, n)) in out_batched.iter().zip(out_naive.iter()).enumerate() {
+        assert!(
+            (b - n).abs() < TOLERANCE,
+            "Abweichung bei Index {i}: batched={b}, naive={n}"
+        );
+    }
+}
+// ANCHOR_END: test_mha_equivalence
+
+#[test]
+#[should_panic(expected = "embedding_dim must be divisible by num_heads")]
+fn rejects_indivisible_num_heads() {
+    MultiHeadAttentionConfig::new(5, 2).init::<Cpu>(&Default::default());
 }
