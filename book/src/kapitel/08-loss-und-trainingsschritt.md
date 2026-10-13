@@ -27,10 +27,11 @@ keine Textgenerierung. Die Beispiele laufen auf der CPU.
 
 ## Von Logits zu Wahrscheinlichkeiten
 
-Ein Logit ist ein unbeschränkter Zahlenwert, keine Wahrscheinlichkeit. Erst
+Ein Logit ist ein unbeschränkter Zahlenwert, der nicht auf den Bereich von 0 bis 1 beschränkt und keine Wahrscheinlichkeit ist (Wahrscheinlichkeit => 0 - 1). Erst
 **Softmax** macht aus einem Logit-Vektor positive Werte, deren Summe `1` ist.
-Die Wahrscheinlichkeit für einen Eintrag ist seine Exponentialfunktion,
-geteilt durch die Summe aller Exponentialfunktionen.
+Für jeden Logit `z` berechnen wir den Exponentialwert `exp(z)`. Diesen Wert
+teilen wir durch die Summe der Exponentialwerte aller Logits. Das Ergebnis
+ist die Wahrscheinlichkeit für die zugehörige Token-ID.
 
 Für ein nachrechenbares Beispiel wählen wir drei Logits:
 
@@ -50,37 +51,97 @@ Angenommen, das richtige nächste Token hat die ID `2`. Das Modell gibt ihm
 Wahrscheinlichkeit `0.5`. Wir brauchen eine Fehlerzahl, die kleiner wird,
 wenn genau diese Wahrscheinlichkeit wächst.
 
-## Cross-Entropy: Die Wahrscheinlichkeit des richtigen Tokens
+## Cross-Entropy: Wie gut passt die Vorhersage zum richtigen Token?
 
-Für eine Position mit genau einer richtigen Token-ID ist Cross-Entropy:
+**Cross-Entropy ist keine Wahrscheinlichkeit, sondern eine Fehlerzahl.**
+Sie misst, wie wenig Wahrscheinlichkeit das Modell dem richtigen nächsten
+Token gibt. Weniger Loss bedeutet: Die Vorhersage passt besser zum Ziel.
 
-```text
-Loss einer Position = -ln(Wahrscheinlichkeit des richtigen Tokens)
+### Woher wissen wir, welches Token richtig ist?
 
-p = 1.0 → Loss = 0
-p = 0.5 → Loss ≈ 0.693147
-p = 0.2 → Loss ≈ 1.609438
-```
-
-Eine sichere richtige Vorhersage hat kleinen Loss. Eine sichere falsche
-Vorhersage wird stark bestraft: Nähert sich die Wahrscheinlichkeit des
-richtigen Tokens `0`, wächst der Loss ohne obere Grenze.
-
-Wir verwenden nicht nur das wahrscheinlichste Token. Beispielsweise wählen
-`[0.1, 0.2, 0.7]` und `[0.01, 0.02, 0.97]` beide ID `2`, haben aber
-unterschiedlichen Loss. Die ganzen Logits bleiben Teil des Rechengraphen.
-Ein `argmax` würde diese Information für das Lernen verlieren.
-
-Für mehrere Positionen bilden wir den **Mittelwert** ihrer Loss-Werte.
-Bei zwei richtigen Tokens mit Wahrscheinlichkeiten `0.5` und `0.2`:
+Das richtige Token kommt aus dem **Trainingstext**, nicht aus der Vorhersage
+des Modells. Nehmen wir zur Vereinfachung an, jedes Wort sei ein Token:
 
 ```text
-mittlerer Loss = (0.693147 + 1.609438) / 2 ≈ 1.151293
+Trainingstext: „Der Hund bellt“
+Eingabe:      „Der Hund“
+Ziel:         „bellt“
 ```
 
-Damit bleibt die Fehlerzahl bei identischen Vorhersagen vergleichbar, wenn
-wir die Anzahl Fenster oder Positionen ändern. Hier zählen alle Positionen
-gleich; wir verwenden weder Padding noch zusätzliche Klassengewichte.
+„Richtig“ bedeutet hier: Dieses Token folgt tatsächlich im Beispieltext.
+Es bedeutet nicht, dass nach „Der Hund“ niemals ein anderes Wort stehen darf.
+
+Das Modell könnte folgende Wahrscheinlichkeiten vorhersagen:
+
+```text
+Token:              „bellt“  „rennt“  „schläft“
+Wahrscheinlichkeit:   0.5      0.3       0.2
+```
+
+Für den Loss dieser Position nehmen wir die Wahrscheinlichkeit von
+**„bellt“**, weil „bellt“ das Ziel ist. Die Wahrscheinlichkeiten der anderen
+Tokens bestimmen wir nicht als zusätzliche Ziele.
+
+### Aus der Ziel-Wahrscheinlichkeit wird eine Fehlerzahl
+
+Wir nennen die Wahrscheinlichkeit des richtigen Tokens `p`. Cross-Entropy
+berechnet daraus:
+
+```text
+Loss einer Position = -ln(p)
+```
+
+`ln` ist der natürliche Logarithmus. Für Werte zwischen `0` und `1` ist er
+negativ; das Minuszeichen davor macht daraus eine positive Fehlerzahl.
+Bei `p = 1` ist der Loss `0`.
+
+Für unser Ziel „bellt“ bedeutet das:
+
+```text
+p = 0.1 → Loss ≈ 2.302585   wenig Wahrscheinlichkeit für das Ziel
+p = 0.5 → Loss ≈ 0.693147   Vorhersage aus dem Beispiel
+p = 0.8 → Loss ≈ 0.223144   mehr Wahrscheinlichkeit für das Ziel
+p = 1.0 → Loss = 0          gesamte Wahrscheinlichkeit für das Ziel
+```
+
+**Das Training soll den Loss senken und dadurch die Wahrscheinlichkeit des
+vorgegebenen nächsten Tokens erhöhen.** Nähert sich `p` der `0`, wächst der
+Loss ohne obere Grenze: Das Modell hält das tatsächliche nächste Token dann
+für sehr unwahrscheinlich.
+
+### Warum nicht nur das wahrscheinlichste Token prüfen?
+
+In unserem Beispiel steht „bellt“ mit `0.5` bereits auf Platz 1. Trotzdem
+kann das Modell ihm noch mehr Wahrscheinlichkeit geben. Auch eine Vorhersage
+mit `0.8` für „bellt“ wählt dasselbe Token, bekommt aber einen kleineren Loss.
+
+Nur die Token-ID mit der höchsten Wahrscheinlichkeit auszuwählen, heisst
+`argmax`. Damit würden beide Vorhersagen gleich aussehen. Cross-Entropy
+berücksichtigt dagegen, **wie viel Wahrscheinlichkeit das Ziel bekommt**.
+Für das Training behalten wir deshalb die ganzen Logits, statt zuerst mit
+`argmax` eine einzelne Token-ID auszuwählen.
+
+### Ein Loss für den ganzen Batch
+
+Bis hier haben wir eine Position betrachtet. Ein Batch enthält mehrere
+Fenster mit mehreren Positionen. Jede Position hat ihr eigenes nächstes
+Token als Ziel und erhält einen eigenen Loss.
+
+Wir bilden den **Mittelwert** dieser Loss-Werte. Bei zwei Positionen mit
+Ziel-Wahrscheinlichkeiten `0.5` und `0.2`:
+
+```text
+Position 1: -ln(0.5) ≈ 0.693147
+Position 2: -ln(0.2) ≈ 1.609438
+
+Batch-Loss = (0.693147 + 1.609438) / 2 ≈ 1.151293
+```
+
+Wir mitteln also die **Loss-Werte**, nicht zuerst die Wahrscheinlichkeiten.
+Der Mittelwert verhindert, dass der Loss allein deshalb grösser wird, weil
+wir mehr Positionen mit denselben Fehlerwerten auswerten. Hier zählen alle
+Positionen gleich; wir verwenden weder Padding noch zusätzliche
+Klassengewichte.
 
 ### Eine ausführbare Mini-Demo
 
@@ -109,19 +170,121 @@ geändert. Der Loss hängt also davon ab, **was wir vorhersagen sollten**.
 
 ## Warum rohe Logits in die Verlustfunktion gehen
 
-Die Mini-Demo zeigt Softmax nur, um die Wahrscheinlichkeiten sichtbar zu
-machen. An `cross_entropy` übergeben wir weiterhin **Logits**, nicht das
-Ergebnis von Softmax.
+Im vorherigen Abschnitt haben wir den Loss aus einer Wahrscheinlichkeit
+berechnet. Im Code übergeben wir aber **Logits** an `cross_entropy`. Das ist
+kein Widerspruch: Burn übernimmt die Umrechnung innerhalb der Verlustfunktion.
+„Roh“ bedeutet hier nur: Auf die Modellausgabe wurde noch kein Softmax angewendet.
 
-Burn berechnet intern `log_softmax`: den Logarithmus der
-Softmax-Wahrscheinlichkeiten auf numerisch stabile Weise. Ein separat
-berechnetes Softmax könnte sehr kleine Wahrscheinlichkeiten zu `0` abrunden;
-`ln(0)` wäre dann nicht endlich. Auch sehr grosse Logits könnten bei einer
-naiven Exponentialfunktion überlaufen.
+### Die Verlustfunktion übernimmt die ganze Rechnung
 
-`CrossEntropyLossConfig::new()` erwartet standardmässig Logits. Softmax
-vorher aufzurufen, würde die Wahrscheinlichkeiten erneut wie Logits behandeln
-und damit **einen anderen, falschen Loss** berechnen.
+Zum Verstehen haben wir die Berechnung in einzelne Schritte zerlegt:
+
+```text
+Logits → Softmax → Wahrscheinlichkeit des Ziels → -ln → Loss
+```
+
+Burn berechnet dasselbe Ergebnis, verbindet aber Softmax und Logarithmus
+zu einer Operation namens **`log_softmax`**:
+
+```text
+Logits → log_softmax → logarithmierter Wert des Ziels → Minuszeichen → Loss
+```
+
+`log_softmax` liefert für jede Token-ID direkt den Logarithmus ihrer
+Wahrscheinlichkeit. Bei unserem Beispiel:
+
+```text
+Logits:                 [ln(2),   ln(3),   ln(5)]
+Softmax zum Vergleich:  [0.2,     0.3,     0.5]
+log_softmax:            [ln(0.2), ln(0.3), ln(0.5)]
+                       ≈ [-1.609438, -1.203973, -0.693147]
+
+Ziel-ID: 2
+Loss:    -(-0.693147) = 0.693147
+```
+
+Burn wählt anhand der Ziel-ID den passenden Wert aus und bildet anschliessend
+den mittleren Loss über alle Positionen. Die Wahrscheinlichkeiten müssen
+dabei nicht als Zwischenergebnis gespeichert werden.
+
+### Warum diese Verbindung numerisch stabiler ist
+
+Computer rechnen nicht mit beliebig genauen Zahlen. `f32` kann sehr grosse
+und sehr kleine Werte nur begrenzt darstellen. Das kann die getrennte
+Rechnung `Softmax → ln` an zwei Stellen stören.
+
+**Sehr grosse Logits:** Bei Logits wie `[1000, 1001, 1002]` würden die
+Exponentialwerte einer naiven Softmax-Berechnung die Grenzen von `f32`
+überschreiten. Wir können aber von allen Logits denselben Wert abziehen,
+ohne die Softmax-Wahrscheinlichkeiten zu verändern:
+
+```text
+Logits:                       [1000, 1001, 1002]
+Grössten Logit abziehen:       [-2,   -1,   0]
+Exponentialwerte danach:       [0.135335, 0.367879, 1]
+```
+
+Der gemeinsame Faktor kürzt sich beim Teilen durch die Summe heraus.
+Deshalb arbeitet eine stabile Berechnung mit diesen kleineren Zahlen.
+
+**Sehr kleine Ziel-Wahrscheinlichkeit:** Selbst ein stabiles Softmax kann
+eine extrem kleine Wahrscheinlichkeit auf `0` abrunden. Wenn wir danach
+den Logarithmus nehmen, erhalten wir `ln(0)`, also keinen endlichen Wert.
+
+```text
+Logits: [0, -1000], Ziel-ID: 1
+
+Getrennte Rechnung:
+  Wahrscheinlichkeit des Ziels ≈ exp(-1000)
+  In f32 auf 0 abgerundet → -ln(0) = unendlich
+
+Direkte Rechnung mit log_softmax:
+  logarithmierter Wert des Ziels ≈ -1000
+  Loss ≈ 1000
+```
+
+`log_softmax` muss den winzigen Wert `exp(-1000)` nicht erst als
+Ziel-Wahrscheinlichkeit darstellen. Es berechnet direkt im logarithmischen
+Bereich. Dazu zieht es zunächst den grössten Logit ab und verwendet dann:
+
+```text
+verschobener Logit = Logit - grösster Logit
+log_softmax eines Eintrags
+  = verschobener Logit - ln(Summe der exp-Werte aller verschobenen Logits)
+```
+
+Im letzten Beispiel ist die Summe ungefähr `1`, ihr Logarithmus ungefähr
+`0`. Für das Ziel ergibt sich deshalb direkt `-1000 - 0 = -1000`.
+Das vermeidet hier den unendlichen Loss, obwohl die separat ausgegebene
+Wahrscheinlichkeit auf `0` gerundet würde.
+
+### Warum wir nicht vorher selbst Softmax aufrufen
+
+`CrossEntropyLossConfig::new()` erwartet standardmässig **Logits**.
+Wenn wir stattdessen bereits berechnete Wahrscheinlichkeiten übergeben,
+behandelt Burn diese Zahlen wieder wie Logits. Es rechnet damit effektiv
+ein zweites Softmax:
+
+```text
+Richtig:
+  Logits [ln(2), ln(3), ln(5)]
+  → Ziel-Wahrscheinlichkeit für ID 2: 0.5
+  → Loss ≈ 0.693147
+
+Falsch bei der Standardkonfiguration:
+  vorher selbst Softmax: [0.2, 0.3, 0.5]
+  → Burn behandelt [0.2, 0.3, 0.5] als Logits
+  → neue Ziel-Wahrscheinlichkeit für ID 2:
+      exp(0.5) / (exp(0.2) + exp(0.3) + exp(0.5)) ≈ 0.391
+  → Loss ≈ 0.94
+```
+
+Das ist ein anderer Loss für dieselbe Modellausgabe.
+
+**Für unser Training gilt deshalb:** Die GPT-Ausgabe unverändert an
+`cross_entropy` übergeben. Softmax in der Mini-Demo dient nur dazu,
+Wahrscheinlichkeiten anzuzeigen; sein Ergebnis geht nicht in den Loss ein.
+Burn berechnet den Loss und seine Gradienten aus den ursprünglichen Logits.
 
 ## Die Ziele sind bereits verschoben
 
@@ -204,8 +367,15 @@ Unsere Funktion ist ein kleiner Adapter für Burns Verlustfunktion:
 ```
 
 Das Ergebnis ist ein Tensor mit einer Zahl, nicht sofort ein Rust-`f32`.
-So bleibt der Rechengraph erhalten, und wir können `backward()` aufrufen.
-`into_scalar()` ist erst für die Ausgabe gedacht.
+**`cross_entropy` berechnet hier nur den Loss; sie ruft noch kein
+`backward()` auf und verändert keine Gewichte.**
+
+Beim Training mit dem Autodiff-Backend bleibt der Loss-Tensor mit dem
+Rechengraphen verbunden. Erst die Funktion `sgd_step` im folgenden Abschnitt
+[Der vollständige Trainingsschritt](#der-vollständige-trainingsschritt)
+ruft darauf `backward()` auf und verwendet die Gradienten für das Update.
+`into_scalar()` liest dagegen nur den Zahlenwert für die Ausgabe aus;
+dieser Rust-Zahlenwert hat keinen Rechengraphen mehr.
 
 ## SGD: Aus Gradienten werden neue Gewichte
 
