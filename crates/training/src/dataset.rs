@@ -1,5 +1,6 @@
 use std::fmt;
 
+use burn::tensor::{Int, Tensor, TensorData, backend::Backend};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -36,6 +37,38 @@ impl fmt::Display for DatasetError {
 
 impl std::error::Error for DatasetError {}
 // ANCHOR_END: types
+
+// ANCHOR: batch_tensors
+impl Batch {
+    pub fn to_tensors<B: Backend>(&self, device: &B::Device) -> (Tensor<B, 2, Int>, Tensor<B, 2, Int>) {
+        self.validate_shape();
+        (
+            token_tensor(&self.inputs, device),
+            token_tensor(&self.targets, device),
+        )
+    }
+
+    fn validate_shape(&self) {
+        assert!(!self.inputs.is_empty(), "Batch darf nicht leer sein");
+        let context_length = self.inputs[0].len();
+        assert!(context_length > 0, "Fenster darf nicht leer sein");
+        assert_eq!(self.inputs.len(), self.targets.len(), "Batch-Größen ungleich");
+        assert!(
+            self.inputs
+                .iter()
+                .chain(&self.targets)
+                .all(|row| row.len() == context_length),
+            "Alle Eingabe- und Zielfenster müssen gleich lang sein"
+        );
+    }
+}
+
+fn token_tensor<B: Backend>(rows: &[Vec<u32>], device: &B::Device) -> Tensor<B, 2, Int> {
+    let values: Vec<i64> = rows.iter().flatten().map(|&id| i64::from(id)).collect();
+    let shape = [rows.len(), rows[0].len()];
+    Tensor::from_data(TensorData::new(values, shape), device)
+}
+// ANCHOR_END: batch_tensors
 
 // ANCHOR: split
 /// Teilt den Token-Strom in (Training, Validierung). Muss VOR dem Fenstern geschehen.

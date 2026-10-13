@@ -21,3 +21,4 @@
 - [6. Der Transformer-Block](kapitel/06-transformer-block.md)
   - [Aktivierungsfunktionen und GELU](exkurse/aktivierung-gelu.md)
 - [7. GPT: Das Sprachmodell](kapitel/07-gpt.md)
+- [8. Cross-Entropy und der erste Trainingsschritt](kapitel/08-loss-und-trainingsschritt.md)
