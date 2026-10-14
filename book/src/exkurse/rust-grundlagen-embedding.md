@@ -31,7 +31,7 @@ let embedding = config.init(&device);
 ```
 
 `&device` leiht das Gerät aus, statt es zu verschieben. Die Demo erzeugt es
-ausdrücklich mit `Device::ndarray()`.
+ausdrücklich mit `Device::flex()`.
 
 ## Generische Typen
 

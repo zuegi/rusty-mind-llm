@@ -55,10 +55,10 @@ Für Gradienten aktivieren wir Autodiff auf dem Device, bevor wir Tensoren
 und Modellparameter erzeugen:
 
 ```rust,ignore
-let device = Device::ndarray().autodiff();
+let device = Device::flex().autodiff();
 ```
 
-NdArray rechnet auf der CPU. `.autodiff()` aktiviert die Aufzeichnung, wie jedes
+Flex rechnet auf der CPU. `.autodiff()` aktiviert die Aufzeichnung, wie jedes
 Ergebnis entstanden ist. Diese Aufzeichnung heisst *Rechengraph*.
 
 Danach folgen immer drei Schritte:

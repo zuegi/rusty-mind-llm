@@ -1,12 +1,12 @@
 Epoche  0: Training 1.823400, Validierung 1.830004
-Epoche  1: Training 1.483244, Validierung 1.510059
-Epoche  2: Training 1.249202, Validierung 1.286581
-Epoche  3: Training 1.062803, Validierung 1.107402
-Epoche  4: Training 0.908031, Validierung 0.955214
-Epoche  5: Training 0.771578, Validierung 0.814820
-Epoche  6: Training 0.651603, Validierung 0.692870
-Epoche  7: Training 0.543175, Validierung 0.578644
-Epoche  8: Training 0.450824, Validierung 0.482944
-Epoche  9: Training 0.371858, Validierung 0.397878
-Epoche 10: Training 0.306911, Validierung 0.327809
+Epoche  1: Training 1.483243, Validierung 1.510058
+Epoche  2: Training 1.249200, Validierung 1.286580
+Epoche  3: Training 1.062802, Validierung 1.107400
+Epoche  4: Training 0.908030, Validierung 0.955212
+Epoche  5: Training 0.771576, Validierung 0.814818
+Epoche  6: Training 0.651601, Validierung 0.692867
+Epoche  7: Training 0.543172, Validierung 0.578641
+Epoche  8: Training 0.450821, Validierung 0.482941
+Epoche  9: Training 0.371855, Validierung 0.397875
+Epoche 10: Training 0.306908, Validierung 0.327805
 SGD-Updates: 60

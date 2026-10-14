@@ -23,7 +23,7 @@ const POSITION_WEIGHTS: [[f32; EMBEDDING_DIM]; MAX_CONTEXT_LENGTH] = [
 ];
 
 fn example_embedding() -> GptEmbedding {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let config = GptEmbeddingConfig::new(VOCAB_SIZE, MAX_CONTEXT_LENGTH, EMBEDDING_DIM);
     let mut embedding = config.init(&device);
     embedding.token.weight = Param::from_tensor(Tensor::from_data(TOKEN_WEIGHTS, &device));
@@ -32,11 +32,11 @@ fn example_embedding() -> GptEmbedding {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let embedding = example_embedding();
     let token_ids = Tensor::<2, Int>::from_data([[1, 1, 3], [0, 2, 4]], &device);
     println!("Vokabular: 0=Der, 1=Hund, 2=Katze, 3=rennt, 4=.");
-    println!("Eingabe: {:?}", token_ids.to_data().try_to_vec::<i64>()?);
+    println!("Eingabe: {:?}", token_ids.to_data().convert::<i64>().try_to_vec::<i64>()?);
     println!("Eingabeform: {:?}", token_ids.dims());
     print_vectors("Token-Vektoren", embedding.token.forward(token_ids.clone()))?;
     let positions = Tensor::<2, Int>::from_data([[0, 1, 2]], &device);

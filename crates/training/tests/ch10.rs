@@ -6,7 +6,7 @@ use training::checkpoint::{load_model, save_model};
 
 #[test]
 fn saved_weights_produce_same_output_after_loading() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let config = GptModelConfig::new(5, 3, 8, 2, 1);
     let model = config.init(&device);
     let inputs = Tensor::<2, Int>::from_ints([[0, 1, 2]], &device);
@@ -30,7 +30,7 @@ fn checkpoint_path(label: &str) -> std::path::PathBuf {
 #[test]
 fn missing_checkpoint_returns_io_error() {
     let config = GptModelConfig::new(5, 3, 8, 2, 1);
-    let result = load_model(&config, checkpoint_path("missing"), &Device::ndarray());
+    let result = load_model(&config, checkpoint_path("missing"), &Device::flex());
     assert!(matches!(result, Err(RecordError::Io(_))));
 }
 
@@ -39,14 +39,14 @@ fn corrupt_checkpoint_returns_error() {
     let path = checkpoint_path("corrupt");
     fs::write(&path, b"not a burnpack file").unwrap();
     let config = GptModelConfig::new(5, 3, 8, 2, 1);
-    let result = load_model(&config, &path, &Device::ndarray());
+    let result = load_model(&config, &path, &Device::flex());
     fs::remove_file(path).unwrap();
     assert!(matches!(result, Err(RecordError::Io(_))));
 }
 
 #[test]
 fn incompatible_checkpoint_returns_validation_error() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let path = checkpoint_path("incompatible");
     let model = GptModelConfig::new(5, 3, 8, 2, 1).init(&device);
     save_model(&model, &path).unwrap();
@@ -58,7 +58,7 @@ fn incompatible_checkpoint_returns_validation_error() {
 
 #[test]
 fn saving_to_directory_returns_io_error() {
-    let model = GptModelConfig::new(5, 3, 8, 2, 1).init(&Device::ndarray());
+    let model = GptModelConfig::new(5, 3, 8, 2, 1).init(&Device::flex());
     let path = checkpoint_path("directory");
     fs::create_dir(&path).unwrap();
     let result = save_model(&model, &path);
@@ -68,13 +68,12 @@ fn saving_to_directory_returns_io_error() {
 
 #[test]
 fn loading_on_autodiff_device_preserves_trainable_parameters() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let config = GptModelConfig::new(5, 3, 8, 2, 1);
     let path = checkpoint_path("autodiff");
     save_model(&config.init(&device), &path).unwrap();
     let device = device.autodiff();
     let loaded = load_model(&config, &path, &device).unwrap();
-    fs::remove_file(path).unwrap();
     let inputs = Tensor::<2, Int>::from_ints([[0, 1, 2]], &device);
     let gradients = loaded.forward(inputs).sum().backward();
     assert!(
@@ -83,4 +82,5 @@ fn loading_on_autodiff_device_preserves_trainable_parameters() {
     assert!(
         loaded.output_projection.weight.val().grad(&gradients).is_some()
     );
+    fs::remove_file(path).unwrap();
 }

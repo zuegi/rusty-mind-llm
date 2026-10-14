@@ -45,17 +45,17 @@ fn model() -> GptModel {
         NUM_HEADS,
         NUM_BLOCKS,
     )
-    .init(&Device::ndarray().autodiff())
+    .init(&Device::flex().autodiff())
 }
 
 #[test]
 fn batch_tensors_preserve_window_order_and_shifted_targets() {
     let batch = batch();
-    let (inputs, targets) = batch.to_tensors(&Device::ndarray());
+    let (inputs, targets) = batch.to_tensors(&Device::flex());
     assert_eq!(inputs.dims(), [2, CONTEXT_LENGTH]);
     assert_eq!(targets.dims(), [2, CONTEXT_LENGTH]);
-    let inputs = inputs.into_data().try_to_vec::<i64>().unwrap();
-    let targets = targets.into_data().try_to_vec::<i64>().unwrap();
+    let inputs = inputs.into_data().convert::<i64>().try_to_vec::<i64>().unwrap();
+    let targets = targets.into_data().convert::<i64>().try_to_vec::<i64>().unwrap();
     assert_eq!(inputs, token_values(&batch.inputs));
     assert_eq!(targets, token_values(&batch.targets));
     for (inputs, targets) in batch.inputs.iter().zip(&batch.targets) {
@@ -70,7 +70,7 @@ fn rejects_empty_batch() {
         inputs: vec![],
         targets: vec![],
     }
-    .to_tensors(&Device::ndarray());
+    .to_tensors(&Device::flex());
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn rejects_empty_windows() {
         inputs: vec![vec![]],
         targets: vec![vec![]],
     }
-    .to_tensors(&Device::ndarray());
+    .to_tensors(&Device::flex());
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn rejects_missing_target_windows() {
         inputs: vec![vec![1, 2]],
         targets: vec![],
     }
-    .to_tensors(&Device::ndarray());
+    .to_tensors(&Device::flex());
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn rejects_ragged_inputs() {
         inputs: vec![vec![1, 2], vec![3]],
         targets: vec![vec![2, 3], vec![4, 0]],
     }
-    .to_tensors(&Device::ndarray());
+    .to_tensors(&Device::flex());
 }
 
 #[test]
@@ -110,12 +110,12 @@ fn rejects_mismatched_target_lengths() {
         inputs: vec![vec![1, 2]],
         targets: vec![vec![2]],
     }
-    .to_tensors(&Device::ndarray());
+    .to_tensors(&Device::flex());
 }
 
 #[test]
 fn cross_entropy_averages_aligned_positions_across_multiple_windows() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let weights = [
         [[2.0, 3.0, 5.0], [5.0, 3.0, 2.0]],
         [[3.0, 2.0, 5.0], [3.0, 5.0, 2.0]],
@@ -130,7 +130,7 @@ fn cross_entropy_averages_aligned_positions_across_multiple_windows() {
 
 #[test]
 fn equal_logits_give_log_vocabulary_size() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let logits = Tensor::<3>::zeros([2, 3, VOCAB_SIZE], &device);
     let targets = Tensor::<2, Int>::from_data([[0, 1, 2], [3, 4, 0]], &device);
     let loss = cross_entropy(logits, targets).into_scalar::<f32>();
@@ -139,7 +139,7 @@ fn equal_logits_give_log_vocabulary_size() {
 
 #[test]
 fn cross_entropy_remains_finite_for_large_logits() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let logits = Tensor::<3>::from_data([[[1000.0, 1000.0, -1000.0]]], &device);
     let targets = Tensor::<2, Int>::from_data([[0]], &device);
     let loss = cross_entropy(logits, targets).into_scalar::<f32>();
@@ -150,7 +150,7 @@ fn cross_entropy_remains_finite_for_large_logits() {
 #[test]
 #[should_panic(expected = "Zielform passt nicht zu Logits")]
 fn rejects_target_shape_even_when_element_count_matches() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let logits = Tensor::<3>::zeros([2, 2, VOCAB_SIZE], &device);
     let targets = Tensor::<2, Int>::zeros([1, 4], &device);
     cross_entropy(logits, targets);
@@ -158,7 +158,7 @@ fn rejects_target_shape_even_when_element_count_matches() {
 
 #[test]
 fn cross_entropy_gradients_match_softmax_minus_target_divided_by_positions() {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let logits = Tensor::<3>::zeros([1, 2, 3], &device).require_grad();
     let targets = Tensor::<2, Int>::from_data([[2, 0]], &device);
     let gradients = cross_entropy(logits.clone(), targets).backward();
@@ -196,13 +196,13 @@ fn assert_sgd_update(
 #[test]
 fn one_sgd_step_updates_embedding_block_and_output_and_reduces_this_batch_loss() {
     let model = model();
-    let (inputs, targets) = batch().to_tensors(&Device::ndarray().autodiff());
+    let (inputs, targets) = batch().to_tensors(&Device::flex().autodiff());
     let before = cross_entropy(model.forward(inputs.clone()), targets.clone());
     let gradients = before.clone().backward();
     let (updated, reported) = sgd_step(model.clone(), inputs, targets, LEARNING_RATE);
     assert!(!reported.is_autodiff());
     assert_model_update(&model, &updated, &gradients);
-    let (inputs, targets) = batch().to_tensors(&Device::ndarray());
+    let (inputs, targets) = batch().to_tensors(&Device::flex());
     let after = cross_entropy(updated.valid().forward(inputs), targets).into_scalar::<f32>();
     assert!((reported.into_scalar::<f32>() - before.clone().into_scalar::<f32>()).abs() < TOLERANCE);
     assert!(after.is_finite());
@@ -225,7 +225,7 @@ fn assert_model_update(
 #[test]
 fn rejects_non_positive_and_non_finite_learning_rates() {
     for learning_rate in [0.0, -0.01, f64::NAN, f64::INFINITY] {
-        let (inputs, targets) = batch().to_tensors(&Device::ndarray().autodiff());
+        let (inputs, targets) = batch().to_tensors(&Device::flex().autodiff());
         let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             sgd_step(model(), inputs, targets, learning_rate)
         }));
@@ -236,7 +236,7 @@ fn rejects_non_positive_and_non_finite_learning_rates() {
 #[test]
 #[should_panic(expected = "Training braucht ein Autodiff-Device")]
 fn rejects_training_without_autodiff() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let (inputs, targets) = batch().to_tensors(&device);
     sgd_step(model().valid(), inputs, targets, LEARNING_RATE);
 }

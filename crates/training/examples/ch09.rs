@@ -50,7 +50,7 @@ fn model(device: &Device) -> GptModel {
 
 // ANCHOR: report
 fn report(model: &GptModel, train: &Dataset, validation: &Dataset, epoch: usize) {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let fixed = model.valid();
     let train_loss = evaluate(&fixed, train, BATCH_SIZE, &device);
     let validation_loss = evaluate(&fixed, validation, BATCH_SIZE, &device);
@@ -60,7 +60,7 @@ fn report(model: &GptModel, train: &Dataset, validation: &Dataset, epoch: usize)
 
 // ANCHOR: loop
 fn main() -> Demo {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let (train, validation) = datasets()?;
     let mut model = model(&device);
     let mut optimizer = SgdConfig::new().init();

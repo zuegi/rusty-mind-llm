@@ -321,11 +321,11 @@ keine Trainingsepoche stattgefunden.
 
 ### Messen ohne Autograd-Aufzeichnung
 
-Zum Trainieren verwenden wir `Device::ndarray().autodiff()`:
-NdArray rechnet auf der CPU; `.autodiff()` aktiviert die Aufzeichnung,
+Zum Trainieren verwenden wir `Device::flex().autodiff()`:
+Flex rechnet auf der CPU; `.autodiff()` aktiviert die Aufzeichnung,
 damit `backward()` daraus Gradienten berechnen kann.
 
-Zur Messung reicht `Device::ndarray()` ohne diese Aufzeichnung.
+Zur Messung reicht `Device::flex()` ohne diese Aufzeichnung.
 `model.valid()` erzeugt in Burn eine Modellversion mit denselben
 initialisierten Gewichten ohne Autodiff. Training und Messung haben dabei
 denselben Modelltyp; die Autodiff-Einstellung steckt jetzt im Device.
@@ -420,7 +420,8 @@ Wir setzen die Gewichte nicht zu Beginn einer neuen Epoche zurück.
 cargo run -p training --example ch09
 ```
 
-Beispielausgabe mit Burn 0.22 auf der CPU:
+Beispielausgabe mit Burn 0.22 und Flex auf der CPU
+(Rundungsabweichungen gegenüber anderen Backends sind möglich):
 
 ```text
 {{#include ../ausgaben/ch09.txt}}

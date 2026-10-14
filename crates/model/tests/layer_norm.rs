@@ -9,7 +9,7 @@ fn values(tensor: Tensor<3>) -> Vec<f32> {
 
 #[test]
 fn normalizes_each_token_to_mean_zero_and_unit_variance() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let norm = LayerNormConfig::new(4).init(&device);
     let input = Tensor::<3>::from_data([[[1.0, 2.0, 3.0, 4.0], [10.0, 10.0, 30.0, 30.0]]], &device);
     let output = values(norm.forward(input));
@@ -26,7 +26,7 @@ const COMPARE_TOLERANCE: f32 = 1e-4;
 
 #[test]
 fn matches_burn_layer_norm() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let input = Tensor::<3>::from_data([[[1.0, 2.0, 3.0, 4.0], [0.5, -1.0, 2.0, 0.0]]], &device);
     let ours = LayerNormConfig::new(4).init(&device).forward(input.clone());
     let burns = burn::nn::LayerNormConfig::new(4).init(&device).forward(input);
@@ -37,7 +37,7 @@ fn matches_burn_layer_norm() {
 
 #[test]
 fn matches_burn_layer_norm_with_learned_scale_and_shift() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let input = Tensor::<3>::from_data([[[1.0, 2.0, 3.0, 4.0], [0.5, -1.0, 2.0, 0.0]]], &device);
     let gamma = Tensor::<1>::from_data([2.0, 0.5, 1.0, -1.0], &device);
     let beta = Tensor::<1>::from_data([0.1, 0.2, 0.3, 0.4], &device);
@@ -58,7 +58,7 @@ fn matches_burn_layer_norm_with_learned_scale_and_shift() {
 
 #[test]
 fn propagates_gradients_to_scale_and_shift() {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let norm = LayerNormConfig::new(3).init(&device);
     let input = Tensor::<3>::from_data([[[1.0, 2.0, 4.0]]], &device);
     let grads = (norm.forward(input) * 2.0).sum().backward();
@@ -69,7 +69,7 @@ fn propagates_gradients_to_scale_and_shift() {
 #[test]
 #[should_panic(expected = "embedding dimension mismatch")]
 fn rejects_wrong_embedding_dimension() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let norm = LayerNormConfig::new(4).init(&device);
     norm.forward(Tensor::<3>::zeros([1, 2, 3], &device));
 }

@@ -18,7 +18,7 @@ const TOKEN_IDS: [[i32; CONTEXT_LENGTH]; 1] = [[1, 2, 3, 4]];
 const CHANGED_LAST_TOKEN: [[i32; CONTEXT_LENGTH]; 1] = [[1, 2, 3, 9]];
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let embedding =
         GptEmbeddingConfig::new(VOCAB_SIZE, CONTEXT_LENGTH, EMBEDDING_DIM).init(&device);
     let blocks: Vec<_> = (0..NUM_BLOCKS)
@@ -46,7 +46,7 @@ fn run(
     blocks: &[model::transformer_block::TransformerBlock],
     token_ids: [[i32; CONTEXT_LENGTH]; 1],
 ) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
-    let ids = Tensor::<2, Int>::from_data(token_ids, &Device::ndarray());
+    let ids = Tensor::<2, Int>::from_data(token_ids, &Device::flex());
     let output = blocks
         .iter()
         .fold(embedding.forward(ids), |hidden, block| block.forward(hidden));

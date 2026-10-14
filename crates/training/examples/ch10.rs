@@ -30,7 +30,7 @@ fn checkpoint_path() -> PathBuf {
 }
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let config = config();
     let model = config.init(&device);
     let inputs = Tensor::<2, Int>::from_ints([[0, 1, 2]], &device);

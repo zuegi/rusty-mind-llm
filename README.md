@@ -52,10 +52,10 @@ data/         Beispieltext und Herkunftshinweise
 Modellberechnung und Training bleiben getrennt: `model` hängt nicht von
 `training` ab. Die Trainingslogik gehört in den Trainingsbereich.
 Das Projekt ist ein Cargo-Workspace; Demo und Tests des Modells verwenden
-Burn 0.22 mit dem CPU-Device `Device::ndarray()` und benötigen keine GPU.
+Burn 0.22 mit dem CPU-Device `Device::flex()` und benötigen keine GPU.
 Backend und Autodiff werden über `Device` gewählt, nicht über Modell-Typparameter.
-NdArray ist in Burn 0.22 deprecated; wir behalten es für die bestehenden
-Lernbeispiele bei. Burn empfiehlt für neue reine Rust-CPU-Projekte `Device::flex()`.
+Flex ist Burns reines Rust-CPU-Backend und ersetzt das seit Burn 0.22
+deprecated NdArray-Backend.
 
 Checkpoints verwenden jetzt Burnpack (`.bpk`) statt des früheren
 `DefaultRecorder`-Formats (`.mpk`). Alte Dateien werden nicht automatisch konvertiert.
@@ -135,13 +135,23 @@ Für die lokale HTML-Ausgabe wird zusätzlich
 [mdbook-mermaid](https://github.com/badboy/mdbook-mermaid) (für Diagramme) benötigt:
 
 ```bash
-cargo install mdbook mdbook-mermaid --locked
+cargo install mdbook --version 0.5.4 --locked
+cargo install mdbook-mermaid --version 0.17.1
 mdbook serve book --port 3000
 ```
 
 Danach ist das Buch unter <http://localhost:3000> erreichbar.
 Ohne lokalen Server lässt es sich mit `mdbook build book` nach `target/book`
 bauen.
+
+`mdbook-mermaid` wird bewusst ohne `--locked` gebaut: Sein veröffentlichtes
+Lockfile bindet die mdBook-API an 0.5.0 und erzeugt mit mdBook 0.5.4 einen
+Versionshinweis. Ohne dieses Lockfile wird die kompatible 0.5.4-API verwendet.
+Bei einer bereits installierten Plugin-Version erzwingt `--force` den Neuaufbau:
+
+```bash
+cargo install mdbook-mermaid --version 0.17.1 --force
+```
 
 ## Tests
 

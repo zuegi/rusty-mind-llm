@@ -13,7 +13,7 @@ const INPUT: [[[f32; EMBEDDING_DIM]; 2]; 1] = [
 ];
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let input = Tensor::<3>::from_data(INPUT, &device);
 
     // 1. Didaktische Variante mit einzelnen Köpfen

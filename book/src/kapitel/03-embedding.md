@@ -195,7 +195,7 @@ in Rust. Eine kurze Einführung steht im Exkurs [Burn: Die Bausteine](../exkurse
 Modellcode liegt in der eigenen Crate `crates/model`. Der DataLoader bleibt in
 `crates/training`; das Modell hängt nicht vom Trainingsbereich ab. Wir verwenden
 Burn 0.22 mit backendfreien Tensor- und Modelltypen.
-Für Demo und Tests genügt `Device::ndarray()`, ohne GPU.
+Für Demo und Tests genügt `Device::flex()`, ohne GPU.
 
 Rust-Hintergrund zu den folgenden Typen und Methoden steht im Exkurs
 [Rust-Grundlagen für das Embedding](../exkurse/rust-grundlagen-embedding.md).
@@ -304,6 +304,6 @@ Tabellen mit ganzen Zahlen als Gleitkommawerte. Dadurch lässt sich das Ergebnis
 exakt prüfen: Nachschlagen, Addition, Positionen pro Fenster und kürzere Fenster.
 Weitere Tests prüfen ungültige Grössen und zu lange oder leere Fenster.
 
-Ein Test verwendet `Device::ndarray().autodiff()`. Er prüft, dass beide Tabellen die
+Ein Test verwendet `Device::flex().autodiff()`. Er prüft, dass beide Tabellen die
 richtige Form haben und für beide Gewichte Gradienten entstehen. Das bestätigt
 ihre Lernbarkeit, ohne bereits eine Trainingsschleife einzuführen.

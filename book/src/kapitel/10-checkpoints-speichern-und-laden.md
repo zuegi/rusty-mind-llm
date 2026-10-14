@@ -175,6 +175,8 @@ cargo test -p training --test ch10
 
 Ein weiterer Test lädt auf einem Autodiff-Device und prüft, dass Gradienten
 weiterhin die geladenen Modellparameter erreichen.
+Die temporäre Datei wird erst nach der Berechnung entfernt: Flex kann
+geladene Tensordaten verzögert aus der Checkpoint-Datei lesen.
 
 Damit ist noch kein vollständiger Trainings-Resume implementiert. Nach dem
 Laden kann man mit den Gewichten weiterrechnen oder sie erneut trainieren,

@@ -471,7 +471,7 @@ Attention-Köpfe und ein Transformer-Block.
 {{#include ../../../crates/training/examples/ch08.rs:model}}
 ```
 
-`Device::ndarray().autodiff()` aktiviert die Aufzeichnung des Trainingsgraphen.
+`Device::flex().autodiff()` aktiviert die Aufzeichnung des Trainingsgraphen.
 Der feste Seed macht Initialisierung und Batch-Reihenfolge im CPU-Beispiel
 wiederholbar; die beiden Zufallsgeneratoren werden getrennt gesetzt.
 
@@ -481,7 +481,7 @@ wiederholbar; die beiden Zufallsgeneratoren werden getrennt gesetzt.
 
 Nach dem Update messen wir den Loss noch einmal auf **demselben Batch**.
 `updated.valid()` liefert ein Modell mit denselben Gewichten auf dem
-NdArray-Device ohne Autodiff-Aufzeichnung. Auch die neuen Eingabetensoren
+Flex-Device ohne Autodiff-Aufzeichnung. Auch die neuen Eingabetensoren
 erzeugen wir auf `device.without_autodiff()`. Der Name der
 Burn-Methode bedeutet hier **nicht**, dass wir einen Validierungsdatensatz
 auswerten. Eine Validierung mit getrennten Daten folgt erst später.

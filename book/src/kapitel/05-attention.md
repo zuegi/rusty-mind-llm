@@ -435,7 +435,7 @@ die Values und die gewichtete Summe.
 ```
 
 `Tensor<2>` ist ein zweidimensionaler Tensor. Die Demo wählt das CPU-Backend
-mit `Device::ndarray()`. `clone()` erhält einen Tensor für weitere Verwendungen, weil
+mit `Device::flex()`. `clone()` erhält einen Tensor für weitere Verwendungen, weil
 Burns Rechenoperationen ihre Eingaben in Rust verbrauchen.
 
 `matmul` führt Matrixmultiplikation aus, `transpose` vertauscht die beiden
@@ -1050,7 +1050,7 @@ Die Config beschreibt die Grössen; das Modell speichert die drei Projektionen.
 `Linear` ist Burns lernbare lineare Projektion. Wir verwenden drei getrennte
 Instanzen, jede mit eigener Gewichtsmatrix. Das `Module`-Derive macht ihre
 Parameter für Burn zugänglich. Das Backend wählen wir über das Device:
-`Device::ndarray()` für die Demo, mit `.autodiff()` für Gradienten.
+`Device::flex()` für die Demo, mit `.autodiff()` für Gradienten.
 
 #### Drei Schichten initialisieren
 
@@ -1080,7 +1080,7 @@ die jeweils eine Gewichtsmatrix und die dazugehörige Berechnung verwalten.
 
 `SelfAttention` ist nicht fest auf einen Backend-Typ beschränkt.
 Seit Burn 0.22 gibt es dafür keinen Typparameter `B` mehr.
-Die Demo übergibt ein `Device::ndarray()`: CPU-Berechnung mit standardmässig
+Die Demo übergibt ein `Device::flex()`: CPU-Berechnung mit standardmässig
 32-Bit-Gleitkommazahlen. Die Tensoren tragen ihre Device-Zuordnung zur Laufzeit.
 
 `#[derive(Module, Debug)]` bittet Rust und Burn, Hilfscode zu erzeugen.
@@ -1398,7 +1398,7 @@ Demo betrachtet. Zuletzt prüfen wir, was an diesem Baustein "trainierbar" ist.
 Die Tests berechnen Gradienten, verändern aber noch keine Parameter.
 
 Die Integrationstests in `crates/model/tests/attention.rs` verwenden denselben
-Baustein auch mit `Device::ndarray().autodiff()`. Wie in Kapitel 4 summieren sie die
+Baustein auch mit `Device::flex().autodiff()`. Wie in Kapitel 4 summieren sie die
 Ausgabe und rufen `backward()` auf. Sie prüfen endliche, nicht durchweg null
 gesetzte Gradienten für alle drei Projektionsmatrizen und die markierte Eingabe.
 Softmax und Matrixmultiplikationen bleiben Teil von Burns Rechengraph.

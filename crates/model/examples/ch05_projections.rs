@@ -16,7 +16,7 @@ const VALUE_WEIGHTS: [[f32; HEAD_DIM]; EMBEDDING_DIM] = [[2.0, 0.0], [0.0, 3.0]]
 
 // ANCHOR: fixed
 fn fixed_attention() -> SelfAttention {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let mut attention = SelfAttentionConfig::new(EMBEDDING_DIM, HEAD_DIM).init(&device);
     attention.query.weight = Param::from_tensor(Tensor::from_data(QUERY_WEIGHTS, &device));
     attention.key.weight = Param::from_tensor(Tensor::from_data(KEY_WEIGHTS, &device));
@@ -26,7 +26,7 @@ fn fixed_attention() -> SelfAttention {
 // ANCHOR_END: fixed
 
 fn main() -> Demo {
-    let input = Tensor::<3>::from_data(INPUT, &Device::ndarray());
+    let input = Tensor::<3>::from_data(INPUT, &Device::flex());
     let attention = fixed_attention();
     print_vectors("Eingabe", input.clone())?;
     print_vectors("Query", attention.query.forward(input.clone()))?;

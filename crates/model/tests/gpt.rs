@@ -21,7 +21,7 @@ fn config() -> GptModelConfig {
 
 #[test]
 fn forward_returns_one_logit_per_vocabulary_entry() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let model = config().init(&device);
     let ids = Tensor::<2, Int>::from_data([[1, 2, 3], [3, 2, 1]], &device);
 
@@ -30,7 +30,7 @@ fn forward_returns_one_logit_per_vocabulary_entry() {
 
 #[test]
 fn output_projection_is_separate_and_counted() {
-    let model = config().init(&Device::ndarray());
+    let model = config().init(&Device::flex());
 
     assert_eq!(
         model.output_projection.weight.dims(),
@@ -42,7 +42,7 @@ fn output_projection_is_separate_and_counted() {
 
 #[test]
 fn later_tokens_do_not_change_earlier_logits() {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let model = config().init(&device);
     let before = model
         .forward(Tensor::<2, Int>::from_data([[1, 2, 3]], &device))
@@ -65,7 +65,7 @@ fn later_tokens_do_not_change_earlier_logits() {
 
 #[test]
 fn gradients_reach_gpt_embedding_blocks_and_output_projection() {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let model = config().init(&device);
     let ids = Tensor::<2, Int>::from_data([[1, 2, 3]], &device);
     let gradients = model.forward(ids).powf_scalar(2.0).sum().backward();
@@ -102,5 +102,5 @@ fn gradients_reach_gpt_embedding_blocks_and_output_projection() {
 #[should_panic(expected = "num_blocks must be positive")]
 fn rejects_zero_blocks() {
     GptModelConfig::new(VOCAB_SIZE, CONTEXT_LENGTH, EMBEDDING_DIM, NUM_HEADS, 0)
-        .init(&Device::ndarray());
+        .init(&Device::flex());
 }

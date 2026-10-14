@@ -49,7 +49,7 @@ fn model(device: &Device) -> GptModel {
 
 // ANCHOR: main
 fn main() -> Demo {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let batch = batch()?;
     println!("Eingaben: {:?}", batch.inputs);
     println!("Ziele:    {:?}", batch.targets);

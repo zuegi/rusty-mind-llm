@@ -12,7 +12,7 @@ const EMBEDDING_DIM: usize = 2;
 const INPUT: [[[f32; EMBEDDING_DIM]; 3]; 1] = [[[1.0, -1.0], [0.5, 2.0], [1.0, -1.0]]];
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let ff = FeedForwardConfig::new(EMBEDDING_DIM).init(&device);
     let input = Tensor::<3>::from_data(INPUT, &device);
     println!("Eingabe:        Form {:?}", input.dims());

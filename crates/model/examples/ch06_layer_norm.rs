@@ -11,7 +11,7 @@ const INPUT: [[[f32; EMBEDDING_DIM]; 2]; 1] =
     [[[1.0, 2.0, 3.0, 4.0], [10.0, 10.0, 30.0, 30.0]]];
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let input = Tensor::<3>::from_data(INPUT, &device);
     print_vectors("Eingabe", input.clone())?;
     let norm = LayerNormConfig::new(EMBEDDING_DIM).init(&device);

@@ -11,7 +11,7 @@ const LIKELY_TARGETS: [[i32; 2]; 1] = [[2, 0]];
 const UNLIKELY_TARGETS: [[i32; 2]; 1] = [[0, 2]];
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let logits = Tensor::<3>::from_data(WEIGHTS, &device).log();
     print_predictions(logits.clone())?;
     let likely = Tensor::<2, Int>::from_data(LIKELY_TARGETS, &device);

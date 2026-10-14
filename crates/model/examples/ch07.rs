@@ -15,7 +15,7 @@ const NUM_BLOCKS: usize = 2;
 const TOKEN_IDS: [[i32; CONTEXT_LENGTH]; 1] = [[1, 2, 3, 4]];
 
 fn main() -> Demo {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let model = GptModelConfig::new(
         VOCAB_SIZE,
         CONTEXT_LENGTH,

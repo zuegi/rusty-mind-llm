@@ -4,7 +4,7 @@ use model::embedding::{GptEmbedding, GptEmbeddingConfig};
 
 
 fn fixed_embedding() -> GptEmbedding {
-    let device = Device::ndarray();
+    let device = Device::flex();
     let mut embedding = GptEmbeddingConfig::new(3, 2, 2).init(&device);
     embedding.token.weight = Param::from_tensor(Tensor::from_data(
         [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]],
@@ -18,7 +18,7 @@ fn fixed_embedding() -> GptEmbedding {
 #[test]
 fn repeated_ids_select_same_token_vector() {
     let embedding = fixed_embedding();
-    let ids = Tensor::<2, Int>::from_data([[1, 1]], &Device::ndarray());
+    let ids = Tensor::<2, Int>::from_data([[1, 1]], &Device::flex());
     embedding
         .token
         .forward(ids)
@@ -29,7 +29,7 @@ fn repeated_ids_select_same_token_vector() {
 #[test]
 fn adds_positions_and_restarts_them_for_each_window() {
     let embedding = fixed_embedding();
-    let ids = Tensor::<2, Int>::from_data([[1, 1], [0, 2]], &Device::ndarray());
+    let ids = Tensor::<2, Int>::from_data([[1, 1], [0, 2]], &Device::flex());
     let output = embedding.forward(ids);
     assert_eq!(output.dims(), [2, 2, 2]);
     output.into_data().assert_eq(
@@ -43,7 +43,7 @@ fn adds_positions_and_restarts_them_for_each_window() {
 
 #[test]
 fn supports_shorter_windows() {
-    let ids = Tensor::<2, Int>::from_data([[2]], &Device::ndarray());
+    let ids = Tensor::<2, Int>::from_data([[2]], &Device::flex());
     fixed_embedding()
         .forward(ids)
         .into_data()
@@ -52,7 +52,7 @@ fn supports_shorter_windows() {
 
 #[test]
 fn initializes_two_trainable_tables() {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let embedding = GptEmbeddingConfig::new(5, 3, 4).init(&device);
     assert_eq!(embedding.token.weight.dims(), [5, 4]);
     assert_eq!(embedding.position.weight.dims(), [3, 4]);
@@ -66,31 +66,31 @@ fn initializes_two_trainable_tables() {
 #[test]
 #[should_panic(expected = "context exceeds position table")]
 fn rejects_long_windows() {
-    let ids = Tensor::<2, Int>::from_data([[0, 1, 2]], &Device::ndarray());
+    let ids = Tensor::<2, Int>::from_data([[0, 1, 2]], &Device::flex());
     fixed_embedding().forward(ids);
 }
 
 #[test]
 #[should_panic(expected = "input must not be empty")]
 fn rejects_empty_windows() {
-    let ids = Tensor::<2, Int>::zeros([1, 0], &Device::ndarray());
+    let ids = Tensor::<2, Int>::zeros([1, 0], &Device::flex());
     fixed_embedding().forward(ids);
 }
 
 #[test]
 #[should_panic(expected = "vocab_size must be positive")]
 fn rejects_empty_vocabulary() {
-    GptEmbeddingConfig::new(0, 2, 2).init(&Device::ndarray());
+    GptEmbeddingConfig::new(0, 2, 2).init(&Device::flex());
 }
 
 #[test]
 #[should_panic(expected = "max_context_length must be positive")]
 fn rejects_zero_context_length() {
-    GptEmbeddingConfig::new(3, 0, 2).init(&Device::ndarray());
+    GptEmbeddingConfig::new(3, 0, 2).init(&Device::flex());
 }
 
 #[test]
 #[should_panic(expected = "embedding_dim must be positive")]
 fn rejects_zero_embedding_dimension() {
-    GptEmbeddingConfig::new(3, 2, 0).init(&Device::ndarray());
+    GptEmbeddingConfig::new(3, 2, 0).init(&Device::flex());
 }

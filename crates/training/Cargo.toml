@@ -11,4 +11,4 @@ tiktoken-rs = "0.12.1"
 rand = "0.10.3"
 
 [dev-dependencies]
-burn = { version = "0.22.0", default-features = false, features = ["std", "ndarray", "autodiff"] }
+burn = { version = "0.22.0", default-features = false, features = ["std", "flex", "autodiff"] }

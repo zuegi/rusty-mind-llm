@@ -21,7 +21,7 @@ fn main() -> Demo {
 
 // ANCHOR: square
 fn square() -> Demo {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let x = Tensor::<1>::from_data([3.0], &device).require_grad();
     let y = x.clone() * x.clone();
     let grads = y.backward();
@@ -35,7 +35,7 @@ fn square() -> Demo {
 
 // ANCHOR: chain_rule
 fn chain_rule() -> Demo {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let x = Tensor::<1>::from_data([3.0], &device).require_grad();
     let u = x.clone() * 2.0 + 1.0;
     let y = u.clone() * u;
@@ -50,7 +50,7 @@ fn chain_rule() -> Demo {
 
 // ANCHOR: weighted_sum
 fn weighted_sum() -> Demo {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let w = Tensor::<1>::from_data([0.5, -1.0, 2.0], &device).require_grad();
     let x = Tensor::<1>::from_data([1.0, 2.0, 3.0], &device);
     let loss = (w.clone() * x).sum();
@@ -65,7 +65,7 @@ fn weighted_sum() -> Demo {
 
 // ANCHOR: embedding
 fn embedding_gradients() -> Demo {
-    let device = Device::ndarray().autodiff();
+    let device = Device::flex().autodiff();
     let config = GptEmbeddingConfig::new(VOCAB_SIZE, MAX_CONTEXT_LENGTH, EMBEDDING_DIM);
     let embedding = config.init(&device);
     let token_ids = Tensor::<2, Int>::from_data([[1, 1, 3]], &device);

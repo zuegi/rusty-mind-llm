@@ -7,7 +7,7 @@ use burn::tensor::{Device, Tensor, activation::softmax};
 const INPUT: [[f32; 2]; 2] = [[1.0, 0.0], [0.0, 1.0]];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input = Tensor::<2>::from_data(INPUT, &Device::ndarray());
+    let input = Tensor::<2>::from_data(INPUT, &Device::flex());
     print_matrix("Eingabe X = Query = Key = Value", input.clone())?;
     let (scores, weights, context) = attention(input);
     print_matrix("Scores", scores)?;
@@ -60,7 +60,7 @@ mod tests {
 
     #[test]
     fn reproduces_hand_calculated_scores_weights_and_context() {
-        let input = Tensor::<2>::from_data(INPUT, &Device::ndarray());
+        let input = Tensor::<2>::from_data(INPUT, &Device::flex());
         let (scores, weights, context) = attention(input);
         assert_eq!(context.dims(), [2, 2]);
         assert_values(scores, [1.0, 0.0, 0.0, 1.0]);
@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn normalizes_each_query_row_over_keys() {
-        let input = Tensor::<2>::from_data(INPUT, &Device::ndarray());
+        let input = Tensor::<2>::from_data(INPUT, &Device::flex());
         let (_, weights, _) = attention(input);
         let values = weights
             .into_data()
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn equal_scores_mix_values_equally() {
-        let input = Tensor::<2>::from_data([[0.0, 0.0], [0.0, 2.0]], &Device::ndarray());
+        let input = Tensor::<2>::from_data([[0.0, 0.0], [0.0, 2.0]], &Device::flex());
         let (_, weights, context) = attention(input);
         let weights = weights
             .into_data()

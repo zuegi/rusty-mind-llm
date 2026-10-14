@@ -20,7 +20,7 @@ fn main() -> Demo {
 
 // ANCHOR: stack
 fn gradient_at_input(layers: usize, residual: bool) -> Result<f32, Box<dyn std::error::Error>> {
-    let x = Tensor::<1>::from_data([1.0], &Device::ndarray().autodiff()).require_grad();
+    let x = Tensor::<1>::from_data([1.0], &Device::flex().autodiff()).require_grad();
     let mut hidden = x.clone();
     for _ in 0..layers {
         let update = hidden.clone() * LAYER_SCALE;
