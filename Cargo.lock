@@ -4770,6 +4770,8 @@ dependencies = [
 name = "training"
 version = "0.1.0"
 dependencies = [
+ "burn",
+ "model",
  "rand 0.9.5",
  "tiktoken-rs",
 ]

@@ -132,6 +132,8 @@ Logits-Form:   [1, 4, 50]
 Das Modell kennt noch keine Wörter: Ohne Training sind seine Logits nur
 Startwerte. Der sinnvolle nächste Schritt ist deshalb kein größeres Modell,
 sondern Targets, Cross-Entropy und ein Optimizer.
+Das folgt in [Kapitel 8: Cross-Entropy und der erste
+Trainingsschritt](08-loss-und-trainingsschritt.md).
 
 ## Tests
 

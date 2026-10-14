@@ -27,16 +27,20 @@ Bisher umgesetzt:
   Residual-Verbindungen zu mehreren Blöcken zusammensetzen.
 - **GPT-Sprachmodell:** `GptEmbedding`, Transformer-Blöcke und separate
   Ausgabeprojektion liefern Logits `[Batch, Position, Vokabular]`.
+- **Loss und erster Trainingsschritt:** Cross-Entropy über die verschobenen
+  DataLoader-Ziele, Burn-Autograd und genau ein SGD-Update für das GPT-Modell.
 
-Als Nächstes folgen Cross-Entropy über die DataLoader-Ziele, Optimizer und
-Trainingsschleife sowie Textgenerierung. `model` enthält bewusst nur
+- **Trainingsschleife und Validierung:** Mehrere Epochen mit erhaltenem
+  Optimizer; Loss-Messung auf getrennten Daten ohne Gewichtsupdates.
+
+Als Nächstes folgen Checkpoints und Textgenerierung. `model` enthält bewusst nur
 Modellberechnung; Trainingsinfrastruktur bleibt im Crate `training`.
 
 ## Projektstruktur
 
 ```text
 crates/
-  training/   Tokenizer, Datenaufbereitung und Demos für Kapitel 1 und 2
+  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2, 8 und 9
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -89,6 +93,15 @@ cargo run -p model --example ch06
 
 # Kapitel 7: GPT-Modell mit Ausgabe-Logits
 cargo run -p model --example ch07
+
+# Kapitel 8: Cross-Entropy mit festen Logits
+cargo run -p training --example ch08_loss
+
+# Kapitel 8: Genau ein SGD-Schritt auf einem Mini-Batch
+cargo run -p training --example ch08
+
+# Kapitel 9: Trainingsschleife und getrennte Validierung
+cargo run -p training --example ch09
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
@@ -131,10 +144,17 @@ cargo test -p model --test attention
 
 # GPT-Modell: Formen, Parameter und Gradienten
 cargo test -p model --test gpt
+
+# Cross-Entropy, Batch-Tensoren und genau ein SGD-Update
+cargo test -p training --test ch08
+
+# Trainingsschleife und Auswertung ohne Gewichtsupdates
+cargo test -p training --test ch09
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
-kausale Attention, Tensorformen, Parameterzahlen und Gradientenfluss. Sie
+kausale Attention, Tensorformen, Parameterzahlen, Gradientenfluss und ein
+SGD-Update anhand der Cross-Entropy. Sie
 ersetzen kein vollständiges Modelltraining.
 
 ## Architektur und Quellen
