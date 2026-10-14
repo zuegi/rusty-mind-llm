@@ -23,3 +23,4 @@
 - [7. GPT: Das Sprachmodell](kapitel/07-gpt.md)
 - [8. Cross-Entropy und der erste Trainingsschritt](kapitel/08-loss-und-trainingsschritt.md)
 - [9. Trainingsschleife und Validierung](kapitel/09-trainingsschleife-und-validierung.md)
+- [10. Checkpoints speichern und laden](kapitel/10-checkpoints-speichern-und-laden.md)
