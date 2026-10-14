@@ -1,9 +1,9 @@
 use burn::nn::loss::CrossEntropyLossConfig;
-use burn::tensor::{Int, Tensor, backend::Backend};
+use burn::tensor::{Int, Tensor};
 
 // ANCHOR: cross_entropy
 /// Mittlere Cross-Entropy über alle Positionen und Fenster, aus rohen Logits.
-pub fn cross_entropy<B: Backend>(logits: Tensor<B, 3>, targets: Tensor<B, 2, Int>) -> Tensor<B, 1> {
+pub fn cross_entropy(logits: Tensor<3>, targets: Tensor<2, Int>) -> Tensor<1> {
     let [batch_size, context_length, vocab_size] = logits.dims();
     assert!(
         batch_size > 0 && context_length > 0 && vocab_size > 0,

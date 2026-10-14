@@ -2,7 +2,7 @@ use crate::attention::{MultiHeadAttention, MultiHeadAttentionConfig};
 use crate::feed_forward::{FeedForward, FeedForwardConfig};
 use crate::layer_norm::{LayerNorm, LayerNormConfig};
 use burn::module::Module;
-use burn::tensor::{Tensor, backend::Backend};
+use burn::tensor::{Device, Tensor};
 
 // ANCHOR: config
 #[derive(Debug)]
@@ -12,11 +12,11 @@ pub struct TransformerBlockConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct TransformerBlock<B: Backend> {
-    pub attention_norm: LayerNorm<B>,
-    pub attention: MultiHeadAttention<B>,
-    pub feed_forward_norm: LayerNorm<B>,
-    pub feed_forward: FeedForward<B>,
+pub struct TransformerBlock {
+    pub attention_norm: LayerNorm,
+    pub attention: MultiHeadAttention,
+    pub feed_forward_norm: LayerNorm,
+    pub feed_forward: FeedForward,
 }
 // ANCHOR_END: config
 
@@ -28,7 +28,7 @@ impl TransformerBlockConfig {
         }
     }
 
-    pub fn init<B: Backend>(&self, device: &B::Device) -> TransformerBlock<B> {
+    pub fn init(&self, device: &Device) -> TransformerBlock {
         TransformerBlock {
             attention_norm: LayerNormConfig::new(self.embedding_dim).init(device),
             attention: MultiHeadAttentionConfig::new(self.embedding_dim, self.num_heads)
@@ -39,9 +39,9 @@ impl TransformerBlockConfig {
     }
 }
 
-impl<B: Backend> TransformerBlock<B> {
+impl TransformerBlock {
     // ANCHOR: forward
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+    pub fn forward(&self, input: Tensor<3>) -> Tensor<3> {
         let normed = self.attention_norm.forward(input.clone());
         // Residual 1: Eingabe + Attention-Ausgabe
         let after_attention = input + self.attention.forward(normed);

@@ -2,7 +2,7 @@ use crate::embedding::{GptEmbedding, GptEmbeddingConfig};
 use crate::transformer_block::{TransformerBlock, TransformerBlockConfig};
 use burn::module::Module;
 use burn::nn::{Linear, LinearConfig};
-use burn::tensor::{Int, Tensor, backend::Backend};
+use burn::tensor::{Device, Int, Tensor};
 
 // ANCHOR: config
 #[derive(Debug)]
@@ -15,10 +15,10 @@ pub struct GptModelConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct GptModel<B: Backend> {
-    pub gpt_embedding: GptEmbedding<B>,
-    pub blocks: Vec<TransformerBlock<B>>,
-    pub output_projection: Linear<B>,
+pub struct GptModel {
+    pub gpt_embedding: GptEmbedding,
+    pub blocks: Vec<TransformerBlock>,
+    pub output_projection: Linear,
 }
 // ANCHOR_END: config
 
@@ -40,7 +40,7 @@ impl GptModelConfig {
     }
 
     // ANCHOR: init
-    pub fn init<B: Backend>(&self, device: &B::Device) -> GptModel<B> {
+    pub fn init(&self, device: &Device) -> GptModel {
         assert!(self.num_blocks > 0, "num_blocks must be positive");
         let gpt_embedding =
             GptEmbeddingConfig::new(self.vocab_size, self.max_context_length, self.embedding_dim)
@@ -62,9 +62,9 @@ impl GptModelConfig {
     // ANCHOR_END: init
 }
 
-impl<B: Backend> GptModel<B> {
+impl GptModel {
     // ANCHOR: forward
-    pub fn forward(&self, token_ids: Tensor<B, 2, Int>) -> Tensor<B, 3> {
+    pub fn forward(&self, token_ids: Tensor<2, Int>) -> Tensor<3> {
         let hidden = self
             .blocks
             .iter()

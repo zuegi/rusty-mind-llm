@@ -1,16 +1,13 @@
 //! Kapitel 9: Trainingsschleife und getrennte Validierung auf der CPU.
 //! Ausführen: cargo run -p training --example ch09
 
-use burn::backend::{Autodiff, NdArray};
-use burn::module::AutodiffModule;
+use burn::module::Module;
 use burn::optim::SgdConfig;
-use burn::tensor::{Int, Tensor, backend::Backend};
+use burn::tensor::{Device, Int, Tensor};
 use model::gpt::{GptModel, GptModelConfig};
 use training::dataset::{Dataset, split_tokens};
 use training::runner::{evaluate, train_epoch};
 
-type Cpu = NdArray<f32>;
-type Ad = Autodiff<Cpu>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const VOCAB_SIZE: usize = 5;
@@ -36,8 +33,8 @@ fn datasets() -> Result<(Dataset, Dataset), Box<dyn std::error::Error>> {
 }
 // ANCHOR_END: datasets
 
-fn model<B: Backend>(device: &B::Device) -> GptModel<B> {
-    B::seed(device, SEED);
+fn model(device: &Device) -> GptModel {
+    device.seed(SEED);
     let model = GptModelConfig::new(
         VOCAB_SIZE,
         CONTEXT_LENGTH,
@@ -46,14 +43,14 @@ fn model<B: Backend>(device: &B::Device) -> GptModel<B> {
         NUM_BLOCKS,
     )
     .init(device);
-    let inputs = Tensor::<B, 2, Int>::zeros([1, CONTEXT_LENGTH], device);
+    let inputs = Tensor::<2, Int>::zeros([1, CONTEXT_LENGTH], device);
     let _ = model.forward(inputs).into_data();
     model
 }
 
 // ANCHOR: report
-fn report(model: &GptModel<Ad>, train: &Dataset, validation: &Dataset, epoch: usize) {
-    let device = Default::default();
+fn report(model: &GptModel, train: &Dataset, validation: &Dataset, epoch: usize) {
+    let device = Device::flex();
     let fixed = model.valid();
     let train_loss = evaluate(&fixed, train, BATCH_SIZE, &device);
     let validation_loss = evaluate(&fixed, validation, BATCH_SIZE, &device);
@@ -63,9 +60,9 @@ fn report(model: &GptModel<Ad>, train: &Dataset, validation: &Dataset, epoch: us
 
 // ANCHOR: loop
 fn main() -> Demo {
-    let device = Default::default();
+    let device = Device::flex().autodiff();
     let (train, validation) = datasets()?;
-    let mut model = model::<Ad>(&device);
+    let mut model = model(&device);
     let mut optimizer = SgdConfig::new().init();
     let mut updates = 0;
     report(&model, &train, &validation, 0);

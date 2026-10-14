@@ -126,14 +126,14 @@ kein neu erzeugter `String`.
 
 ## Generics
 
-`B: Backend` ist eine Trait-Schranke: Der eingesetzte Typ `B` muss `Backend`
-implementieren. Das ähnelt Kotlin `<B : Backend>` oder Java
-`<B extends Backend>`, wenn `Backend` dort ein Interface ist.
+`T: Named` wäre eine Trait-Schranke: Der eingesetzte Typ `T` muss `Named`
+implementieren. Das ähnelt Kotlin `<T : Named>` oder Java
+`<T extends Named>`, wenn `Named` dort ein Interface ist.
 
-Unser `GptEmbedding<B: Backend>` ist also eine Struktur mit einem generischen
-Backend-Typ, kein Interface.
+Burn 0.22 benötigt für unser `GptEmbedding` keinen generischen Backend-Typ:
+Das Backend wird stattdessen über `Device` zur Laufzeit gewählt.
 
-Rust erlaubt auch konstante Zahlenparameter. In `Tensor<B, 3>` ist `B` ein Typ,
+Rust erlaubt auch konstante Zahlenparameter. In `Tensor<3>` ist
 `3` die Anzahl der Dimensionen. Kotlin und Java haben keine direkte Entsprechung
 für solche Zahlenparameter in ihren Generics. Die konkreten Tensorgrössen
 stehen weiterhin im Tensor, nicht in der `3`.
@@ -152,7 +152,7 @@ Ausleihen (*Borrowing*) beim Kompilieren.
 | `let mut value` | Veränderbare Bindung | Anders als Kotlin `val` / `var` entscheidet dies bei gewöhnlichen Werten auch über veränderbaren Zugriff auf deren Felder. |
 | `.clone()` | Explizite, vom Typ definierte Kopie | Nicht automatisch eine tiefe Kopie; Burn-Tensoren teilen zunächst ihre zugrunde liegenden Daten. |
 
-Bei `forward(&self, token_ids: Tensor<B, 2, Int>)` wird das Modell ausgeliehen,
+Bei `forward(&self, token_ids: Tensor<2, Int>)` wird das Modell ausgeliehen,
 der Eingabetensor dagegen als Wert übernommen. Deshalb benötigt die Demo
 `token_ids.clone()`, wenn sie ihn für eine weitere Berechnung behalten möchte.
 

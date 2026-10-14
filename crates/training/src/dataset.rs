@@ -1,6 +1,6 @@
 use std::fmt;
 
-use burn::tensor::{Int, Tensor, TensorData, backend::Backend};
+use burn::tensor::{Device, Int, Tensor, TensorData};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -40,7 +40,7 @@ impl std::error::Error for DatasetError {}
 
 // ANCHOR: batch_tensors
 impl Batch {
-    pub fn to_tensors<B: Backend>(&self, device: &B::Device) -> (Tensor<B, 2, Int>, Tensor<B, 2, Int>) {
+    pub fn to_tensors(&self, device: &Device) -> (Tensor<2, Int>, Tensor<2, Int>) {
         self.validate_shape();
         (
             token_tensor(&self.inputs, device),
@@ -63,7 +63,7 @@ impl Batch {
     }
 }
 
-fn token_tensor<B: Backend>(rows: &[Vec<u32>], device: &B::Device) -> Tensor<B, 2, Int> {
+fn token_tensor(rows: &[Vec<u32>], device: &Device) -> Tensor<2, Int> {
     let values: Vec<i64> = rows.iter().flatten().map(|&id| i64::from(id)).collect();
     let shape = [rows.len(), rows[0].len()];
     Tensor::from_data(TensorData::new(values, shape), device)

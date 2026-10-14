@@ -36,17 +36,23 @@ Implementierung für unsere zusammengesetzte Rust-Struktur.
 Das Backend führt die Tensoroperationen aus, etwa auf der CPU oder einer GPU.
 Es ist die Rechenumgebung, nicht das Sprachmodell selbst.
 
-Unser Modellcode verwendet den Typparameter `B: Backend`. Die Demo legt mit
-`NdArray<f32>` konkret fest: auf der CPU rechnen, mit 32-Bit-Gleitkommazahlen.
-Dieses Backend benötigt keine GPU und eignet sich für unsere kleinen Beispiele.
+Seit Burn 0.22 wählen wir das Backend zur Laufzeit über `Device`.
+`Device::flex()` wählt unser CPU-Backend mit standardmässig
+32-Bit-Gleitkommazahlen. `Tensor<3>` trägt nur Rang und Zahlenart im Rust-Typ;
+sein Device bestimmt, wo gerechnet wird. Modelle benötigen keinen Backend-Typparameter.
 
-Der generische Modellcode ist damit nicht fest an die CPU gebunden. Ein anderes
-Backend muss die verwendeten Operationen unterstützen und passend eingerichtet
-werden; für dieses Kapitel bleiben wir bei der CPU.
+Die Demo braucht keine GPU. Flex ist ein reines Rust-CPU-Backend und wird mit
+dem Cargo-Feature `flex` aktiviert. Es ersetzt hier NdArray, das seit Burn 0.22
+deprecated ist. Andere Backends brauchen passende Cargo-Features und Geräte.
+
+Flex verwendet standardmässig `f32` für Gleitkommazahlen und `i32` für
+Integer-Tensoren. Beim Auslesen als anderer Rust-Zahlentyp konvertieren wir
+die `TensorData` ausdrücklich, etwa mit `.convert::<i64>()`.
 
 ## Autodiff: Grundlage für späteres Training
 
-Burn kann mit `Autodiff` automatisch Gradienten berechnen. Ein Gradient
+Mit `Device::flex().autodiff()` aktivieren wir automatische Ableitungen,
+bevor wir Modell und Eingaben auf diesem Device erzeugen. Ein Gradient
 beschreibt, wie sich ein Fehlerwert bei Änderungen der Modellparameter verändert.
 Ein Optimierer kann diese Gradienten später verwenden, um Gewichte anzupassen.
 

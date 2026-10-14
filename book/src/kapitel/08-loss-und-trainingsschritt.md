@@ -396,7 +396,7 @@ Beim Training mit dem Autodiff-Backend bleibt der Loss-Tensor mit dem
 Rechengraphen verbunden. Erst die Funktion `sgd_step` im folgenden Abschnitt
 [Der vollständige Trainingsschritt](#der-vollständige-trainingsschritt)
 ruft darauf `backward()` auf und verwendet die Gradienten für das Update.
-`into_scalar()` liest dagegen nur den Zahlenwert für die Ausgabe aus;
+`into_scalar::<f32>()` liest dagegen nur den Zahlenwert für die Ausgabe aus;
 dieser Rust-Zahlenwert hat keinen Rechengraphen mehr.
 
 ## SGD: Aus Gradienten werden neue Gewichte
@@ -444,7 +444,7 @@ Burn markiert Modellparameter automatisch für Autograd. Wir brauchen weder
 eine eigene Ableitung noch manuelle Updates einzelner Tabellen.
 
 `loss.clone()` hält den ursprünglichen Loss für die Rückgabe verfügbar,
-während `backward()` seinen Tensor verbraucht. `loss.inner()` entfernt den
+während `backward()` seinen Tensor verbraucht. `loss.without_autodiff()` entfernt den
 Autodiff-Wrapper vom Ergebnis: Die Rückgabe enthält den **Loss vor dem
 Update**, ohne einen weiteren Rechengraphen dafür aufzubauen.
 
@@ -471,7 +471,7 @@ Attention-Köpfe und ein Transformer-Block.
 {{#include ../../../crates/training/examples/ch08.rs:model}}
 ```
 
-`Ad = Autodiff<NdArray<f32>>` zeichnet den Trainingsgraphen auf.
+`Device::flex().autodiff()` aktiviert die Aufzeichnung des Trainingsgraphen.
 Der feste Seed macht Initialisierung und Batch-Reihenfolge im CPU-Beispiel
 wiederholbar; die beiden Zufallsgeneratoren werden getrennt gesetzt.
 
@@ -481,7 +481,8 @@ wiederholbar; die beiden Zufallsgeneratoren werden getrennt gesetzt.
 
 Nach dem Update messen wir den Loss noch einmal auf **demselben Batch**.
 `updated.valid()` liefert ein Modell mit denselben Gewichten auf dem
-inneren Backend `NdArray<f32>`, ohne Autodiff-Aufzeichnung. Der Name der
+Flex-Device ohne Autodiff-Aufzeichnung. Auch die neuen Eingabetensoren
+erzeugen wir auf `device.without_autodiff()`. Der Name der
 Burn-Methode bedeutet hier **nicht**, dass wir einen Validierungsdatensatz
 auswerten. Eine Validierung mit getrennten Daten folgt erst später.
 
@@ -489,7 +490,7 @@ auswerten. Eine Validierung mit getrennten Daten folgt erst später.
 cargo run -p training --example ch08
 ```
 
-Beispielausgabe mit Burn 0.21 und dem CPU-Backend:
+Beispielausgabe mit Burn 0.22 und dem CPU-Backend:
 
 ```text
 {{#include ../ausgaben/ch08.txt}}
@@ -511,8 +512,9 @@ training → Burn (Tensor-Konvertierung, Loss, Optimizer)
 
 `model` liefert Logits. Dort gibt es weder Cross-Entropy noch SGD oder
 Datensätze. `training` verbindet Daten, Modell, Verlustfunktion und Update.
-Die CPU- und Autodiff-Backends sind wie im Modell-Crate nur für Demos und
-Tests aktiviert.
+Das CPU-Backend ist wie im Modell-Crate nur für Demos und Tests aktiviert.
+`training` aktiviert das Burn-Feature `optim`, das auch `autodiff` einschliesst.
+Der Optimizer-Typ für ganze Modelle heisst in Burn 0.22 `ModuleOptimizer`.
 
 ## Tests und Grenzen
 

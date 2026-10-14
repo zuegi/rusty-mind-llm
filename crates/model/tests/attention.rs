@@ -1,30 +1,27 @@
-use burn::backend::{Autodiff, NdArray};
 use burn::module::{Module, Param};
-use burn::tensor::{Tensor, TensorData};
+use burn::tensor::{Device, Tensor, TensorData};
 use model::attention::{
     MultiHeadAttentionConfig, NaiveMultiHeadAttentionConfig, SelfAttention, SelfAttentionConfig,
 };
 use model::embedding::GptEmbeddingConfig;
 
-type Cpu = NdArray<f32>;
 const TOLERANCE: f32 = 1e-5;
 const QUERY_WEIGHTS: [[f32; 2]; 2] = [[1.0, 0.0], [1.0, 1.0]];
 const KEY_WEIGHTS: [[f32; 2]; 2] = [[0.0, 1.0], [1.0, 0.0]];
 const VALUE_WEIGHTS: [[f32; 2]; 2] = [[2.0, 0.0], [0.0, 3.0]];
 
-fn fixed_attention<B: burn::tensor::backend::Backend>() -> SelfAttention<B> {
-    let device = Default::default();
-    let mut attention = SelfAttentionConfig::new(2, 2).init(&device);
-    attention.query.weight = Param::from_tensor(Tensor::from_data(QUERY_WEIGHTS, &device));
-    attention.key.weight = Param::from_tensor(Tensor::from_data(KEY_WEIGHTS, &device));
-    attention.value.weight = Param::from_tensor(Tensor::from_data(VALUE_WEIGHTS, &device));
+fn fixed_attention(device: &Device) -> SelfAttention {
+    let mut attention = SelfAttentionConfig::new(2, 2).init(device);
+    attention.query.weight = Param::from_tensor(Tensor::from_data(QUERY_WEIGHTS, device));
+    attention.key.weight = Param::from_tensor(Tensor::from_data(KEY_WEIGHTS, device));
+    attention.value.weight = Param::from_tensor(Tensor::from_data(VALUE_WEIGHTS, device));
     attention
 }
 
 #[test]
 fn projects_each_role_and_uses_scaled_causal_scores() {
-    let attention = fixed_attention::<Cpu>();
-    let input = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default());
+    let attention = fixed_attention(&Device::flex());
+    let input = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Device::flex());
     let query = attention.query.forward(input.clone());
     let key = attention.key.forward(input.clone());
     let value = attention.value.forward(input.clone());
@@ -39,7 +36,7 @@ fn projects_each_role_and_uses_scaled_causal_scores() {
     let output = attention
         .forward(input)
         .into_data()
-        .to_vec::<f32>()
+        .try_to_vec::<f32>()
         .unwrap();
     // Mit kausaler Maske:
     // Position 0 sieht nur Position 0 -> [2.0, 0.0]
@@ -55,10 +52,10 @@ fn projects_each_role_and_uses_scaled_causal_scores() {
 
 #[test]
 fn batches_do_not_share_context() {
-    let attention = fixed_attention::<Cpu>();
+    let attention = fixed_attention(&Device::flex());
     let first = [[1.0_f32, 0.0], [0.0, 1.0]];
     let second = [[2.0_f32, -1.0], [0.5, 3.0]];
-    let device = Default::default();
+    let device = Device::flex();
     let batch = attention.forward(Tensor::from_data([first, second], &device));
     for (index, window) in [first, second].into_iter().enumerate() {
         let single = attention.forward(Tensor::from_data([window], &device));
@@ -73,8 +70,8 @@ fn batches_do_not_share_context() {
 
 #[test]
 fn accepts_embedding_output_and_different_head_width() {
-    let device = Default::default();
-    let embedding = GptEmbeddingConfig::new(5, 3, 4).init::<Cpu>(&device);
+    let device = Device::flex();
+    let embedding = GptEmbeddingConfig::new(5, 3, 4).init(&device);
     let attention = SelfAttentionConfig::new(4, 2).init(&device);
     let input = embedding.forward(Tensor::from_data([[1, 2, 3], [0, 1, 2]], &device));
     assert_eq!(attention.forward(input).dims(), [2, 3, 2]);
@@ -83,8 +80,8 @@ fn accepts_embedding_output_and_different_head_width() {
 
 #[test]
 fn propagates_finite_nonzero_gradients_to_all_projections_and_input() {
-    let attention = fixed_attention::<Autodiff<Cpu>>();
-    let input = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default()).require_grad();
+    let attention = fixed_attention(&Device::flex().autodiff());
+    let input = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Device::flex().autodiff()).require_grad();
     let grads = attention.forward(input.clone()).sum().backward();
     for projection in [&attention.query, &attention.key, &attention.value] {
         let values = projection
@@ -92,7 +89,7 @@ fn propagates_finite_nonzero_gradients_to_all_projections_and_input() {
             .grad(&grads)
             .expect("Projektionsgradient fehlt")
             .into_data()
-            .to_vec::<f32>()
+            .try_to_vec::<f32>()
             .unwrap();
         assert!(values.iter().all(|value| value.is_finite()));
         assert!(values.iter().any(|value| value.abs() > TOLERANCE));
@@ -101,7 +98,7 @@ fn propagates_finite_nonzero_gradients_to_all_projections_and_input() {
         .grad(&grads)
         .expect("Eingabegradient fehlt")
         .into_data()
-        .to_vec::<f32>()
+        .try_to_vec::<f32>()
         .unwrap();
     assert!(values.iter().all(|value| value.is_finite()));
     assert!(values.iter().any(|value| value.abs() > TOLERANCE));
@@ -109,8 +106,8 @@ fn propagates_finite_nonzero_gradients_to_all_projections_and_input() {
 
 #[test]
 fn one_token_returns_its_value() {
-    let attention = fixed_attention::<Cpu>();
-    let input = Tensor::from_data([[[2.0, 1.0]]], &Default::default());
+    let attention = fixed_attention(&Device::flex());
+    let input = Tensor::from_data([[[2.0, 1.0]]], &Device::flex());
     attention
         .forward(input.clone())
         .into_data()
@@ -120,20 +117,20 @@ fn one_token_returns_its_value() {
 // ANCHOR: test_causal
 #[test]
 fn future_tokens_do_not_influence_earlier_outputs() {
-    let attention = fixed_attention::<Cpu>();
+    let attention = fixed_attention(&Device::flex());
     // Erste Sequenz: zwei Tokens
-    let seq_a = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Default::default());
+    let seq_a = Tensor::from_data([[[1.0, 0.0], [0.0, 1.0]]], &Device::flex());
     // Zweite Sequenz: dieselben ersten zwei Tokens, aber ein drittes beliebiges Token angehängt
     let seq_b = Tensor::from_data(
         [[[1.0, 0.0], [0.0, 1.0], [99.0, -99.0]]],
-        &Default::default(),
+        &Device::flex(),
     );
     let out_a = attention.forward(seq_a);
     let out_b = attention.forward(seq_b);
 
     // Position 0 und 1 müssen bei beiden Sequenzen exakt identisch sein!
-    let out_a_vec = out_a.into_data().to_vec::<f32>().unwrap();
-    let out_b_vec = out_b.into_data().to_vec::<f32>().unwrap();
+    let out_a_vec = out_a.into_data().try_to_vec::<f32>().unwrap();
+    let out_b_vec = out_b.into_data().try_to_vec::<f32>().unwrap();
     for i in 0..4 {
         assert!(
             (out_a_vec[i] - out_b_vec[i]).abs() < TOLERANCE,
@@ -146,40 +143,39 @@ fn future_tokens_do_not_influence_earlier_outputs() {
 #[test]
 #[should_panic(expected = "embedding_dim must be positive")]
 fn rejects_zero_embedding_dimension() {
-    SelfAttentionConfig::new(0, 2).init::<Cpu>(&Default::default());
+    SelfAttentionConfig::new(0, 2).init(&Device::flex());
 }
 
 #[test]
 #[should_panic(expected = "head_dim must be positive")]
 fn rejects_zero_head_dimension() {
-    SelfAttentionConfig::new(2, 0).init::<Cpu>(&Default::default());
+    SelfAttentionConfig::new(2, 0).init(&Device::flex());
 }
 
 #[test]
 #[should_panic(expected = "input must not be empty")]
 fn rejects_empty_sequence() {
-    fixed_attention::<Cpu>().forward(Tensor::zeros([1, 0, 2], &Default::default()));
+    fixed_attention(&Device::flex()).forward(Tensor::zeros([1, 0, 2], &Device::flex()));
 }
 
 #[test]
 #[should_panic(expected = "input must not be empty")]
 fn rejects_empty_batch() {
-    fixed_attention::<Cpu>().forward(Tensor::zeros([0, 2, 2], &Default::default()));
+    fixed_attention(&Device::flex()).forward(Tensor::zeros([0, 2, 2], &Device::flex()));
 }
 
 #[test]
 #[should_panic(expected = "embedding dimension mismatch")]
 fn rejects_wrong_embedding_dimension() {
-    fixed_attention::<Cpu>().forward(Tensor::zeros([1, 2, 3], &Default::default()));
+    fixed_attention(&Device::flex()).forward(Tensor::zeros([1, 2, 3], &Device::flex()));
 }
 
 #[test]
 fn multi_head_attention_preserves_shape_and_propagates_gradients() {
-    type Diff = Autodiff<Cpu>;
-    let device = Default::default();
-    let mha = MultiHeadAttentionConfig::new(4, 2).init::<Diff>(&device);
+    let device = Device::flex().autodiff();
+    let mha = MultiHeadAttentionConfig::new(4, 2).init(&device);
 
-    let input = Tensor::<Diff, 3>::ones([2, 3, 4], &device).require_grad();
+    let input = Tensor::<3>::ones([2, 3, 4], &device).require_grad();
     let output = mha.forward(input.clone());
 
     assert_eq!(output.dims(), [2, 3, 4]);
@@ -188,7 +184,7 @@ fn multi_head_attention_preserves_shape_and_propagates_gradients() {
     let grads = loss.backward();
     let input_grad = input.grad(&grads).expect("Gradient für Eingabe fehlt");
     assert_eq!(input_grad.dims(), [2, 3, 4]);
-    for val in input_grad.into_data().to_vec::<f32>().unwrap() {
+    for val in input_grad.into_data().try_to_vec::<f32>().unwrap() {
         assert!(val.is_finite());
     }
 }
@@ -196,14 +192,14 @@ fn multi_head_attention_preserves_shape_and_propagates_gradients() {
 // ANCHOR: test_mha_equivalence
 #[test]
 fn naive_and_batched_multi_head_attention_are_numerically_equivalent() {
-    let device = Default::default();
+    let device = Device::flex();
     let embedding_dim = 4;
     let num_heads = 2;
     let head_dim = 2;
 
-    let batched = MultiHeadAttentionConfig::new(embedding_dim, num_heads).init::<Cpu>(&device);
+    let batched = MultiHeadAttentionConfig::new(embedding_dim, num_heads).init(&device);
     let mut naive =
-        NaiveMultiHeadAttentionConfig::new(embedding_dim, num_heads).init::<Cpu>(&device);
+        NaiveMultiHeadAttentionConfig::new(embedding_dim, num_heads).init(&device);
 
     naive.output_projection.weight = Param::from_tensor(batched.output_projection.weight.val());
 
@@ -223,13 +219,13 @@ fn naive_and_batched_multi_head_attention_are_numerically_equivalent() {
             Param::from_tensor(v_w.clone().slice([0..embedding_dim, start..end]));
     }
 
-    let input = Tensor::<Cpu, 3>::from_data(
+    let input = Tensor::<3>::from_data(
         [[[1.0, 0.5, -0.2, 0.8], [0.2, -0.7, 0.3, 1.1]]],
         &device,
     );
 
-    let out_batched = batched.forward(input.clone()).into_data().to_vec::<f32>().unwrap();
-    let out_naive = naive.forward(input).into_data().to_vec::<f32>().unwrap();
+    let out_batched = batched.forward(input.clone()).into_data().try_to_vec::<f32>().unwrap();
+    let out_naive = naive.forward(input).into_data().try_to_vec::<f32>().unwrap();
 
     assert_eq!(out_batched.len(), out_naive.len());
     for (i, (b, n)) in out_batched.iter().zip(out_naive.iter()).enumerate() {
@@ -244,5 +240,5 @@ fn naive_and_batched_multi_head_attention_are_numerically_equivalent() {
 #[test]
 #[should_panic(expected = "embedding_dim must be divisible by num_heads")]
 fn rejects_indivisible_num_heads() {
-    MultiHeadAttentionConfig::new(5, 2).init::<Cpu>(&Default::default());
+    MultiHeadAttentionConfig::new(5, 2).init(&Device::flex());
 }

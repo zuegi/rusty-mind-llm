@@ -3,14 +3,10 @@
 
 use std::{fs, path::PathBuf};
 
-use burn::{
-    backend::NdArray,
-    tensor::{Int, Tensor},
-};
+use burn::tensor::{Device, Int, Tensor};
 use model::gpt::GptModelConfig;
 use training::checkpoint::{load_model, save_model};
 
-type Cpu = NdArray<f32>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const VOCAB_SIZE: usize = 5;
@@ -30,24 +26,24 @@ fn config() -> GptModelConfig {
 }
 
 fn checkpoint_path() -> PathBuf {
-    std::env::temp_dir().join("rusty-mind-llm-ch10-model")
+    std::env::temp_dir().join("rusty-mind-llm-ch10-model.bpk")
 }
 
 fn main() -> Demo {
-    let device = Default::default();
+    let device = Device::flex();
     let config = config();
-    let model = config.init::<Cpu>(&device);
-    let inputs = Tensor::<Cpu, 2, Int>::from_ints([[0, 1, 2]], &device);
+    let model = config.init(&device);
+    let inputs = Tensor::<2, Int>::from_ints([[0, 1, 2]], &device);
     let before = model.forward(inputs.clone()).into_data();
 
     let path = checkpoint_path();
     save_model(&model, &path)?;
-    let loaded = load_model::<Cpu>(&config, &path, &device)?;
+    let loaded = load_model(&config, &path, &device)?;
     let after = loaded.forward(inputs).into_data();
 
     assert_eq!(before, after);
     println!("Modellgewichte gespeichert und identisch geladen.");
-    println!("Datei: {}.mpk", path.display());
-    fs::remove_file(path.with_extension("mpk"))?;
+    println!("Datei: {}", path.display());
+    fs::remove_file(path)?;
     Ok(())
 }

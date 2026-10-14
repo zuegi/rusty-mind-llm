@@ -284,12 +284,12 @@ Jetzt erzeugen wir ihn einmal und verwenden ihn in allen Schritten:
 ```
 
 Die Berechnung bleibt dieselbe: Vorhersage, Loss, Gradienten, Update.
-Neu ist der Parameter `optimizer: &mut O`.
+Neu ist der Parameter `optimizer: &mut ModuleOptimizer`.
 
 `&mut` bedeutet in Rust: Die Funktion darf das bestehende Objekt über
 eine veränderbare Referenz verwenden. Sie muss keinen neuen Optimizer
-erzeugen. `O` steht für dessen konkreten Typ; in der Demo ist das SGD.
-`B` steht für das Backend, also Burns Rechenverfahren.
+erzeugen. `ModuleOptimizer` verwaltet Updates und Zustand für ganze Modelle;
+`SgdConfig::new().init()` konfiguriert ihn hier für SGD.
 
 Unser SGD ohne Momentum benötigt keine Verlaufshistorie für seine Regel.
 Wir erhalten das Objekt trotzdem über alle Schritte hinweg. Andere
@@ -321,13 +321,16 @@ keine Trainingsepoche stattgefunden.
 
 ### Messen ohne Autograd-Aufzeichnung
 
-Zum Trainieren verwenden wir `Autodiff<NdArray<f32>>`:
-`NdArray` rechnet auf der CPU; `Autodiff` zeichnet die Rechnung auf,
+Zum Trainieren verwenden wir `Device::flex().autodiff()`:
+Flex rechnet auf der CPU; `.autodiff()` aktiviert die Aufzeichnung,
 damit `backward()` daraus Gradienten berechnen kann.
 
-Zur Messung reicht `NdArray<f32>` ohne diese Aufzeichnung.
+Zur Messung reicht `Device::flex()` ohne diese Aufzeichnung.
 `model.valid()` erzeugt in Burn eine Modellversion mit denselben
-initialisierten Gewichten auf diesem inneren Backend.
+initialisierten Gewichten ohne Autodiff. Training und Messung haben dabei
+denselben Modelltyp; die Autodiff-Einstellung steckt jetzt im Device.
+`evaluate` lehnt deshalb sowohl ein Autodiff-Eingabe-Device als auch
+Autodiff-Logits explizit ab, statt diese Grenze nur über den Typ abzusichern.
 
 **`valid()` wählt keine Daten aus und führt noch keine Validierung aus.**
 Erst die Übergabe des Validierungsdatensatzes an `evaluate` macht
@@ -369,7 +372,7 @@ zum Gesamtwert bei. `evaluate` sammelt entsprechend:
 `positions` zählt alle ausgewerteten Positionen. Am Ende teilen
 wir die Summe durch diese Gesamtzahl.
 
-`into_scalar()` liest den Loss als Zahl aus; `.elem::<f64>()`
+`into_scalar::<f32>()` liest den Loss als Zahl aus; `f64::from(...)`
 wandelt ihn für die Summierung in den Rust-Zahlentyp `f64` um.
 Ein nicht endlicher Loss wird als Fehler sichtbar.
 
@@ -417,7 +420,8 @@ Wir setzen die Gewichte nicht zu Beginn einer neuen Epoche zurück.
 cargo run -p training --example ch09
 ```
 
-Beispielausgabe mit Burn 0.21 auf der CPU:
+Beispielausgabe mit Burn 0.22 und Flex auf der CPU
+(Rundungsabweichungen gegenüber anderen Backends sind möglich):
 
 ```text
 {{#include ../ausgaben/ch09.txt}}

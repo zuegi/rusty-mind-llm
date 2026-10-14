@@ -1,6 +1,6 @@
 use burn::module::Module;
 use burn::nn::{Embedding, EmbeddingConfig};
-use burn::tensor::{Int, Tensor, backend::Backend};
+use burn::tensor::{Device, Int, Tensor};
 
 // ANCHOR: config
 #[derive(Debug)]
@@ -11,9 +11,9 @@ pub struct GptEmbeddingConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct GptEmbedding<B: Backend> {
-    pub token: Embedding<B>,
-    pub position: Embedding<B>,
+pub struct GptEmbedding {
+    pub token: Embedding,
+    pub position: Embedding,
 }
 // ANCHOR_END: config
 
@@ -27,7 +27,7 @@ impl GptEmbeddingConfig {
         }
     }
 
-    pub fn init<B: Backend>(&self, device: &B::Device) -> GptEmbedding<B> {
+    pub fn init(&self, device: &Device) -> GptEmbedding {
         assert!(self.vocab_size > 0, "vocab_size must be positive");
         assert!(
             self.max_context_length > 0,
@@ -44,8 +44,8 @@ impl GptEmbeddingConfig {
 // ANCHOR_END: init
 
 // ANCHOR: forward
-impl<B: Backend> GptEmbedding<B> {
-    pub fn forward(&self, token_ids: Tensor<B, 2, Int>) -> Tensor<B, 3> {
+impl GptEmbedding {
+    pub fn forward(&self, token_ids: Tensor<2, Int>) -> Tensor<3> {
         let [batch_size, context_length] = token_ids.dims();
         let [max_context_length, _] = self.position.weight.dims();
         assert!(
@@ -56,7 +56,7 @@ impl<B: Backend> GptEmbedding<B> {
             context_length <= max_context_length,
             "context exceeds position table"
         );
-        let positions = Tensor::<B, 1, Int>::arange(0..context_length as i64, &token_ids.device())
+        let positions = Tensor::<1, Int>::arange(0..context_length as i64, &token_ids.device())
             .reshape([1, context_length]);
         let token_vectors = self.token.forward(token_ids);
         let position_vectors = self.position.forward(positions);

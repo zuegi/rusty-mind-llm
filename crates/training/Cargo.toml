@@ -5,10 +5,10 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
-burn = { version = "0.21", default-features = false, features = ["std"] }
+burn = { version = "0.22.0", default-features = false, features = ["std", "optim"] }
 model = { path = "../model" }
-tiktoken-rs = "0.12"
-rand = "0.9"
+tiktoken-rs = "0.12.1"
+rand = "0.10.3"
 
 [dev-dependencies]
-burn = { version = "0.21", default-features = false, features = ["std", "ndarray", "autodiff"] }
+burn = { version = "0.22.0", default-features = false, features = ["std", "flex", "autodiff"] }

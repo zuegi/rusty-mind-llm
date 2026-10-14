@@ -73,7 +73,7 @@ den Gewichten erraten. Beim Laden muss dieselbe `GptModelConfig` bekannt sein:
 
 ```rust
 let config = GptModelConfig::new(5, 3, 8, 2, 1);
-let model = config.init::<Cpu>(&device);
+let model = config.init(&device);
 ```
 
 Ändert sich etwa `vocab_size` oder `embedding_dim`, passen Record und Modell
@@ -81,24 +81,28 @@ nicht mehr zusammen. Diese Konfiguration gehört deshalb in ein echtes
 Trainingsprojekt in eine versionierte Konfigurationsdatei oder in Metadaten
 neben den Checkpoint.
 
-## 2. Burns Recorder
+## 2. Burns Burnpack-API
 
-Burn stellt `Module::save_file` und `Module::load_file` bereit. Der Recorder
-legt die Datei mit seiner passenden Endung an. Im Beispiel verwenden wir
-`DefaultRecorder`, der die Gewichte mit voller Genauigkeit aufzeichnet:
+Burn 0.22 stellt `Module::save_file` und `Module::try_load_file` bereit.
+Die Modellgewichte werden als Burnpack gespeichert. Wir geben die Endung
+`.bpk` ausdrücklich an; fehlt eine Endung, ergänzt Burn sie automatisch:
 
 ```rust
-use burn::record::DefaultRecorder;
+use burn::module::Module;
 
-let recorder = DefaultRecorder::new();
-model.clone().save_file("checkpoints/model", &recorder)?;
-let loaded = model.load_file("checkpoints/model", &recorder, &device)?;
+model.clone().save_file("checkpoints/model.bpk")?;
+let loaded = model.try_load_file("checkpoints/model.bpk")?;
 ```
 
 `save_file` nimmt das Modell als Besitz. `clone()` lässt das ursprüngliche
-Modell weiterleben. `DefaultRecorder` erzeugt dabei eine `.mpk`-Datei.
-`load_file` lädt in ein bereits initialisiertes Modell;
+Modell weiterleben. `try_load_file` lädt in ein bereits initialisiertes Modell;
 dadurch liefert die Konfiguration die Struktur und der Record die Werte.
+Beide Funktionen liefern bei Fehlern `RecordError` zurück. Anders als
+`try_load_file` würde `load_file` bei einem Ladefehler einen Panic auslösen.
+
+**Formatwechsel:** Frühere `.mpk`-Dateien aus `DefaultRecorder` sind keine
+Burnpack-Dateien. Umbenennen konvertiert sie nicht; diese Demo unterstützt
+keinen automatischen Import alter Checkpoints.
 
 ## 3. Kleine Checkpoint-Hilfsfunktionen
 
@@ -109,26 +113,25 @@ use std::path::Path;
 
 use burn::{
     module::Module,
-    record::{DefaultRecorder, RecorderError},
-    tensor::backend::Backend,
+    store::RecordError,
+    tensor::Device,
 };
 use model::gpt::{GptModel, GptModelConfig};
 
-pub fn save_model<B: Backend>(
-    model: &GptModel<B>,
+pub fn save_model(
+    model: &GptModel,
     path: impl AsRef<Path>,
-) -> Result<(), RecorderError> {
-    model.clone().save_file(path.as_ref(), &DefaultRecorder::new())
+) -> Result<(), RecordError> {
+    model.clone().save_file(path)
 }
 
-pub fn load_model<B: Backend>(
+pub fn load_model(
     config: &GptModelConfig,
     path: impl AsRef<Path>,
-    device: &B::Device,
-) -> Result<GptModel<B>, RecorderError> {
-    config
-        .init(device)
-        .load_file(path.as_ref(), &DefaultRecorder::new(), device)
+    device: &Device,
+) -> Result<GptModel, RecordError> {
+    let model = config.init(device);
+    model.try_load_file(path)
 }
 ```
 
@@ -142,19 +145,19 @@ Die vollständige Demo in `crates/training/examples/ch10.rs` erzeugt ein
 kleines Modell, berechnet Logits, speichert die Gewichte und lädt sie wieder:
 
 ```rust
-let model = config.init::<Cpu>(&device);
-let inputs = Tensor::<Cpu, 2, Int>::from_ints([[0, 1, 2]], &device);
+let model = config.init(&device);
+let inputs = Tensor::<2, Int>::from_ints([[0, 1, 2]], &device);
 let before = model.forward(inputs.clone()).into_data();
 
 save_model(&model, &path)?;
-let loaded = load_model::<Cpu>(&config, &path, &device)?;
+let loaded = load_model(&config, &path, &device)?;
 let after = loaded.forward(inputs).into_data();
 
 assert_eq!(before, after);
 ```
 
 Der Vergleich prüft genau das Lernziel: Für dieselben Eingaben erzeugen
-Original und geladenes Modell dieselben Logits. Die Demo räumt ihre temporäre `.mpk`-Datei danach wieder auf:
+Original und geladenes Modell dieselben Logits. Die Demo räumt ihre temporäre `.bpk`-Datei danach wieder auf:
 
 ```bash
 cargo run -p training --example ch10
@@ -162,11 +165,18 @@ cargo run -p training --example ch10
 
 ## 5. Test und Grenzen
 
-Der Integrationstest wiederholt denselben Vergleich:
+Die Integrationstests wiederholen denselben Vergleich und prüfen explizite
+Fehler bei fehlenden, beschädigten oder inkompatiblen Dateien sowie beim Speichern
+auf einen Verzeichnispfad:
 
 ```bash
 cargo test -p training --test ch10
 ```
+
+Ein weiterer Test lädt auf einem Autodiff-Device und prüft, dass Gradienten
+weiterhin die geladenen Modellparameter erreichen.
+Die temporäre Datei wird erst nach der Berechnung entfernt: Flex kann
+geladene Tensordaten verzögert aus der Checkpoint-Datei lesen.
 
 Damit ist noch kein vollständiger Trainings-Resume implementiert. Nach dem
 Laden kann man mit den Gewichten weiterrechnen oder sie erneut trainieren,
@@ -191,7 +201,7 @@ Laden der Modellgewichte.
 
 ## Zusammenfassung
 
-- `DefaultRecorder` speichert Burn-Modellgewichte.
+- `Module::save_file` speichert Burn-Modellgewichte im Burnpack-Format (`.bpk`).
 - Laden braucht ein frisch initialisiertes Modell mit passender Konfiguration.
 - Ein geladener Record liefert dieselben Ausgaben wie das Original.
 - Der Optimizer-Zustand ist in dieser Demo nicht Bestandteil des Checkpoints.

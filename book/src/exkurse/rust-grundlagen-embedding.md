@@ -27,28 +27,24 @@ das eigentliche Modell:
 
 ```rust,ignore
 let config = GptEmbeddingConfig::new(5, 3, 4);
-let embedding = config.init::<Cpu>(&device);
+let embedding = config.init(&device);
 ```
 
-`&device` leiht das Gerät aus, statt es zu verschieben. `Cpu` ist in der Demo
-ein Typalias für `NdArray<f32>`.
+`&device` leiht das Gerät aus, statt es zu verschieben. Die Demo erzeugt es
+ausdrücklich mit `Device::flex()`.
 
 ## Generische Typen
 
-`GptEmbedding<B: Backend>` ist nicht auf eine bestimmte Rechenumgebung festgelegt.
-`B` ist ein Platzhalter für einen Typ. `Backend` ist ein *Trait*: Er beschreibt
-die Fähigkeiten, die dieser Typ mitbringen muss.
+`GptEmbedding` hat seit Burn 0.22 keinen Backend-Typparameter. Die Rechenumgebung
+wird über `device: &Device` bei der Initialisierung gewählt.
 
-Der zugehörige Gerätetyp wird als `B::Device` geschrieben. Bei unserem CPU-Backend
-erstellt `Default::default()` dessen Standardgerät.
-
-In `Tensor<B, 2, Int>` ist `B` ein Typ, `2` dagegen ein konstanter Zahlenparameter.
+In `Tensor<2, Int>` ist `Int` ein Typ, `2` dagegen ein konstanter Zahlenparameter.
 Rust kennt damit bereits die Anzahl der Tensorachsen. Deren konkrete Grössen
 liest das Programm mit `dims()` aus.
 
 ## Ausleihen und Verschieben
 
-Die Methode `forward(&self, token_ids: Tensor<B, 2, Int>)` leiht das Modell aus,
+Die Methode `forward(&self, token_ids: Tensor<2, Int>)` leiht das Modell aus,
 übernimmt aber den Eingabetensor als Wert. Danach kann der Aufrufer dieselbe
 Tensorvariable nicht erneut verwenden.
 
@@ -76,7 +72,7 @@ mit `i64`; deshalb steht im Code `context_length as i64`.
 
 ## Lernbare Gewichte
 
-Burns `Embedding` enthält seine Tabelle als `Param<Tensor<B, 2>>`. `Param`
+Burns `Embedding` enthält seine Tabelle als `Param<Tensor<2>>`. `Param`
 kennzeichnet den Tensor als Modellparameter. Mit `#[derive(Module)]` erzeugt
 Burn den Code, der die Parameter unseres zusammengesetzten Moduls verwaltet.
 

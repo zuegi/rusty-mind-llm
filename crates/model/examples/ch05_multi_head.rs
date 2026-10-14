@@ -1,11 +1,9 @@
 //! Kapitel 5, Schritt 4: Multi-Head Attention mit Burn.
 //! Ausführen: cargo run -p model --example ch05_multi_head
 
-use burn::backend::NdArray;
-use burn::tensor::Tensor;
+use burn::tensor::{Device, Tensor};
 use model::attention::{MultiHeadAttentionConfig, NaiveMultiHeadAttentionConfig};
 
-type Cpu = NdArray<f32>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const EMBEDDING_DIM: usize = 4;
@@ -15,8 +13,8 @@ const INPUT: [[[f32; EMBEDDING_DIM]; 2]; 1] = [
 ];
 
 fn main() -> Demo {
-    let device = Default::default();
-    let input = Tensor::<Cpu, 3>::from_data(INPUT, &device);
+    let device = Device::flex();
+    let input = Tensor::<3>::from_data(INPUT, &device);
 
     // 1. Didaktische Variante mit einzelnen Köpfen
     let naive = NaiveMultiHeadAttentionConfig::new(EMBEDDING_DIM, NUM_HEADS).init(&device);
@@ -38,9 +36,9 @@ fn main() -> Demo {
     Ok(())
 }
 
-fn print_vectors(label: &str, tensor: Tensor<Cpu, 3>) -> Demo {
+fn print_vectors(label: &str, tensor: Tensor<3>) -> Demo {
     let [batch_size, context_length, dim] = tensor.dims();
-    let values = tensor.into_data().to_vec::<f32>()?;
+    let values = tensor.into_data().try_to_vec::<f32>()?;
     println!("{label}, Form [{batch_size}, {context_length}, {dim}]:");
     for (position, vector) in values.chunks(dim).enumerate() {
         let numbers: Vec<_> = vector.iter().map(|value| format!("{value:.3}")).collect();

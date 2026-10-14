@@ -434,8 +434,8 @@ die Values und die gewichtete Summe.
 {{#include ../../../crates/model/examples/ch05.rs:attention}}
 ```
 
-`Tensor<Cpu, 2>` ist ein zweidimensionaler Tensor auf dem CPU-Backend
-`NdArray<f32>`. `clone()` erhält einen Tensor für weitere Verwendungen, weil
+`Tensor<2>` ist ein zweidimensionaler Tensor. Die Demo wählt das CPU-Backend
+mit `Device::flex()`. `clone()` erhält einen Tensor für weitere Verwendungen, weil
 Burns Rechenoperationen ihre Eingaben in Rust verbrauchen.
 
 `matmul` führt Matrixmultiplikation aus, `transpose` vertauscht die beiden
@@ -1047,10 +1047,10 @@ Die Config beschreibt die Grössen; das Modell speichert die drei Projektionen.
 {{#include ../../../crates/model/src/attention.rs:config}}
 ```
 
-`Linear<B>` ist Burns lernbare lineare Projektion. Wir verwenden drei getrennte
+`Linear` ist Burns lernbare lineare Projektion. Wir verwenden drei getrennte
 Instanzen, jede mit eigener Gewichtsmatrix. Das `Module`-Derive macht ihre
-Parameter für Burn zugänglich. Das Backend bleibt generisch: `NdArray` für
-die Demo, `Autodiff<NdArray<f32>>` für Gradienten.
+Parameter für Burn zugänglich. Das Backend wählen wir über das Device:
+`Device::flex()` für die Demo, mit `.autodiff()` für Gradienten.
 
 #### Drei Schichten initialisieren
 
@@ -1064,7 +1064,7 @@ gewünschten Grössen; `init` erzeugt daraus die drei Schichten:
 
 Beide Funktionen stehen innerhalb derselben äusseren geschweiften Klammern
 von `impl SelfAttentionConfig`. `new` gibt mit `Self` eine Config zurück,
-`init` dagegen ein Modell vom Typ `SelfAttention<B>`.
+`init` dagegen ein Modell vom Typ `SelfAttention`.
 
 `with_bias(false)` lässt einen zusätzlichen lernbaren Summanden weg. So bleibt
 die Berechnung genau `X @ W` und passt zur Handrechnung. Dafür schreiben wir
@@ -1078,30 +1078,29 @@ Grössen und Indizes. Das Modell selbst enthält dagegen drei `Linear`-Schichten
 die jeweils eine Gewichtsmatrix und die dazugehörige Berechnung verwalten.
 `pub` macht diese Felder öffentlich; so kann die Demo die Gewichte ersetzen.
 
-`B` ist ein Platzhalter für die Rechenumgebung. `B: Backend` bedeutet:
-Der eingesetzte Typ muss Burns Tensoroperationen unterstützen. Das Wort
-*generisch* meint hier nur, dass unser Modell nicht fest auf einen bestimmten
-Backend-Typ beschränkt ist. In der Demo legt der Alias `Cpu` den konkreten Typ
-`NdArray<f32>` fest: CPU-Berechnung mit 32-Bit-Gleitkommazahlen.
+`SelfAttention` ist nicht fest auf einen Backend-Typ beschränkt.
+Seit Burn 0.22 gibt es dafür keinen Typparameter `B` mehr.
+Die Demo übergibt ein `Device::flex()`: CPU-Berechnung mit standardmässig
+32-Bit-Gleitkommazahlen. Die Tensoren tragen ihre Device-Zuordnung zur Laufzeit.
 
 `#[derive(Module, Debug)]` bittet Rust und Burn, Hilfscode zu erzeugen.
 `Module` ermöglicht die Verwaltung der enthaltenen Modellparameter; `Debug`
 ermöglicht eine Debug-Darstellung. Diesen erzeugten Code musst du nicht selbst
 schreiben oder für die Attention-Rechnung nachvollziehen.
 
-Das Modell hat einen eigenen `impl`-Block für `SelfAttention<B>`. Darin steht
+Das Modell hat einen eigenen `impl`-Block für `SelfAttention`. Darin steht
 `forward`, das die eigentliche Rechnung ausführt. Diesen Block betrachten wir
 vollständig unter [Berechnung verfolgen](#berechnung-verfolgen).
 Die Trennung ist wichtig: **Initialisieren erzeugt Parameter; `forward`
 verwendet sie, ohne sie zu trainieren.**
 
-In `init` ist `device: &B::Device` ein ausgeliehenes Gerät der gewählten
+In `init` ist `device: &Device` ein ausgeliehenes Gerät der gewählten
 Rechenumgebung. `&` bedeutet hier, dass wir das Gerät verwenden, ohne es zu
 übernehmen. Burns `LinearConfig` beschreibt eine einzelne Projektion.
 Wir rufen ihr `init` dreimal auf: gleiche Grössen, aber drei getrennte
 Schichten und Gewichtsmatrizen.
 
-Für die ersten Durchgänge reicht es, `Module`, `Backend` und die Initialisierung
+Für die ersten Durchgänge reicht es, `Module`, `Device` und die Initialisierung
 als Burn-Bausteine einzuordnen. Den Datenfluss in `forward` solltest du dagegen
 Schritt für Schritt verfolgen können. Weitere Rust-Grundlagen stehen im Exkurs
 [Rust-Grundlagen für das Embedding](../exkurse/rust-grundlagen-embedding.md);
@@ -1221,7 +1220,7 @@ die Ausgabe dann entsprechend breiter oder schmaler als die Eingabe.
 
 #### Eingabe prüfen
 
-Die Signatur `forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3>` sagt:
+Die Signatur `forward(&self, input: Tensor<3>) -> Tensor<3>` sagt:
 Wir leihen das Modell mit `&self` aus, übernehmen einen Eingabetensor und liefern
 einen Ausgabetensor zurück. Die `3` ist die Anzahl der Achsen, nicht deren
 Grösse. Welche konkreten Grössen der Tensor hat, liefert `dims()`.
@@ -1399,7 +1398,7 @@ Demo betrachtet. Zuletzt prüfen wir, was an diesem Baustein "trainierbar" ist.
 Die Tests berechnen Gradienten, verändern aber noch keine Parameter.
 
 Die Integrationstests in `crates/model/tests/attention.rs` verwenden denselben
-Baustein auch mit `Autodiff<NdArray<f32>>`. Wie in Kapitel 4 summieren sie die
+Baustein auch mit `Device::flex().autodiff()`. Wie in Kapitel 4 summieren sie die
 Ausgabe und rufen `backward()` auf. Sie prüfen endliche, nicht durchweg null
 gesetzte Gradienten für alle drei Projektionsmatrizen und die markierte Eingabe.
 Softmax und Matrixmultiplikationen bleiben Teil von Burns Rechengraph.
@@ -1611,7 +1610,7 @@ Die Zeilen im Detail:
 
 1. **`if context_length > 1`**: Bei einem einzelnen Token (`context_length == 1`)
    gibt es keine Zukunft. Die Maskierung kann übersprungen werden.
-2. **`Tensor::<B, 2>::ones([context_length, context_length], ...)`**: Erzeugt
+2. **`Tensor::<2>::ones([context_length, context_length], ...)`**: Erzeugt
    eine quadratische 2D-Matrix aus Einsen.
 3. **`.triu(1)`** (*upper triangular*): Behält nur Werte **oberhalb** der
    Hauptdiagonale (Offset 1) und setzt Diagonale sowie untere Werte auf 0.

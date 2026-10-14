@@ -1,10 +1,8 @@
 //! Kapitel 6, Schritt 3: Gradient durch viele Schichten, mit und ohne Residual.
 //! Ausführen: cargo run -p model --example ch06_residual
 
-use burn::backend::{Autodiff, NdArray};
-use burn::tensor::Tensor;
+use burn::tensor::{Device, Tensor};
 
-type Ad = Autodiff<NdArray<f32>>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const LAYER_SCALE: f32 = 0.1;
@@ -22,7 +20,7 @@ fn main() -> Demo {
 
 // ANCHOR: stack
 fn gradient_at_input(layers: usize, residual: bool) -> Result<f32, Box<dyn std::error::Error>> {
-    let x = Tensor::<Ad, 1>::from_data([1.0], &Default::default()).require_grad();
+    let x = Tensor::<1>::from_data([1.0], &Device::flex().autodiff()).require_grad();
     let mut hidden = x.clone();
     for _ in 0..layers {
         let update = hidden.clone() * LAYER_SCALE;
@@ -30,6 +28,6 @@ fn gradient_at_input(layers: usize, residual: bool) -> Result<f32, Box<dyn std::
     }
     let grads = hidden.backward();
     let gradient = x.grad(&grads).ok_or("kein Gradient")?;
-    Ok(gradient.into_data().to_vec::<f32>()?[0])
+    Ok(gradient.into_data().try_to_vec::<f32>()?[0])
 }
 // ANCHOR_END: stack
