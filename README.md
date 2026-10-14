@@ -32,15 +32,18 @@ Bisher umgesetzt:
 
 - **Trainingsschleife und Validierung:** Mehrere Epochen mit erhaltenem
   Optimizer; Loss-Messung auf getrennten Daten ohne Gewichtsupdates.
+- **Checkpoints:** Modellgewichte mit Burns `DefaultRecorder` speichern und
+  mit expliziter Modellkonfiguration laden. Der Optimizer-Zustand wird noch
+  nicht gespeichert.
 
-Als Nächstes folgen Checkpoints und Textgenerierung. `model` enthält bewusst nur
+Als Nächstes folgt Textgenerierung. `model` enthält bewusst nur
 Modellberechnung; Trainingsinfrastruktur bleibt im Crate `training`.
 
 ## Projektstruktur
 
 ```text
 crates/
-  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2, 8 und 9
+  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2, 8, 9 und 10
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -102,6 +105,9 @@ cargo run -p training --example ch08
 
 # Kapitel 9: Trainingsschleife und getrennte Validierung
 cargo run -p training --example ch09
+
+# Kapitel 10: Modellgewichte speichern und laden
+cargo run -p training --example ch10
 ```
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
@@ -150,6 +156,9 @@ cargo test -p training --test ch08
 
 # Trainingsschleife und Auswertung ohne Gewichtsupdates
 cargo test -p training --test ch09
+
+# Modellgewichte speichern und laden
+cargo test -p training --test ch10
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
