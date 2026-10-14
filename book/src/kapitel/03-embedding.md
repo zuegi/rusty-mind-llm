@@ -171,16 +171,16 @@ Batch macht die Fenster nicht zu einem einzigen langen Text.
 
 ## Tensorformen in Rust
 
-Burn beschreibt unsere Eingabe mit dem Typ `Tensor<B, 2, Int>`:
+Burn beschreibt unsere Eingabe mit dem Typ `Tensor<2, Int>`:
 
-- `B` ist das Backend: Es legt fest, wie und wo gerechnet wird.
+- Das Device des Tensors legt fest, wie und wo gerechnet wird; es ist kein Typparameter.
 - `2` ist die Anzahl der Dimensionen, nicht die Fensterlänge.
 - `Int` steht für Ganzzahlen, also unsere Token-IDs.
 
 Sowohl die Form `[2, 3]` als auch `[8, 16]` hat zwei Dimensionen und damit denselben
 Rust-Typ. Die konkreten Grössen stehen im Tensor.
 
-Die Embedding-Ausgabe hat den Typ `Tensor<B, 3>`. Ohne dritte Typangabe verwendet
+Die Embedding-Ausgabe hat den Typ `Tensor<3>`. Ohne zweite Typangabe verwendet
 Burn Gleitkommazahlen. Die `3` zählt die drei Achsen: Batch, Position und
 Embedding-Dimension. Auch eine Ausgabe mit der Form `[2, 7, 4]` hat diesen Typ,
 obwohl jedes Fenster sieben Tokens enthält.
@@ -194,8 +194,8 @@ in Rust. Eine kurze Einführung steht im Exkurs [Burn: Die Bausteine](../exkurse
 
 Modellcode liegt in der eigenen Crate `crates/model`. Der DataLoader bleibt in
 `crates/training`; das Modell hängt nicht vom Trainingsbereich ab. Wir verwenden
-Burn 0.21 mit seiner hier erklärten backend-generischen Tensor-API.
-Für Demo und Tests genügt das reine Rust-CPU-Backend `NdArray<f32>`, ohne GPU.
+Burn 0.22 mit backendfreien Tensor- und Modelltypen.
+Für Demo und Tests genügt `Device::ndarray()`, ohne GPU.
 
 Rust-Hintergrund zu den folgenden Typen und Methoden steht im Exkurs
 [Rust-Grundlagen für das Embedding](../exkurse/rust-grundlagen-embedding.md).
@@ -304,6 +304,6 @@ Tabellen mit ganzen Zahlen als Gleitkommawerte. Dadurch lässt sich das Ergebnis
 exakt prüfen: Nachschlagen, Addition, Positionen pro Fenster und kürzere Fenster.
 Weitere Tests prüfen ungültige Grössen und zu lange oder leere Fenster.
 
-Ein Test verwendet `Autodiff<NdArray<f32>>`. Er prüft, dass beide Tabellen die
+Ein Test verwendet `Device::ndarray().autodiff()`. Er prüft, dass beide Tabellen die
 richtige Form haben und für beide Gewichte Gradienten entstehen. Das bestätigt
 ihre Lernbarkeit, ohne bereits eine Trainingsschleife einzuführen.

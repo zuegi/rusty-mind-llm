@@ -1,13 +1,11 @@
 //! Kapitel 6, Schritt 6: Transformer-Blöcke hinter dem Embedding.
 //! Ausführen: cargo run -p model --example ch06
 
-use burn::backend::NdArray;
 use burn::module::Module;
-use burn::tensor::{Int, Tensor};
+use burn::tensor::{Device, Int, Tensor};
 use model::embedding::GptEmbeddingConfig;
 use model::transformer_block::TransformerBlockConfig;
 
-type Cpu = NdArray<f32>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const VOCAB_SIZE: usize = 50;
@@ -20,14 +18,14 @@ const TOKEN_IDS: [[i32; CONTEXT_LENGTH]; 1] = [[1, 2, 3, 4]];
 const CHANGED_LAST_TOKEN: [[i32; CONTEXT_LENGTH]; 1] = [[1, 2, 3, 9]];
 
 fn main() -> Demo {
-    let device = Default::default();
+    let device = Device::ndarray();
     let embedding =
-        GptEmbeddingConfig::new(VOCAB_SIZE, CONTEXT_LENGTH, EMBEDDING_DIM).init::<Cpu>(&device);
+        GptEmbeddingConfig::new(VOCAB_SIZE, CONTEXT_LENGTH, EMBEDDING_DIM).init(&device);
     let blocks: Vec<_> = (0..NUM_BLOCKS)
-        .map(|_| TransformerBlockConfig::new(EMBEDDING_DIM, NUM_HEADS).init::<Cpu>(&device))
+        .map(|_| TransformerBlockConfig::new(EMBEDDING_DIM, NUM_HEADS).init(&device))
         .collect();
 
-    let ids = Tensor::<Cpu, 2, Int>::from_data(TOKEN_IDS, &device);
+    let ids = Tensor::<2, Int>::from_data(TOKEN_IDS, &device);
     let embedded = embedding.forward(ids);
     show("Embedding x", &embedded)?;
 
@@ -44,21 +42,21 @@ fn main() -> Demo {
 
 // ANCHOR: stack
 fn run(
-    embedding: &model::embedding::GptEmbedding<Cpu>,
-    blocks: &[model::transformer_block::TransformerBlock<Cpu>],
+    embedding: &model::embedding::GptEmbedding,
+    blocks: &[model::transformer_block::TransformerBlock],
     token_ids: [[i32; CONTEXT_LENGTH]; 1],
 ) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
-    let ids = Tensor::<Cpu, 2, Int>::from_data(token_ids, &Default::default());
+    let ids = Tensor::<2, Int>::from_data(token_ids, &Device::ndarray());
     let output = blocks
         .iter()
         .fold(embedding.forward(ids), |hidden, block| block.forward(hidden));
-    Ok(output.into_data().to_vec::<f32>()?)
+    Ok(output.into_data().try_to_vec::<f32>()?)
 }
 // ANCHOR_END: stack
 
 fn print_causality(
-    embedding: &model::embedding::GptEmbedding<Cpu>,
-    blocks: &[model::transformer_block::TransformerBlock<Cpu>],
+    embedding: &model::embedding::GptEmbedding,
+    blocks: &[model::transformer_block::TransformerBlock],
 ) -> Demo {
     let before = run(embedding, blocks, TOKEN_IDS)?;
     let after = run(embedding, blocks, CHANGED_LAST_TOKEN)?;
@@ -74,8 +72,8 @@ fn print_causality(
     Ok(())
 }
 
-fn show(label: &str, tensor: &Tensor<Cpu, 3>) -> Demo {
-    let values = tensor.clone().into_data().to_vec::<f32>()?;
+fn show(label: &str, tensor: &Tensor<3>) -> Demo {
+    let values = tensor.clone().into_data().try_to_vec::<f32>()?;
     let shown: Vec<_> = values[..SHOWN_VALUES]
         .iter()
         .map(|value| format!("{value:.3}"))

@@ -1,28 +1,19 @@
 use std::path::Path;
 
-use burn::{
-    module::Module,
-    record::{DefaultRecorder, RecorderError},
-    tensor::backend::Backend,
-};
+use burn::{module::Module, store::RecordError, tensor::Device};
 use model::gpt::{GptModel, GptModelConfig};
 
-/// Speichert die Modellgewichte als Burn-Record.
-pub fn save_model<B: Backend>(
-    model: &GptModel<B>,
-    path: impl AsRef<Path>,
-) -> Result<(), RecorderError> {
-    model
-        .clone()
-        .save_file(path.as_ref(), &DefaultRecorder::new())
+/// Speichert die Modellgewichte als Burnpack-Datei am angegebenen Pfad.
+pub fn save_model(model: &GptModel, path: impl AsRef<Path>) -> Result<(), RecordError> {
+    model.clone().save_file(path)
 }
 
 /// Initialisiert Modell mit `config` und lädt danach gespeicherte Gewichte.
-pub fn load_model<B: Backend>(
+pub fn load_model(
     config: &GptModelConfig,
     path: impl AsRef<Path>,
-    device: &B::Device,
-) -> Result<GptModel<B>, RecorderError> {
+    device: &Device,
+) -> Result<GptModel, RecordError> {
     let model = config.init(device);
-    model.load_file(path.as_ref(), &DefaultRecorder::new(), device)
+    model.try_load_file(path)
 }

@@ -1,6 +1,6 @@
 use burn::module::Module;
 use burn::nn::{Linear, LinearConfig};
-use burn::tensor::{Tensor, activation::gelu, backend::Backend};
+use burn::tensor::{Device, Tensor, activation::gelu};
 
 const EXPANSION_FACTOR: usize = 4;
 
@@ -11,9 +11,9 @@ pub struct FeedForwardConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct FeedForward<B: Backend> {
-    pub expand: Linear<B>,
-    pub contract: Linear<B>,
+pub struct FeedForward {
+    pub expand: Linear,
+    pub contract: Linear,
 }
 // ANCHOR_END: config
 
@@ -22,7 +22,7 @@ impl FeedForwardConfig {
         Self { embedding_dim }
     }
 
-    pub fn init<B: Backend>(&self, device: &B::Device) -> FeedForward<B> {
+    pub fn init(&self, device: &Device) -> FeedForward {
         assert!(self.embedding_dim > 0, "embedding_dim must be positive");
         let hidden_dim = EXPANSION_FACTOR * self.embedding_dim;
         FeedForward {
@@ -32,9 +32,9 @@ impl FeedForwardConfig {
     }
 }
 
-impl<B: Backend> FeedForward<B> {
+impl FeedForward {
     // ANCHOR: forward
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+    pub fn forward(&self, input: Tensor<3>) -> Tensor<3> {
         let hidden = gelu(self.expand.forward(input));
         self.contract.forward(hidden)
     }

@@ -131,7 +131,7 @@ Achsennummer kann also je nach Tensor etwas anderes bedeuten.
 ```
 
 `Param` markiert Tensoren, die Burn als lernbar behandelt. `scale` und `shift`
-sind Vektoren (`Tensor<B, 1>`).
+sind Vektoren (`Tensor<1>`).
 
 ```rust,ignore
 {{#include ../../../crates/model/src/layer_norm.rs:forward}}
@@ -198,7 +198,7 @@ Zwei Unterschiede im Aufbau fallen auf:
 | ----------- | -------------------- |
 | `scale`     | `gamma`              |
 | `shift`     | `beta` (optional)    |
-| nur `[B, T, E]` (`Tensor<B, 3>`) | beliebiger Rang |
+| nur `[B, T, E]` (`Tensor<3>`) | beliebiger Rang |
 
 Wir haben bewusst nur den Fall gebaut, den der Transformer-Block braucht.
 Im Rest des Kapitels bleibt unser eigenes `LayerNorm` im Block. Du kannst es
@@ -251,7 +251,7 @@ Attention-Projektionen haben sie einen Bias (Standard von `LinearConfig`).
 ```
 
 Die Methode hat nur zwei Zeilen: erst `expand` und `gelu`, dann `contract`.
-Der Eingang ist `Tensor<B, 3>` mit Form `[B, T, E]`. `Linear` wirkt auf die
+Der Eingang ist `Tensor<3>` mit Form `[B, T, E]`. `Linear` wirkt auf die
 letzte Achse, Achse 2. Alle Fenster und Positionen werden so mit denselben
 Gewichten behandelt, jede für sich.
 

@@ -1,12 +1,10 @@
 //! Kapitel 3: Token- und Positions-Embedding mit nachrechenbaren Gewichten.
 //! Ausführen: cargo run -p model --example ch03
 
-use burn::backend::NdArray;
 use burn::module::Param;
-use burn::tensor::{Int, Tensor};
+use burn::tensor::{Device, Int, Tensor};
 use model::embedding::{GptEmbedding, GptEmbeddingConfig};
 
-type Cpu = NdArray<f32>;
 
 const VOCAB_SIZE: usize = 5;
 const MAX_CONTEXT_LENGTH: usize = 3;
@@ -24,8 +22,8 @@ const POSITION_WEIGHTS: [[f32; EMBEDDING_DIM]; MAX_CONTEXT_LENGTH] = [
     [0.0, -0.1, 0.0, 0.2],
 ];
 
-fn example_embedding() -> GptEmbedding<Cpu> {
-    let device = Default::default();
+fn example_embedding() -> GptEmbedding {
+    let device = Device::ndarray();
     let config = GptEmbeddingConfig::new(VOCAB_SIZE, MAX_CONTEXT_LENGTH, EMBEDDING_DIM);
     let mut embedding = config.init(&device);
     embedding.token.weight = Param::from_tensor(Tensor::from_data(TOKEN_WEIGHTS, &device));
@@ -34,14 +32,14 @@ fn example_embedding() -> GptEmbedding<Cpu> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device = Default::default();
+    let device = Device::ndarray();
     let embedding = example_embedding();
-    let token_ids = Tensor::<Cpu, 2, Int>::from_data([[1, 1, 3], [0, 2, 4]], &device);
+    let token_ids = Tensor::<2, Int>::from_data([[1, 1, 3], [0, 2, 4]], &device);
     println!("Vokabular: 0=Der, 1=Hund, 2=Katze, 3=rennt, 4=.");
-    println!("Eingabe: {:?}", token_ids.to_data().to_vec::<i64>()?);
+    println!("Eingabe: {:?}", token_ids.to_data().try_to_vec::<i64>()?);
     println!("Eingabeform: {:?}", token_ids.dims());
     print_vectors("Token-Vektoren", embedding.token.forward(token_ids.clone()))?;
-    let positions = Tensor::<Cpu, 2, Int>::from_data([[0, 1, 2]], &device);
+    let positions = Tensor::<2, Int>::from_data([[0, 1, 2]], &device);
     print_vectors(
         "Positions-Vektoren (für jedes Fenster)",
         embedding.position.forward(positions),
@@ -50,9 +48,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn print_vectors(label: &str, tensor: Tensor<Cpu, 3>) -> Result<(), Box<dyn std::error::Error>> {
+fn print_vectors(label: &str, tensor: Tensor<3>) -> Result<(), Box<dyn std::error::Error>> {
     let [batch_size, context_length, embedding_dim] = tensor.dims();
-    let values = tensor.into_data().to_vec::<f32>()?;
+    let values = tensor.into_data().try_to_vec::<f32>()?;
     println!("{label}, Form [{batch_size}, {context_length}, {embedding_dim}]:");
     for (batch, window) in values.chunks(context_length * embedding_dim).enumerate() {
         for (position, vector) in window.chunks(embedding_dim).enumerate() {

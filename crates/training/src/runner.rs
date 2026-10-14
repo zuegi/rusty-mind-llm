@@ -1,21 +1,18 @@
-use burn::optim::{LearningRate, Optimizer};
-use burn::tensor::{
-    ElementConversion,
-    backend::{AutodiffBackend, Backend},
-};
+use burn::tensor::Device;
+use burn::optim::{LearningRate, ModuleOptimizer};
 use model::gpt::GptModel;
 
 use crate::{dataset::Dataset, loss::cross_entropy, step::train_step};
 
 // ANCHOR: train_epoch
 /// Trainiert einmal auf allen vollständigen, gemischten Batches.
-pub fn train_epoch<B: AutodiffBackend, O: Optimizer<GptModel<B>, B>>(
-    mut model: GptModel<B>,
+pub fn train_epoch(
+    mut model: GptModel,
     batches: &[crate::dataset::Batch],
     learning_rate: LearningRate,
-    optimizer: &mut O,
-    device: &B::Device,
-) -> (GptModel<B>, usize) {
+    optimizer: &mut ModuleOptimizer,
+    device: &Device,
+) -> (GptModel, usize) {
     assert!(!batches.is_empty(), "Keine vollständigen Trainingsbatches");
     for batch in batches {
         let (inputs, targets) = batch.to_tensors(device);
@@ -27,14 +24,14 @@ pub fn train_epoch<B: AutodiffBackend, O: Optimizer<GptModel<B>, B>>(
 
 // ANCHOR: evaluate
 /// Mittlerer Loss aller Positionen mit festen Gewichten, ohne Autodiff.
-pub fn evaluate<B: Backend>(
-    model: &GptModel<B>,
+pub fn evaluate(
+    model: &GptModel,
     dataset: &Dataset,
     batch_size: usize,
-    device: &B::Device,
+    device: &Device,
 ) -> f64 {
     assert!(
-        !B::ad_enabled(device),
+        !device.is_autodiff(),
         "Auswertung braucht ein Backend ohne Autodiff"
     );
     assert!(!dataset.is_empty(), "Keine Fenster für die Auswertung");
@@ -43,9 +40,12 @@ pub fn evaluate<B: Backend>(
     for batch in dataset.batches(batch_size) {
         let count = batch.inputs.len() * dataset.context_length();
         let (inputs, targets) = batch.to_tensors(device);
-        let loss = cross_entropy(model.forward(inputs), targets)
-            .into_scalar()
-            .elem::<f64>();
+        let logits = model.forward(inputs);
+        assert!(
+            !logits.is_autodiff(),
+            "Auswertung braucht ein Backend ohne Autodiff"
+        );
+        let loss = f64::from(cross_entropy(logits, targets).into_scalar::<f32>());
         assert!(loss.is_finite(), "Nicht endlicher Loss bei der Auswertung");
         total_loss += loss * count as f64;
         positions += count;

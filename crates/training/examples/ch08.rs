@@ -2,16 +2,13 @@
 //! Ausführen: cargo run -p training --example ch08
 
 // ANCHOR: setup
-use burn::backend::{Autodiff, NdArray};
-use burn::module::AutodiffModule;
-use burn::tensor::backend::Backend;
+use burn::tensor::Device;
+use burn::module::Module;
 use model::gpt::{GptModel, GptModelConfig};
 use training::dataset::{Batch, Dataset};
 use training::loss::cross_entropy;
 use training::step::sgd_step;
 
-type Cpu = NdArray<f32>;
-type Ad = Autodiff<Cpu>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const VOCAB_SIZE: usize = 5;
@@ -37,8 +34,8 @@ fn batch() -> Result<Batch, Box<dyn std::error::Error>> {
 // ANCHOR_END: batch
 
 // ANCHOR: model
-fn model<B: Backend>(device: &B::Device) -> GptModel<B> {
-    B::seed(device, SEED);
+fn model(device: &Device) -> GptModel {
+    device.seed(SEED);
     GptModelConfig::new(
         VOCAB_SIZE,
         CONTEXT_LENGTH,
@@ -52,18 +49,19 @@ fn model<B: Backend>(device: &B::Device) -> GptModel<B> {
 
 // ANCHOR: main
 fn main() -> Demo {
-    let device = Default::default();
+    let device = Device::ndarray().autodiff();
     let batch = batch()?;
     println!("Eingaben: {:?}", batch.inputs);
     println!("Ziele:    {:?}", batch.targets);
-    let (inputs, targets) = batch.to_tensors::<Ad>(&device);
+    let (inputs, targets) = batch.to_tensors(&device);
     println!("Tensorformen: {:?}, {:?}", inputs.dims(), targets.dims());
-    let (updated, before) = sgd_step(model::<Ad>(&device), inputs, targets, LEARNING_RATE);
-    let (inputs, targets) = batch.to_tensors::<Cpu>(&device);
+    let (updated, before) = sgd_step(model(&device), inputs, targets, LEARNING_RATE);
+    let device = device.without_autodiff();
+    let (inputs, targets) = batch.to_tensors(&device);
     let after = cross_entropy(updated.valid().forward(inputs), targets);
     println!("Lernrate: {LEARNING_RATE}");
-    println!("Loss vor SGD:  {:.6}", before.into_scalar());
-    println!("Loss nach SGD: {:.6}", after.into_scalar());
+    println!("Loss vor SGD:  {:.6}", before.into_scalar::<f32>());
+    println!("Loss nach SGD: {:.6}", after.into_scalar::<f32>());
     Ok(())
 }
 // ANCHOR_END: main

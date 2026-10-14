@@ -1,10 +1,7 @@
-use burn::backend::{Autodiff, NdArray};
 use burn::module::Module;
-use burn::tensor::{Int, Tensor};
+use burn::tensor::{Device, Int, Tensor};
 use model::gpt::GptModelConfig;
 
-type Cpu = NdArray<f32>;
-type Ad = Autodiff<NdArray<f32>>;
 
 const VOCAB_SIZE: usize = 10;
 const CONTEXT_LENGTH: usize = 3;
@@ -24,16 +21,16 @@ fn config() -> GptModelConfig {
 
 #[test]
 fn forward_returns_one_logit_per_vocabulary_entry() {
-    let device = Default::default();
-    let model = config().init::<Cpu>(&device);
-    let ids = Tensor::<Cpu, 2, Int>::from_data([[1, 2, 3], [3, 2, 1]], &device);
+    let device = Device::ndarray();
+    let model = config().init(&device);
+    let ids = Tensor::<2, Int>::from_data([[1, 2, 3], [3, 2, 1]], &device);
 
     assert_eq!(model.forward(ids).dims(), [2, CONTEXT_LENGTH, VOCAB_SIZE]);
 }
 
 #[test]
 fn output_projection_is_separate_and_counted() {
-    let model = config().init::<Cpu>(&Default::default());
+    let model = config().init(&Device::ndarray());
 
     assert_eq!(
         model.output_projection.weight.dims(),
@@ -45,17 +42,17 @@ fn output_projection_is_separate_and_counted() {
 
 #[test]
 fn later_tokens_do_not_change_earlier_logits() {
-    let device = Default::default();
-    let model = config().init::<Cpu>(&device);
+    let device = Device::ndarray();
+    let model = config().init(&device);
     let before = model
-        .forward(Tensor::<Cpu, 2, Int>::from_data([[1, 2, 3]], &device))
+        .forward(Tensor::<2, Int>::from_data([[1, 2, 3]], &device))
         .into_data()
-        .to_vec::<f32>()
+        .try_to_vec::<f32>()
         .unwrap();
     let after = model
-        .forward(Tensor::<Cpu, 2, Int>::from_data([[1, 2, 9]], &device))
+        .forward(Tensor::<2, Int>::from_data([[1, 2, 9]], &device))
         .into_data()
-        .to_vec::<f32>()
+        .try_to_vec::<f32>()
         .unwrap();
 
     for (old, new) in before[..2 * VOCAB_SIZE]
@@ -68,9 +65,9 @@ fn later_tokens_do_not_change_earlier_logits() {
 
 #[test]
 fn gradients_reach_gpt_embedding_blocks_and_output_projection() {
-    let device = Default::default();
-    let model = config().init::<Ad>(&device);
-    let ids = Tensor::<Ad, 2, Int>::from_data([[1, 2, 3]], &device);
+    let device = Device::ndarray().autodiff();
+    let model = config().init(&device);
+    let ids = Tensor::<2, Int>::from_data([[1, 2, 3]], &device);
     let gradients = model.forward(ids).powf_scalar(2.0).sum().backward();
 
     assert!(
@@ -105,5 +102,5 @@ fn gradients_reach_gpt_embedding_blocks_and_output_projection() {
 #[should_panic(expected = "num_blocks must be positive")]
 fn rejects_zero_blocks() {
     GptModelConfig::new(VOCAB_SIZE, CONTEXT_LENGTH, EMBEDDING_DIM, NUM_HEADS, 0)
-        .init::<Cpu>(&Default::default());
+        .init(&Device::ndarray());
 }

@@ -1,15 +1,12 @@
-use burn::backend::{Autodiff, NdArray};
-use burn::module::AutodiffModule;
+use burn::module::Module;
 use burn::optim::SgdConfig;
-use burn::tensor::{Int, Tensor};
+use burn::tensor::{Device, Int, Tensor};
 use model::gpt::{GptModel, GptModelConfig};
 use training::dataset::{Batch, Dataset, split_tokens};
 use training::loss::cross_entropy;
 use training::runner::{evaluate, train_epoch};
 use training::step::train_step;
 
-type Cpu = NdArray<f32>;
-type Ad = Autodiff<Cpu>;
 
 const VOCAB_SIZE: usize = 5;
 const CONTEXT_LENGTH: usize = 3;
@@ -23,7 +20,7 @@ const TOKEN_COUNT: usize = 101;
 const EPOCHS: usize = 10;
 const SEED: u64 = 42;
 
-fn model() -> GptModel<Ad> {
+fn model() -> GptModel {
     let model = GptModelConfig::new(
         VOCAB_SIZE,
         CONTEXT_LENGTH,
@@ -31,8 +28,8 @@ fn model() -> GptModel<Ad> {
         NUM_HEADS,
         NUM_BLOCKS,
     )
-    .init(&Default::default());
-    let inputs = Tensor::<Ad, 2, Int>::zeros([1, CONTEXT_LENGTH], &Default::default());
+    .init(&Device::ndarray().autodiff());
+    let inputs = Tensor::<2, Int>::zeros([1, CONTEXT_LENGTH], &Device::ndarray().autodiff());
     let _ = model.forward(inputs).into_data();
     model
 }
@@ -46,23 +43,23 @@ fn datasets() -> (Dataset, Dataset) {
     )
 }
 
-fn projection(model: &GptModel<Ad>) -> Vec<f32> {
+fn projection(model: &GptModel) -> Vec<f32> {
     model
         .output_projection
         .weight
         .val()
         .into_data()
-        .to_vec::<f32>()
+        .try_to_vec::<f32>()
         .unwrap()
 }
 
-fn window_loss(model: &GptModel<Cpu>, window: &training::dataset::Window) -> f64 {
+fn window_loss(model: &GptModel, window: &training::dataset::Window) -> f64 {
     let batch = Batch {
         inputs: vec![window.input.clone()],
         targets: vec![window.target.clone()],
     };
-    let (inputs, targets) = batch.to_tensors(&Default::default());
-    cross_entropy(model.forward(inputs), targets).into_scalar() as f64
+    let (inputs, targets) = batch.to_tensors(&Device::ndarray().autodiff());
+    cross_entropy(model.forward(inputs), targets).into_scalar::<f32>() as f64
 }
 
 #[test]
@@ -91,7 +88,7 @@ fn evaluate_weights_partial_batch_by_positions_and_never_updates_model() {
         .sum::<f64>()
         / train.len() as f64;
     for batch_size in [1, 4, 100] {
-        let actual = evaluate(&fixed, &train, batch_size, &Default::default());
+        let actual = evaluate(&fixed, &train, batch_size, &Device::ndarray());
         assert!((actual - expected).abs() < TOLERANCE);
     }
     assert_eq!(projection(&model), before);
@@ -105,7 +102,7 @@ fn epoch_matches_one_manual_update_per_batch() {
     let mut optimizer = SgdConfig::new().init();
     let mut manual = model.clone();
     for batch in &batches {
-        let (inputs, targets) = batch.to_tensors(&Default::default());
+        let (inputs, targets) = batch.to_tensors(&Device::ndarray());
         (manual, _) = train_step(manual, inputs, targets, LEARNING_RATE, &mut optimizer);
     }
     let mut optimizer = SgdConfig::new().init();
@@ -114,7 +111,7 @@ fn epoch_matches_one_manual_update_per_batch() {
         &batches,
         LEARNING_RATE,
         &mut optimizer,
-        &Default::default(),
+        &Device::ndarray().autodiff(),
     );
     assert_eq!(steps, train.len() / BATCH_SIZE);
     assert_eq!(projection(&updated), projection(&manual));
@@ -124,13 +121,15 @@ fn epoch_matches_one_manual_update_per_batch() {
 fn repeated_epochs_reduce_train_and_held_out_pattern_loss() {
     let mut model = model();
     let (train, validation) = datasets();
-    let device = Default::default();
+    let device = Device::ndarray();
     let before_train = evaluate(&model.valid(), &train, BATCH_SIZE, &device);
     let before_validation = evaluate(&model.valid(), &validation, BATCH_SIZE, &device);
     let mut optimizer = SgdConfig::new().init();
     for epoch in 1..=EPOCHS {
         let batches = train.epoch(BATCH_SIZE, SEED + epoch as u64);
-        (model, _) = train_epoch(model, &batches, LEARNING_RATE, &mut optimizer, &device);
+        (model, _) = train_epoch(
+            model, &batches, LEARNING_RATE, &mut optimizer, &device.clone().autodiff(),
+        );
     }
     let after_train = evaluate(&model.valid(), &train, BATCH_SIZE, &device);
     let after_validation = evaluate(&model.valid(), &validation, BATCH_SIZE, &device);
@@ -147,7 +146,7 @@ fn rejects_epoch_without_complete_batch() {
         &[],
         LEARNING_RATE,
         &mut optimizer,
-        &Default::default(),
+        &Device::ndarray().autodiff(),
     );
 }
 
@@ -155,14 +154,21 @@ fn rejects_epoch_without_complete_batch() {
 #[should_panic(expected = "Auswertung braucht ein Backend ohne Autodiff")]
 fn rejects_evaluation_on_autodiff_backend() {
     let (train, _) = datasets();
-    evaluate(&model(), &train, BATCH_SIZE, &Default::default());
+    evaluate(&model(), &train, BATCH_SIZE, &Device::ndarray());
+}
+
+#[test]
+#[should_panic(expected = "Auswertung braucht ein Backend ohne Autodiff")]
+fn rejects_autodiff_input_device_even_for_validation_model() {
+    let (train, _) = datasets();
+    evaluate(&model().valid(), &train, BATCH_SIZE, &Device::ndarray().autodiff());
 }
 
 #[test]
 #[should_panic(expected = "batch_size muss größer als 0 sein")]
 fn rejects_zero_evaluation_batch_size() {
     let (train, _) = datasets();
-    evaluate(&model().valid(), &train, 0, &Default::default());
+    evaluate(&model().valid(), &train, 0, &Device::ndarray());
 }
 
 #[test]
@@ -182,11 +188,11 @@ fn validation_windows_stay_within_their_original_split() {
 #[should_panic(expected = "Nicht endlicher Loss bei der Auswertung")]
 fn rejects_non_finite_evaluation_loss() {
     let mut fixed = model().valid();
-    fixed.output_projection.weight = burn::module::Param::from_tensor(Tensor::<Cpu, 2>::full(
+    fixed.output_projection.weight = burn::module::Param::from_tensor(Tensor::<2>::full(
         [EMBEDDING_DIM, VOCAB_SIZE],
         f32::NAN,
-        &Default::default(),
+        &Device::ndarray(),
     ));
     let (train, _) = datasets();
-    evaluate(&fixed, &train, BATCH_SIZE, &Default::default());
+    evaluate(&fixed, &train, BATCH_SIZE, &Device::ndarray());
 }

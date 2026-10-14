@@ -1,6 +1,6 @@
 use burn::module::Module;
 use burn::nn::{Linear, LinearConfig};
-use burn::tensor::{Tensor, activation::softmax, backend::Backend};
+use burn::tensor::{Device, Tensor, activation::softmax};
 
 // ANCHOR: config
 #[derive(Debug)]
@@ -10,10 +10,10 @@ pub struct SelfAttentionConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct SelfAttention<B: Backend> {
-    pub query: Linear<B>,
-    pub key: Linear<B>,
-    pub value: Linear<B>,
+pub struct SelfAttention {
+    pub query: Linear,
+    pub key: Linear,
+    pub value: Linear,
 }
 // ANCHOR_END: config
 
@@ -27,7 +27,7 @@ impl SelfAttentionConfig {
     }
 
     // ANCHOR: init
-    pub fn init<B: Backend>(&self, device: &B::Device) -> SelfAttention<B> {
+    pub fn init(&self, device: &Device) -> SelfAttention {
         assert!(self.embedding_dim > 0, "embedding_dim must be positive");
         assert!(self.head_dim > 0, "head_dim must be positive");
         let projection = LinearConfig::new(self.embedding_dim, self.head_dim).with_bias(false);
@@ -42,9 +42,9 @@ impl SelfAttentionConfig {
 // ANCHOR_END: config_impl
 
 // ANCHOR: model_impl
-impl<B: Backend> SelfAttention<B> {
+impl SelfAttention {
     // ANCHOR: forward
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+    pub fn forward(&self, input: Tensor<3>) -> Tensor<3> {
         let [batch_size, context_length, embedding_dim] = input.dims();
         let [expected_dim, head_dim] = self.query.weight.dims();
         assert!(
@@ -58,7 +58,7 @@ impl<B: Backend> SelfAttention<B> {
 // ANCHOR: causal_mask
         let mut scores = query.matmul(key.swap_dims(1, 2)) / (head_dim as f64).sqrt();
         if context_length > 1 {
-            let mask = Tensor::<B, 2>::ones([context_length, context_length], &scores.device())
+            let mask = Tensor::<2>::ones([context_length, context_length], &scores.device())
                 .triu(1)
                 .bool()
                 .unsqueeze();
@@ -80,9 +80,9 @@ pub struct NaiveMultiHeadAttentionConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct NaiveMultiHeadAttention<B: Backend> {
-    pub heads: Vec<SelfAttention<B>>,
-    pub output_projection: Linear<B>,
+pub struct NaiveMultiHeadAttention {
+    pub heads: Vec<SelfAttention>,
+    pub output_projection: Linear,
 }
 
 impl NaiveMultiHeadAttentionConfig {
@@ -93,7 +93,7 @@ impl NaiveMultiHeadAttentionConfig {
         }
     }
 
-    pub fn init<B: Backend>(&self, device: &B::Device) -> NaiveMultiHeadAttention<B> {
+    pub fn init(&self, device: &Device) -> NaiveMultiHeadAttention {
         assert!(self.embedding_dim > 0, "embedding_dim must be positive");
         assert!(self.num_heads > 0, "num_heads must be positive");
         assert_eq!(
@@ -115,8 +115,8 @@ impl NaiveMultiHeadAttentionConfig {
     }
 }
 
-impl<B: Backend> NaiveMultiHeadAttention<B> {
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+impl NaiveMultiHeadAttention {
+    pub fn forward(&self, input: Tensor<3>) -> Tensor<3> {
         let [batch_size, context_length, embedding_dim] = input.dims();
         let [expected_dim, _] = self.output_projection.weight.dims();
         assert!(
@@ -125,7 +125,7 @@ impl<B: Backend> NaiveMultiHeadAttention<B> {
         );
         assert_eq!(embedding_dim, expected_dim, "embedding dimension mismatch");
 
-        let head_outputs: Vec<Tensor<B, 3>> = self
+        let head_outputs: Vec<Tensor<3>> = self
             .heads
             .iter()
             .map(|head| head.forward(input.clone()))
@@ -145,11 +145,11 @@ pub struct MultiHeadAttentionConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct MultiHeadAttention<B: Backend> {
-    pub query: Linear<B>,
-    pub key: Linear<B>,
-    pub value: Linear<B>,
-    pub output_projection: Linear<B>,
+pub struct MultiHeadAttention {
+    pub query: Linear,
+    pub key: Linear,
+    pub value: Linear,
+    pub output_projection: Linear,
     pub num_heads: usize,
     pub head_dim: usize,
 }
@@ -164,7 +164,7 @@ impl MultiHeadAttentionConfig {
         }
     }
 
-    pub fn init<B: Backend>(&self, device: &B::Device) -> MultiHeadAttention<B> {
+    pub fn init(&self, device: &Device) -> MultiHeadAttention {
         assert!(self.embedding_dim > 0, "embedding_dim must be positive");
         assert!(self.num_heads > 0, "num_heads must be positive");
         assert_eq!(
@@ -189,8 +189,8 @@ impl MultiHeadAttentionConfig {
 // ANCHOR_END: mha_config_impl
 
 // ANCHOR: mha_forward
-impl<B: Backend> MultiHeadAttention<B> {
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+impl MultiHeadAttention {
+    pub fn forward(&self, input: Tensor<3>) -> Tensor<3> {
         let [batch_size, context_length, embedding_dim] = input.dims();
         let [expected_dim, _] = self.query.weight.dims();
         assert!(
@@ -205,7 +205,7 @@ impl<B: Backend> MultiHeadAttention<B> {
 
         let mut scores = q.matmul(k.swap_dims(2, 3)) / (self.head_dim as f64).sqrt();
         if context_length > 1 {
-            let mask = Tensor::<B, 2>::ones([context_length, context_length], &scores.device())
+            let mask = Tensor::<2>::ones([context_length, context_length], &scores.device())
                 .triu(1)
                 .bool()
                 .unsqueeze::<3>()
@@ -223,10 +223,10 @@ impl<B: Backend> MultiHeadAttention<B> {
 
     pub fn project_and_split(
         &self,
-        tensor: Tensor<B, 3>,
+        tensor: Tensor<3>,
         batch_size: usize,
         context_length: usize,
-    ) -> Tensor<B, 4> {
+    ) -> Tensor<4> {
         tensor
             .reshape([batch_size, context_length, self.num_heads, self.head_dim])
             .swap_dims(1, 2)

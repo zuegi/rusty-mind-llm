@@ -51,13 +51,14 @@ etwas grösser, wird `y` kleiner.
 
 ## Autodiff in Burn
 
-Burn rechnet nur dann Gradienten, wenn das Backend dafür eingepackt ist:
+Für Gradienten aktivieren wir Autodiff auf dem Device, bevor wir Tensoren
+und Modellparameter erzeugen:
 
 ```rust,ignore
-type Cpu = Autodiff<NdArray<f32>>;
+let device = Device::ndarray().autodiff();
 ```
 
-`NdArray` rechnet auf der CPU. `Autodiff` merkt sich zusätzlich, wie jedes
+NdArray rechnet auf der CPU. `.autodiff()` aktiviert die Aufzeichnung, wie jedes
 Ergebnis entstanden ist. Diese Aufzeichnung heisst *Rechengraph*.
 
 Danach folgen immer drei Schritte:

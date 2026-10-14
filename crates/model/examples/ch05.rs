@@ -1,15 +1,13 @@
 //! Kapitel 5: Ein Attention-Kopf mit festen Vektoren.
 //! Ausführen: cargo run -p model --example ch05
 
-use burn::backend::NdArray;
-use burn::tensor::{Tensor, activation::softmax};
+use burn::tensor::{Device, Tensor, activation::softmax};
 
-type Cpu = NdArray<f32>;
 
 const INPUT: [[f32; 2]; 2] = [[1.0, 0.0], [0.0, 1.0]];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input = Tensor::<Cpu, 2>::from_data(INPUT, &Default::default());
+    let input = Tensor::<2>::from_data(INPUT, &Device::ndarray());
     print_matrix("Eingabe X = Query = Key = Value", input.clone())?;
     let (scores, weights, context) = attention(input);
     print_matrix("Scores", scores)?;
@@ -19,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 // ANCHOR: attention
-fn attention(input: Tensor<Cpu, 2>) -> (Tensor<Cpu, 2>, Tensor<Cpu, 2>, Tensor<Cpu, 2>) {
+fn attention(input: Tensor<2>) -> (Tensor<2>, Tensor<2>, Tensor<2>) {
     let query = input.clone();
     let key = input.clone();
     let value = input;
@@ -30,9 +28,9 @@ fn attention(input: Tensor<Cpu, 2>) -> (Tensor<Cpu, 2>, Tensor<Cpu, 2>, Tensor<C
 }
 // ANCHOR_END: attention
 
-fn print_matrix(label: &str, tensor: Tensor<Cpu, 2>) -> Result<(), Box<dyn std::error::Error>> {
+fn print_matrix(label: &str, tensor: Tensor<2>) -> Result<(), Box<dyn std::error::Error>> {
     let [rows, columns] = tensor.dims();
-    let values = tensor.into_data().to_vec::<f32>()?;
+    let values = tensor.into_data().try_to_vec::<f32>()?;
     println!("{label}, Form [{rows}, {columns}]:");
     for (row, vector) in values.chunks(columns).enumerate() {
         let numbers: Vec<_> = vector.iter().map(|value| format!("{value:.3}")).collect();
@@ -49,8 +47,8 @@ mod tests {
     const SELF_WEIGHT: f32 = 0.731_058_6;
     const OTHER_WEIGHT: f32 = 0.268_941_4;
 
-    fn assert_values(tensor: Tensor<Cpu, 2>, expected: [f32; 4]) {
-        let actual = tensor.into_data().to_vec::<f32>().expect("Tensor lesbar");
+    fn assert_values(tensor: Tensor<2>, expected: [f32; 4]) {
+        let actual = tensor.into_data().try_to_vec::<f32>().expect("Tensor lesbar");
         assert_eq!(actual.len(), expected.len());
         for (actual, expected) in actual.iter().zip(expected) {
             assert!(
@@ -62,7 +60,7 @@ mod tests {
 
     #[test]
     fn reproduces_hand_calculated_scores_weights_and_context() {
-        let input = Tensor::<Cpu, 2>::from_data(INPUT, &Default::default());
+        let input = Tensor::<2>::from_data(INPUT, &Device::ndarray());
         let (scores, weights, context) = attention(input);
         assert_eq!(context.dims(), [2, 2]);
         assert_values(scores, [1.0, 0.0, 0.0, 1.0]);
@@ -73,11 +71,11 @@ mod tests {
 
     #[test]
     fn normalizes_each_query_row_over_keys() {
-        let input = Tensor::<Cpu, 2>::from_data(INPUT, &Default::default());
+        let input = Tensor::<2>::from_data(INPUT, &Device::ndarray());
         let (_, weights, _) = attention(input);
         let values = weights
             .into_data()
-            .to_vec::<f32>()
+            .try_to_vec::<f32>()
             .expect("Gewichte lesbar");
         for row in values.chunks(2) {
             assert!(row.iter().all(|weight| *weight > 0.0));
@@ -87,13 +85,13 @@ mod tests {
 
     #[test]
     fn equal_scores_mix_values_equally() {
-        let input = Tensor::<Cpu, 2>::from_data([[0.0, 0.0], [0.0, 2.0]], &Default::default());
+        let input = Tensor::<2>::from_data([[0.0, 0.0], [0.0, 2.0]], &Device::ndarray());
         let (_, weights, context) = attention(input);
         let weights = weights
             .into_data()
-            .to_vec::<f32>()
+            .try_to_vec::<f32>()
             .expect("Gewichte lesbar");
-        let context = context.into_data().to_vec::<f32>().expect("Kontext lesbar");
+        let context = context.into_data().try_to_vec::<f32>().expect("Kontext lesbar");
         assert!((weights[0] - 0.5).abs() < TOLERANCE);
         assert!((weights[1] - 0.5).abs() < TOLERANCE);
         assert!((context[0] - 0.0).abs() < TOLERANCE);

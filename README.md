@@ -32,7 +32,7 @@ Bisher umgesetzt:
 
 - **Trainingsschleife und Validierung:** Mehrere Epochen mit erhaltenem
   Optimizer; Loss-Messung auf getrennten Daten ohne Gewichtsupdates.
-- **Checkpoints:** Modellgewichte mit Burns `DefaultRecorder` speichern und
+- **Checkpoints:** Modellgewichte mit Burns Burnpack-API speichern und
   mit expliziter Modellkonfiguration laden. Der Optimizer-Zustand wird noch
   nicht gespeichert.
 
@@ -52,7 +52,13 @@ data/         Beispieltext und Herkunftshinweise
 Modellberechnung und Training bleiben getrennt: `model` hängt nicht von
 `training` ab. Die Trainingslogik gehört in den Trainingsbereich.
 Das Projekt ist ein Cargo-Workspace; Demo und Tests des Modells verwenden
-Burns CPU-Backend `NdArray<f32>` und benötigen keine GPU.
+Burn 0.22 mit dem CPU-Device `Device::ndarray()` und benötigen keine GPU.
+Backend und Autodiff werden über `Device` gewählt, nicht über Modell-Typparameter.
+NdArray ist in Burn 0.22 deprecated; wir behalten es für die bestehenden
+Lernbeispiele bei. Burn empfiehlt für neue reine Rust-CPU-Projekte `Device::flex()`.
+
+Checkpoints verwenden jetzt Burnpack (`.bpk`) statt des früheren
+`DefaultRecorder`-Formats (`.mpk`). Alte Dateien werden nicht automatisch konvertiert.
 
 ## Demos starten
 

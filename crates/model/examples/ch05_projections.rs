@@ -1,12 +1,10 @@
 //! Kapitel 5, Schritt 2: Lernbare Projektionen und skalierte Scores.
 //! Ausführen: cargo run -p model --example ch05_projections
 
-use burn::backend::NdArray;
 use burn::module::Param;
-use burn::tensor::Tensor;
+use burn::tensor::{Device, Tensor};
 use model::attention::{SelfAttention, SelfAttentionConfig};
 
-type Cpu = NdArray<f32>;
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
 const EMBEDDING_DIM: usize = 2;
@@ -17,8 +15,8 @@ const KEY_WEIGHTS: [[f32; HEAD_DIM]; EMBEDDING_DIM] = [[0.0, 1.0], [1.0, 0.0]];
 const VALUE_WEIGHTS: [[f32; HEAD_DIM]; EMBEDDING_DIM] = [[2.0, 0.0], [0.0, 3.0]];
 
 // ANCHOR: fixed
-fn fixed_attention() -> SelfAttention<Cpu> {
-    let device = Default::default();
+fn fixed_attention() -> SelfAttention {
+    let device = Device::ndarray();
     let mut attention = SelfAttentionConfig::new(EMBEDDING_DIM, HEAD_DIM).init(&device);
     attention.query.weight = Param::from_tensor(Tensor::from_data(QUERY_WEIGHTS, &device));
     attention.key.weight = Param::from_tensor(Tensor::from_data(KEY_WEIGHTS, &device));
@@ -28,7 +26,7 @@ fn fixed_attention() -> SelfAttention<Cpu> {
 // ANCHOR_END: fixed
 
 fn main() -> Demo {
-    let input = Tensor::<Cpu, 3>::from_data(INPUT, &Default::default());
+    let input = Tensor::<3>::from_data(INPUT, &Device::ndarray());
     let attention = fixed_attention();
     print_vectors("Eingabe", input.clone())?;
     print_vectors("Query", attention.query.forward(input.clone()))?;
@@ -38,9 +36,9 @@ fn main() -> Demo {
     Ok(())
 }
 
-fn print_vectors(label: &str, tensor: Tensor<Cpu, 3>) -> Demo {
+fn print_vectors(label: &str, tensor: Tensor<3>) -> Demo {
     let [batch_size, context_length, head_dim] = tensor.dims();
-    let values = tensor.into_data().to_vec::<f32>()?;
+    let values = tensor.into_data().try_to_vec::<f32>()?;
     println!("{label}, Form [{batch_size}, {context_length}, {head_dim}]:");
     for (position, vector) in values.chunks(head_dim).enumerate() {
         let numbers: Vec<_> = vector.iter().map(|value| format!("{value:.3}")).collect();

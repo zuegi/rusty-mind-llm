@@ -1,5 +1,5 @@
 use burn::module::{Module, Param};
-use burn::tensor::{Tensor, backend::Backend};
+use burn::tensor::{Device, Tensor};
 
 const DEFAULT_EPSILON: f64 = 1e-5;
 
@@ -11,9 +11,9 @@ pub struct LayerNormConfig {
 }
 
 #[derive(Module, Debug)]
-pub struct LayerNorm<B: Backend> {
-    pub scale: Param<Tensor<B, 1>>,
-    pub shift: Param<Tensor<B, 1>>,
+pub struct LayerNorm {
+    pub scale: Param<Tensor<1>>,
+    pub shift: Param<Tensor<1>>,
     epsilon: f64,
 }
 // ANCHOR_END: config
@@ -26,7 +26,7 @@ impl LayerNormConfig {
         }
     }
 
-    pub fn init<B: Backend>(&self, device: &B::Device) -> LayerNorm<B> {
+    pub fn init(&self, device: &Device) -> LayerNorm {
         assert!(self.embedding_dim > 0, "embedding_dim must be positive");
         LayerNorm {
             scale: Param::from_tensor(Tensor::ones([self.embedding_dim], device)),
@@ -36,9 +36,9 @@ impl LayerNormConfig {
     }
 }
 
-impl<B: Backend> LayerNorm<B> {
+impl LayerNorm {
     // ANCHOR: forward
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+    pub fn forward(&self, input: Tensor<3>) -> Tensor<3> {
         let [_, _, embedding_dim] = input.dims();
         assert_eq!(
             embedding_dim,
