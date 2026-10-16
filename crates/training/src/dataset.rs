@@ -82,10 +82,12 @@ pub fn split_tokens(tokens: &[u32], validation_fraction: f64) -> (&[u32], &[u32]
 }
 // ANCHOR_END: split
 
+// ANCHOR: dataset
 pub struct Dataset {
     windows: Vec<Window>,
     context_length: usize,
 }
+// ANCHOR_END: dataset
 
 impl Dataset {
     // ANCHOR: new
