@@ -88,6 +88,15 @@ deshalb ein `Result` und kein Abbruch:
 {{#include ../../../crates/training/src/dataset.rs:types}}
 ```
 
+`Dataset` hält die Liste aller Fenster (`Vec<Window>`) und die gemeinsame Fensterlänge
+(`context_length`). Die Felder sind privat: Zugriff erfolgt über Methoden wie `len`,
+`window` und `context_length`. Mit `epoch` werden die Fenster gemischt und zu Batches
+gebündelt:
+
+```rust,ignore
+{{#include ../../../crates/training/src/dataset.rs:dataset}}
+```
+
 ### Erst teilen
 
 `split_tokens` gibt zwei Slices auf denselben Strom zurück, ohne zu kopieren. Sie teilen
@@ -96,8 +105,13 @@ keine Token:
 ```rust,ignore
 {{#include ../../../crates/training/src/dataset.rs:split}}
 ```
+**`split_tokens` gehört keinem Typ.** Es ist eine **freie Funktion** im Modul `training::dataset`, definiert in `crates/training/src/dataset.rs`:
 
 ### Lückenlose Fenster
+
+`Dataset::new` ist eine zugeordnete Funktion des Typs `Dataset`, definiert in
+`impl Dataset`. Sie erzeugt ein neues Dataset aus dem Token-Strom:
+`Dataset::new(tokens, context_length)`.
 
 Eingabe und Ziel entstehen aus demselben Strom. Das Ziel beginnt ein Token später.
 `chunks_exact` schneidet lückenlos und lässt einen Rest weg, `zip` führt beide Seiten
@@ -109,8 +123,40 @@ Fenster für Fenster zusammen:
 
 ### Eine Epoche
 
-`epoch` mischt die Fensternummern mit festem Seed und bündelt sie zu Batches. Ein
-unvollständiger letzter Batch wird verworfen, damit alle Batches dieselbe Form haben:
+`epoch` ist eine Methode des Typs `Dataset`, ebenfalls definiert in `impl Dataset`.
+Sie arbeitet über `&self` mit einem vorhandenen Dataset: `dataset.epoch(batch_size, seed)`.
+
+Eine *Epoche* ist ein Durchgang durch die Trainingsbeispiele. Ein Trainingsbeispiel
+ist hier ein Fenster (`Window`): Es enthält eine Folge von Token-IDs als Eingabe
+(`input`) und die um ein Token verschobene Folge als Ziel (`target`). Ein *Batch*
+bündelt mehrere dieser Fenster, die das Modell gemeinsam verarbeitet.
+
+Angenommen, das `Dataset` enthält sechs Fenster `A B C D E F`. Bei Batchgrösse 2
+könnte eine Epoche so aussehen:
+
+```text
+Fenster mischen: C A F B E D
+
+Batch 1: C A → Modell lernt
+Batch 2: F B → Modell lernt
+Batch 3: E D → Modell lernt
+
+Epoche fertig.
+```
+
+In der nächsten Epoche verarbeitet das Modell dieselben Fenster erneut, normalerweise
+in einer anderen Reihenfolge. Es startet dabei nicht von vorne, sondern behält die
+bereits gelernten Gewichte.
+
+**Unsere Methode `dataset.epoch(2, seed)` bereitet nur die Batches vor.** Sie trainiert
+noch nichts. Erst der Trainingscode verarbeitet diese Batches und aktualisiert die
+Modellgewichte.
+
+`epoch` mischt die Fensternummern mit einem Seed und bündelt sie zu Batches. Gleicher
+Seed bedeutet gleiche Reihenfolge; für eine neue Mischung braucht die nächste Epoche
+einen anderen Seed. Ein unvollständiger letzter Batch wird verworfen, damit alle
+Batches dieselbe Form haben. Die darin verbleibenden Fenster werden in dieser Epoche
+also nicht zum Training verwendet:
 
 ```rust,ignore
 {{#include ../../../crates/training/src/dataset.rs:epoch}}
