@@ -171,21 +171,216 @@ Batch macht die Fenster nicht zu einem einzigen langen Text.
 
 ## Tensorformen in Rust
 
-Burn beschreibt unsere Eingabe mit dem Typ `Tensor<2, Int>`:
+Ein Tensor enthält Zahlen mit einer bestimmten Anordnung. Zum Verstehen helfen
+verschachtelte Rust-Arrays: Wir betrachten zuerst eine Liste, dann eine Tabelle
+und schliesslich mehrere Tabellen zusammen. Ein Burn-Tensor ist kein Rust-Array,
+aber beim Erstellen können wir diese Arrays als Daten übergeben.
 
-- Das Device des Tensors legt fest, wie und wo gerechnet wird; es ist kein Typparameter.
-- `2` ist die Anzahl der Dimensionen, nicht die Fensterlänge.
-- `Int` steht für Ganzzahlen, also unsere Token-IDs.
+### Eine Liste: eine Achse
 
-Sowohl die Form `[2, 3]` als auch `[8, 16]` hat zwei Dimensionen und damit denselben
-Rust-Typ. Die konkreten Grössen stehen im Tensor.
+Beginnen wir mit einem Fenster aus drei Token-IDs:
 
-Die Embedding-Ausgabe hat den Typ `Tensor<3>`. Ohne zweite Typangabe verwendet
-Burn Gleitkommazahlen. Die `3` zählt die drei Achsen: Batch, Position und
-Embedding-Dimension. Auch eine Ausgabe mit der Form `[2, 7, 4]` hat diesen Typ,
-obwohl jedes Fenster sieben Tokens enthält.
+```rust
+let token_ids = [0, 1, 3];
+```
+
+Um eine Zahl auszuwählen, brauchen wir einen Index, etwa `token_ids[1]`.
+Dieser Zugriff liefert die Token-ID `1`. Der Index bezeichnet die Position
+in der Liste, nicht die Token-ID. Beispielsweise liefert `token_ids[2]` die
+Token-ID `3`.
+
+Diese Anordnung hat **eine Achse** mit **Grösse drei**. Ihre Form schreiben wir
+als `[3]`. Die gültigen Indizes sind `0`, `1` und `2`: Indizes beginnen bei
+null, die Grösse zählt dagegen alle Einträge.
+
+### Eine Tabelle: zwei Achsen
+
+Fassen wir zwei Fenster zu einem Batch zusammen:
+
+```rust
+let batch = [
+    [0, 1, 3],
+    [0, 2, 4],
+];
+```
+
+Betrachten wir das zunächst als gewöhnliche Tabelle:
+
+```text
+           erste    zweite    dritte Spalte
+erste Zeile    0         1         3
+zweite Zeile   0         2         4
+```
+
+Jede Zeile ist ein Fenster. In jeder Zeile stehen drei Token-IDs.
+Es gibt **zwei Zeilen mit je drei Einträgen**. Genau das beschreibt
+die Form **`[2, 3]`**: zuerst die Anzahl der Zeilen, dann die Anzahl
+der Einträge pro Zeile.
+
+Um eine einzelne Zahl zu finden, wählen wir erst eine Zeile und darin
+einen Eintrag. In Rust können wir diese beiden Schritte getrennt schreiben:
+
+```rust
+let fenster = batch[1];     // zweite Zeile: [0, 2, 4]
+let token_id = fenster[2];  // dritter Eintrag: 4
+```
+
+Rust zählt ab null: `[0]` wählt den ersten Eintrag, `[1]` den zweiten
+und `[2]` den dritten. Die Zahl in diesen Zugriffsklammern heisst *Index*.
+Beide Schritte lassen sich auch als `batch[1][2]` schreiben.
+
+Die Tabelle hat zwei Auswahlrichtungen: Zeile auswählen und Eintrag
+innerhalb dieser Zeile auswählen. Diese nennen wir die beiden *Achsen*.
+Fürs Erste genügt: **zwei Achsen, Form `[2, 3]`**.
+
+### Vektoren pro Position: drei Achsen
+
+Das Embedding ersetzt jede Token-ID durch vier Gleitkommazahlen.
+Vorher stand an jeder Position eine einzelne ID. Jetzt steht dort eine
+ganze Liste mit vier Zahlen, der Embedding-Vektor. Die zwei Fenster und
+ihre jeweils drei Positionen bleiben erhalten:
+
+```text
+2 Fenster
+  je 3 Tokenpositionen
+    je 4 Zahlen im Embedding-Vektor
+```
+
+Als verschachteltes Array sieht diese Anordnung so aus:
+
+```rust
+let embeddings = [
+    [
+        [0.1,  0.0,  0.2, -0.1],
+        [0.2, -0.1,  0.4,  0.3],
+        [0.0,  0.2, -0.3,  0.4],
+    ],
+    [
+        [ 0.1,  0.0, 0.2, -0.1],
+        [-0.2,  0.3, 0.1,  0.0],
+        [ 0.1, -0.2, 0.0,  0.2],
+    ],
+];
+```
+
+Dieses Rust-Array zeigt zunächst nur die Anordnung der Zahlen.
+Zum Burn-Tensor wird es durch `from_floats`:
+
+```rust
+use burn::tensor::{Device, Tensor};
+
+let device = Device::flex();
+let tensor = Tensor::<3>::from_floats(embeddings, &device);
+
+println!("{:?}", tensor.dims()); // [2, 3, 4]
+```
+
+Der Tensor enthält dieselben 24 Zahlen wie das Array, geordnet als
+**zwei Fenster mit je drei Vektoren aus je vier Zahlen**.
+Er ist kein einzelner Vektor und auch keine gewöhnliche Tabelle mehr:
+Für eine einzelne Zahl müssen wir drei Entscheidungen treffen.
+
+Am Array können wir diese Entscheidungen einzeln nachvollziehen:
+
+```rust
+let fenster = embeddings[1]; // zweites Fenster: drei Vektoren
+let vektor = fenster[2];     // dritte Position: [0.1, -0.2, 0.0, 0.2]
+let zahl = vektor[0];        // erste Zahl dieses Vektors: 0.1
+```
+
+Diese drei Auswahlebenen sind die drei Achsen des Tensors.
+`Tensor::<3>` sagt Burn, dass es drei Achsen gibt.
+`dims()` liefert deren konkrete Grössen: `[2, 3, 4]`.
+Die Array-Zugriffe zeigen nur das Prinzip; sie sind hier keine Anleitung
+zum Auslesen eines Burn-Tensors.
+
+Beim echten Embedding müssen wir das Array nicht von Hand bauen.
+Das Embedding-Modul erzeugt diesen dreidimensionalen Tensor aus dem
+zweidimensionalen Eingabetensor mit den Token-IDs:
+
+```text
+Eingabetensor                 Embedding-Ausgabetensor
+Form [2, 3]                  Form [2, 3, 4]
+2 Fenster mit je 3 IDs   ->   2 Fenster mit je 3 Vektoren aus je 4 Zahlen
+Tensor<2, Int>               Tensor<3>
+```
+
+Die Bedeutung der Achsen ergibt sich aus unseren Daten, nicht aus Burn.
+Hier stehen die vier Zahlen für Embedding-Komponenten.
+
+### Auch ein einzelnes Fenster bleibt ein Batch
+
+Unser Modell erwartet Eingabe-IDs als `[Batch, Position]`. Bei nur einem Fenster
+bleibt die äussere Ebene erhalten:
+
+```rust
+let ohne_batch = [0, 1, 3];   // Form [3]
+let mit_batch = [[0, 1, 3]]; // Form [1, 3]
+```
+
+Beide enthalten drei IDs, aber ihre Formen sind verschieden.
+Die zusätzliche Klammer erzeugt die Batch-Achse mit Grösse `1`.
+Nach dem Embedding hat dieser einzelne Batch die Form `[1, 3, 4]`:
+ein Fenster, drei Positionen, vier Zahlen pro Position.
+
+**Eine Achse mit Grösse `1` zählt weiterhin als Achse.**
+Die Form `[1, 3, 4]` hat genauso drei Achsen wie `[2, 3, 4]`.
+
+### Rust-Typ und konkrete Form unterscheiden
+
+Burn hält die **Anzahl der Achsen** im Rust-Typ fest. Diese Anzahl heisst auch
+*Rang*. Die **Grösse jeder Achse** steht dagegen im Tensor und lässt sich mit
+`dims()` auslesen.
+
+| Burn-Typ | Beispiel einer Form | Bedeutung hier |
+| -------- | ------------------- | -------------- |
+| `Tensor<1, Int>` | `[3]` | ein Fenster ohne Batch-Achse |
+| `Tensor<2, Int>` | `[2, 3]` | zwei Fenster mit je drei Token-IDs |
+| `Tensor<3>` | `[2, 3, 4]` | Embedding-Vektoren für diesen Batch |
+
+In `Tensor<2, Int>` bedeutet `2` also **zwei Achsen**, nicht zwei Zahlen oder
+zwei Tokens. `Int` steht für Ganzzahlen, passend zu Token-IDs.
+Ohne zweite Typangabe verwendet Burn Gleitkommazahlen, etwa bei `Tensor<3>`
+für Embeddings. Das Device legt fest, wie und wo gerechnet wird;
+es ist kein Typparameter.
+
+Sowohl `[2, 3]` als auch `[8, 16]` passen zum Typ `Tensor<2, Int>`.
+Beide Formen haben zwei Achsen, aber verschieden grosse Batches und Fenster.
+Der Typ allein verrät auch nicht, wofür die Achsen stehen.
+
+Ein kleines, eigenständig ausführbares Beispiel:
+
+```rust
+use burn::tensor::{Device, Int, Tensor};
+
+fn main() {
+    let device = Device::flex();
+    let inputs = Tensor::<2, Int>::from_ints(
+        [[0, 1, 3], [0, 2, 4]],
+        &device,
+    );
+
+    println!("{:?}", inputs.dims()); // [2, 3]
+}
+```
+
+`from_ints` übernimmt die Werte und ihre Form aus dem verschachtelten Array.
+`::<2, Int>` gibt beim Erstellen Rang und Zahlenart an. `dims()` liefert
+hier ein Rust-Array mit zwei Grössen, nicht die sechs gespeicherten Token-IDs.
 
 **Merksatz: Der Rust-Typ zählt die Achsen; die Tensorform nennt deren Grössen.**
+
+### Kleine Verständnisaufgaben
+
+Versuche die Antworten zuerst ohne Ausführen herzuleiten:
+
+1. Welche Form hat `[[0, 1, 3]]`? Wie viele Achsen sind das?
+2. Ein Embedding-Tensor hat die Form `[2, 3, 4]`. Wie viele Zahlen enthält er
+   insgesamt, und welche Grösse hat Achse `1`?
+3. Ein Batch enthält ein Fenster mit fünf Tokens. Pro Token liefert das
+   Embedding acht Zahlen. Welche Form und welchen Burn-Typ hat die Ausgabe?
+4. Ändere im ausführbaren Beispiel nur das Datenarray zu `[[0, 1, 3]]`.
+   Sage die Ausgabe von `dims()` voraus. Muss sich `Tensor::<2, Int>` ändern?
 
 ## Das Embedding-Modul in Rust
 
