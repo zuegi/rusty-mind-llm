@@ -28,8 +28,8 @@ fn main() -> Demo {
     let mut token_ids = TOKEN_IDS[0].to_vec();
     for _ in 0..NEW_TOKENS {
         // Tensor erstellen
-        let context_start = token_ids.len().saturating_sub(CONTEXT_LENGTH);
-        let context = &token_ids[context_start..];
+        let start_token = token_ids.len().saturating_sub(CONTEXT_LENGTH);
+        let context = &token_ids[start_token..];
         assert!(context.len() <= CONTEXT_LENGTH);
         let context_tensor = Tensor::<1, Int>::from_ints(context, &device);
         let ids = context_tensor.reshape([1, context.len()]);
