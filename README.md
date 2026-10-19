@@ -78,13 +78,13 @@ cargo run -p model --example ch03
 # Kapitel 4: Gradienten mit Burn-Autodiff
 cargo run -p model --example ch04
 
-# Kapitel 5: Ein Attention-Kopf mit festen Vektoren
+# Kapitel 5.3: Ein Attention-Kopf mit festen Vektoren
 cargo run -p model --example ch05
 
-# Kapitel 5, Schritt 2: Q/K/V-Projektionen und skalierte Scores
+# Kapitel 5.8: Q/K/V-Projektionen, skalierte Scores und kausale Maske
 cargo run -p model --example ch05_projections
 
-# Kapitel 5, Schritt 4: Multi-Head Attention mit Burn
+# Kapitel 5.9: Multi-Head Attention mit Burn
 cargo run -p model --example ch05_multi_head
 
 # Kapitel 6, Schritt 1: LayerNorm mit festen Zahlen

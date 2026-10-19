@@ -68,4 +68,4 @@ Deshalb ist die kausale Maske für GPT **zwingend erforderlich**.
 - **Kausale Attention (GPT):** Blick nur zurück $\rightarrow$ ermöglicht das Erzeugen von neuem Text Wort für Wort.
 - **Bidirektionale Attention (BERT):** Blick in beide Richtungen $\rightarrow$ maximales Kontextverständnis für Analyse, aber ungeeignet für freie Textgenerierung.
 
-Zurück zu [Kapitel 5: Attention und Multi-Head Attention](../kapitel/05-attention.md).
+Zurück zu [5.7 Zukunft ausblenden](../kapitel/05-07-zukunft-ausblenden.md).

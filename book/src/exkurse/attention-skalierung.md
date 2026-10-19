@@ -66,4 +66,4 @@ Vektorbreite entsteht.
 Sie verhindert nicht jede starke Konzentration: Das Training kann weiterhin
 Projektionen mit grossen oder stark unterschiedlichen Scores erzeugen.
 
-Zurück zum [Attention-Kapitel](../kapitel/05-attention.md).
+Zurück zu [5.6 Scores skalieren](../kapitel/05-06-scores-skalieren.md).

@@ -1,4 +1,4 @@
-//! Kapitel 5: Ein Attention-Kopf mit festen Vektoren.
+//! Kapitel 5.3: Ein Attention-Kopf mit festen Vektoren.
 //! Ausführen: cargo run -p model --example ch05
 
 use burn::tensor::{Device, Tensor, activation::softmax};

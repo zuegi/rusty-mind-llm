@@ -1,4 +1,4 @@
-//! Kapitel 5, Schritt 2: Lernbare Projektionen und skalierte Scores.
+//! Kapitel 5.8: Projektionen, skalierte Scores und kausale Maske.
 //! Ausführen: cargo run -p model --example ch05_projections
 
 use burn::module::Param;
