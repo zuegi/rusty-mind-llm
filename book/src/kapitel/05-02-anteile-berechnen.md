@@ -81,32 +81,86 @@ nur die Rechenmechanik.
 
 ### Wie vergleichen wir?
 
-Für Token A vergleichen wir seine Query mit beiden Keys. Das Skalarprodukt
-multipliziert die jeweils gleich positionierten Zahlen und addiert:
+**In den ersten beiden Vergleichen bleibt die Query gleich. Nur der Key
+wechselt.** Wir betrachten zunächst nur die Sicht von Token A.
+
+Unsere Ausgangswerte sind weiterhin:
 
 ```text
-Query A mit Key A: 1 * 1 + 0 * 0 = 1
-Query A mit Key B: 1 * 0 + 0 * 1 = 0
+Token A: Query A = [1, 0]    Key A = [1, 0]
+Token B: Query B = [0, 1]    Key B = [0, 1]
 ```
 
-Beim zweiten Vergleich stehen die Zahlen so gegenüber:
+Die Query gehört zur suchenden Position, der Key zur jeweils betrachteten
+Quelle. A vergleicht sich auch mit sich selbst: Die eigene Position ist
+ebenfalls eine mögliche Quelle.
+
+#### Vergleich 1: Query A mit Key A
+
+Die Frage lautet: **Welchen Score bekommt Quelle A aus Sicht von A?**
 
 ```text
 Query A: [1, 0]
-Key B:   [0, 1]
+Key A:   [1, 0]
+```
 
+Wir multiplizieren die Zahlen **an derselben Stelle** und addieren danach
+die beiden Produkte. Diese Rechenregel heisst **Skalarprodukt**:
+
+```text
+Erste Stelle:  1 * 1 = 1
+Zweite Stelle: 0 * 0 = 0
+Summe:             1 + 0 = 1
+```
+
+Zwei Vektoren gehen hinein, eine Vergleichszahl kommt heraus.
+Der Score für Quelle A aus Sicht von A ist also `1`.
+
+#### Vergleich 2: Dieselbe Query A mit Key B
+
+Jetzt lautet die Frage: **Welchen Score bekommt Quelle B aus Sicht von A?**
+Wir behalten Query A und wechseln nur die Quelle:
+
+```text
+Query A: [1, 0]    <- unverändert
+Key B:   [0, 1]    <- andere Quelle
+```
+
+Wieder verwenden wir dieselbe Rechenregel:
+
+```text
 Erste Stelle:  1 * 0 = 0
 Zweite Stelle: 0 * 1 = 0
 Summe:             0 + 0 = 0
 ```
 
-Zwei Vektoren gehen hinein, eine Vergleichszahl kommt heraus. Für Token B
-führen wir denselben Ablauf mit seiner Query aus:
+Der Score für Quelle B aus Sicht von A ist `0`.
+Damit ist As Vergleich mit allen Quellen fertig:
 
 ```text
+Aus Sicht von A:
+Quelle A -> Score 1
+Quelle B -> Score 0
+```
+
+**Noch keine Prozente, noch kein Mischen.** Wir haben nur zwei
+Vergleichszahlen berechnet. Erst Softmax macht daraus Anteile.
+Score `0` bedeutet deshalb nicht, dass wir Quelle B schon ausgeschlossen haben.
+
+#### Jetzt wechseln wir die suchende Position: Query B
+
+Erst jetzt brauchen wir Query B. Für den Kontext von B wiederholen wir
+denselben Ablauf **aus Sicht von Token B**. Query B bleibt dabei für beide
+Vergleiche gleich; nacheinander verwenden wir Key A und Key B:
+
+```text
+Query B = [0, 1]
+
 Query B mit Key A: 0 * 1 + 1 * 0 = 0
 Query B mit Key B: 0 * 0 + 1 * 1 = 1
 ```
+
+#### Alle vier Vergleiche zusammen
 
 Damit haben wir vier Vergleiche: Jede der zwei Queries wird mit jedem der zwei
 Keys verglichen. Zusammen ergeben sie eine Tabelle:
@@ -194,7 +248,55 @@ Softmax wandelt jede Score-Zeile in Gewichte um:
 Gewicht j = exp(Score j) / Summe aller exp(Scores) dieser Zeile
 ```
 
-`exp(x)` ist die Exponentialfunktion. Für die erste Zeile:
+<details>
+<summary>Was macht exp(x), und woher kommt e?</summary>
+
+`exp(x)` ist die **Exponentialfunktion**: Sie berechnet `e` hoch `x`.
+`e` ist eine feste Zahl, ungefähr `2.71828`. Anders als beim Quadrieren
+(`x * x`) ist hier also die Basis fest und der Score steht im Exponenten:
+
+```text
+exp(-1) = 1 / e     = ungefähr 0.368
+exp(0)  = e hoch 0  = 1
+exp(1)  = e hoch 1  = ungefähr 2.718
+exp(2)  = e * e     = ungefähr 7.389
+```
+
+#### Woher kommt e = ungefähr 2.71828?
+
+`e` ist keine frei gewählte Zahl, sondern eine mathematisch definierte
+Konstante, ähnlich wie die Kreiszahl Pi. `2.71828` ist nur gerundet.
+
+Ein Zugang ist Wachstum: Wir starten mit `1` und verteilen eine Wachstumsrate
+von insgesamt 100 Prozent auf immer mehr Schritte. Jeder Schritt wirkt
+auf den **bereits gewachsenen Wert**:
+
+| Schritte | Rechnung | Ergebnis |
+|---|---|---|
+| Einmal 100 Prozent | `1 + 1` | `2` |
+| Zweimal je 50 Prozent | `1.5 * 1.5` | `2.25` |
+| Viermal je 25 Prozent | `1.25 hoch 4` | ungefähr `2.4414` |
+| Hundertmal je 1 Prozent | `1.01 hoch 100` | ungefähr `2.7048` |
+
+Allgemein berechnen wir bei `n` Schritten `(1 + 1/n) hoch n`.
+Mit immer mehr, immer kleineren Schritten nähert sich das Ergebnis einer
+festen Grenze. Diese Grenze definiert die Zahl
+`e = 2.718281828...`. Die tatsächliche Zunahme ist dabei grösser als
+100 Prozent, weil jeder Schritt auch das bisherige Wachstum mitvergrössert.
+
+Für Attention genügt: **`exp` verwendet diese fest definierte Basis.
+Wir wählen oder lernen `e` nicht.** Du musst ihre Herkunft nicht herleiten
+können, um Softmax nachzurechnen.
+
+</details>
+
+Für Softmax sind zwei Eigenschaften wichtig: **Auch negative Scores werden
+zu positiven Zahlen**, und **grössere Scores liefern grössere Ergebnisse**.
+Ein Score von `0` wird zu `1`, nicht zu `0` – die Quelle wird also nicht
+ausgeschlossen. Diese Ergebnisse sind noch keine Anteile. Erst das Teilen
+durch ihre Summe macht daraus Gewichte, die zusammen `1` ergeben.
+
+Für unsere erste Score-Zeile `[1, 0]` rechnen wir damit:
 
 ```text
 exp(1) = 2.71828...

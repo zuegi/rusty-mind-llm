@@ -30,11 +30,11 @@ context             = weights @ V
 Damit wird in Burn nichts Neues gerechnet. Burn führt nur dieselben drei
 Schritte als Tensoroperationen aus:
 
-1. `query.matmul(key.transpose())` vergleicht jede Query mit jedem Key und
+1. **Vergleichen**: `query.matmul(key.transpose())` vergleicht jede Query mit jedem Key und
    erzeugt die Score-Matrix `[[1, 0], [0, 1]]`.
-2. `softmax(scores.clone(), 1)` macht aus jeder Score-Zeile die Anteile
+2. **Gewichten**: `softmax(scores.clone(), 1)` macht aus jeder Score-Zeile die Anteile
    `[[0.731, 0.269], [0.269, 0.731]]`.
-3. `weights.clone().matmul(value)` mischt damit die Values und erzeugt die
+3. **Mischen**: `weights.clone().matmul(value)` mischt damit die Values und erzeugt die
    Kontext-Vektoren. Weil `V = [[1, 0], [0, 1]]` gilt, sehen sie hier zufällig
    genauso aus wie die Gewichte.
 
