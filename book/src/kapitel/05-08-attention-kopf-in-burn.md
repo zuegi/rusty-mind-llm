@@ -211,12 +211,14 @@ Scores und Gewichte [Batch, Sequenzlänge, Sequenzlänge]
 Kontext             [Batch, Sequenzlänge, head_dim]
 ```
 
-`head_dim` darf von `embedding_dim` abweichen. Ohne Ausgabeprojektion bleibt
+Wie in [5.4: Was bedeutet head_dim?](05-04-projektionen.md#was-bedeutet-head_dim)
+erklärt, darf `head_dim` von `embedding_dim` abweichen: Die Projektionen
+legen die Ausgabebreite fest. Ohne Ausgabeprojektion bleibt
 die Ausgabe dann entsprechend breiter oder schmaler als die Eingabe.
 
 ```mermaid
 flowchart TD
-    E["Neu: Eingabe mit Batch-Achse"] --> P["Q/K/V-Projektionen"]
+    E["Neu: Eingabe<br/>mit Batch-Achse"] --> P["Q/K/V-Projektionen"]
     P --> QK["Queries und Keys"]
     P --> V["Values"]
     QK --> S["Vergleichen und skalieren"]
@@ -224,7 +226,7 @@ flowchart TD
     Mask --> W["Softmax über Keys"]
     W --> M["Values mischen"]
     V --> M
-    M --> C["Kontext mit derselben Batch-Achse"]
+    M --> C["Kontext mit derselben<br/>Batch-Achse"]
     style E stroke:#b45309,stroke-width:3px
 ```
 

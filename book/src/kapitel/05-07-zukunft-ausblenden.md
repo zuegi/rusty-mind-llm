@@ -43,9 +43,16 @@ sondern füllen Lücken im Satz und dürfen deshalb in beide Richtungen schauen.
 Den genauen Unterschied beleuchtet der Exkurs
 [BERT vs. GPT: Bidirektionale vs. kausale Attention](../exkurse/bert-vs-gpt.md).)*
 
-## Die Lösung: Vor Softmax auf $-\infty$ setzen
+<span id="die-lösung-vor-softmax-auf--infty-setzen"></span>
 
-Wir müssen verhindern, dass Position $i$ Informationen von Positionen $j > i$
+## Die Lösung: Vor Softmax auf minus unendlich setzen
+
+**−∞ bedeutet minus unendlich**, im Code `-inf`. Das ist kein gewöhnlicher
+negativer Zahlenwert. Wir verwenden ihn als Markierung für ausgeschlossene
+Quellen: `exp(-inf)` ergibt `0`, also erhalten diese Quellen nach Softmax
+keinen Anteil.
+
+Wir müssen verhindern, dass Position `i` Informationen von Positionen `j > i`
 erhält. Können wir die unerlaubten Gewichte nicht einfach nach dem Softmax auf 0
 setzen?
 
@@ -75,7 +82,7 @@ exp(-10) = ungefähr 0.000045
 exp(-inf) = 0.0
 ```
 
-Wenn ein Score vor dem Softmax $-\infty$ (Minus Unendlich) ist, wird sein
+Wenn ein Score vor dem Softmax minus unendlich (`-inf`) ist, wird sein
 Zählerterm exakt `0.0`. Dadurch erhält jede Zukunftsposition **automatisch
 genau 0 % Aufmerksamkeit**, und die Summe der erlaubten Positionen bleibt
 bis auf Gleitkomma-Rundung `1`.
@@ -100,7 +107,7 @@ Suchender 2:     erlaubt     erlaubt     erlaubt
 ```
 
 Die erlaubten Einträge bilden ein Dreieck unten links (untere Dreiecksmatrix).
-Jede Position $i$ darf nur Quellen $j \le i$ sehen.
+Jede Position `i` darf nur Quellen `j <= i` sehen.
 
 ## Die Handrechnung mit Maske
 
@@ -113,7 +120,7 @@ Query 1:      0.707     0.707
 ```
 
 Jetzt wenden wir die Maske an. Score `[0, 1]` (Query 0 gegen Quelle 1) ist
-Zukunft und wird durch $-\infty$ ersetzt:
+Zukunft und wird durch `-inf` ersetzt:
 
 ```text
 Maskierte Scores:

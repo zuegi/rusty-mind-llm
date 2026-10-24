@@ -220,19 +220,120 @@ flowchart LR
     M --> C["Kontext"]
 ```
 
-<details>
-<summary>Vertiefung: Die Grössen der Tabellen benennen</summary>
+## Was bedeutet head_dim?
 
-Jetzt können wir auch die Namen im Code zuordnen:
+Eine **Breite** zählt die Zahlen in einem einzelnen Vektor.
+Für die Projektionen unterscheiden wir zwei Breiten:
 
 - `embedding_dim`: Anzahl der Zahlen im Eingabevektor, hier `2`.
 - `head_dim`: Anzahl der Zahlen im erzeugten Query-, Key- oder Value-Vektor,
   in unserem Baustein ebenfalls `2`.
 
+`head` bedeutet Attention-Kopf, `dim` steht für Dimension.
+**`head_dim` ist die Vektorbreite innerhalb eines Kopfes, nicht die Anzahl
+der Köpfe oder Tokens.** Bisher haben wir einen Kopf und zwei Tokens.
+Jedes dieser Tokens bekommt eine Query, einen Key und einen Value der Breite `2`.
+
+Dass beide Breiten bisher gleich sind, ist eine Wahl für unser Beispiel,
+keine Voraussetzung der Projektion. Jede Projektion kann aus vier
+Eingabezahlen beispielsweise zwei Ausgabezahlen berechnen:
+
+```mermaid
+flowchart LR
+    X["Ein Token-Vektor mit 4 Zahlen<br/>embedding_dim = 4"] --> QP["Query-Projektion"]
+    X --> KP["Key-Projektion"]
+    X --> VP["Value-Projektion"]
+    QP --> Q["Query mit 2 Zahlen<br/>head_dim = 2"]
+    KP --> K["Key mit 2 Zahlen<br/>head_dim = 2"]
+    VP --> V["Value mit 2 Zahlen<br/>head_dim = 2"]
+```
+
+Jede Ausgabezahl kann dabei alle vier Eingabezahlen verwenden.
+Wir schneiden nicht einfach die letzten beiden Zahlen ab.
+
 Eine Projektionsmatrix hat eine Zeile pro Eingabezahl und eine Spalte pro
 Ausgabezahl. Ihre Form ist deshalb `[embedding_dim, head_dim]`, hier `[2, 2]`.
-Hätten wir vier Eingabezahlen und wollten zwei Ausgabezahlen, bräuchten wir
-vier Zeilen und zwei Spalten. Die Rechenregel bleibt dieselbe.
+Im Beispiel mit vier Eingabezahlen und zwei Ausgabezahlen wäre sie `[4, 2]`:
+
+```text
+Ein Token als Zeile    Projektionsmatrix    Ein Ausgabevektor als Zeile
+      [1, 4]       @        [4, 2]        =           [1, 2]
+```
+
+Die inneren Grössen `4` passen zusammen. Die `2` der Projektionsmatrix
+bestimmt, wie viele Ausgabezahlen wir berechnen. Diese Grössen legen wir
+beim Modellaufbau fest; Training verändert die Faktoren in der Matrix,
+nicht ihre Anzahl.
+
+Für den späteren Vergleich müssen **Query und Key gleich breit** sein:
+Jede Query-Komponente braucht eine Key-Komponente als Gegenstück.
+Die ursprüngliche Eingabe muss dagegen nicht dieselbe Breite haben.
+In unserem Baustein wählen wir auch die Value-Breite gleich `head_dim`.
+Da Mischen die Breite der Values erhält, hat der Kontext eines Kopfes
+ebenfalls `head_dim` Zahlen pro Token.
+
+Bei mehreren Köpfen werden wir beispielsweise Eingabebreite `4` mit
+zwei Köpfen der Breite `2` verwenden. Jeder Kopf erhält die vollständigen
+vier Eingabezahlen. Erst seine Projektionen erzeugen die schmaleren Vektoren.
+Das Zusammensetzen der Kopf-Ausgaben folgt in [5.9](05-09-mehrere-koepfe.md).
+Für die nächsten Rechnungen bleiben wir bei unserem bisherigen Beispiel:
+`embedding_dim = head_dim = 2`.
+
+### Wer wählt head_dim?
+
+**Wir legen `head_dim` beim Modellaufbau fest. Training lernt diese Anzahl
+nicht.** Beim einzelnen Kopf dürfen wir sie unabhängig von `embedding_dim`
+wählen. Frei wählbar bedeutet aber nicht, dass jede Wahl gleich sinnvoll ist:
+
+- Eine grössere Breite ermöglicht breitere Darstellungen, braucht aber mehr
+  Projektionsparameter, Speicher und Rechenarbeit. Bessere Ergebnisse sind
+  dadurch nicht garantiert.
+- Eine kleinere Breite spart Ressourcen, begrenzt aber die Anzahl der
+  Komponenten, mit denen ein Kopf Vergleiche und Inhalte darstellen kann.
+
+Unsere Breite `2` ist **zum Nachrechnen gewählt**, nicht als Empfehlung für
+ein echtes Sprachmodell.
+
+### head_dim und num_heads sind verschiedene Grössen
+
+Bei mehreren Köpfen brauchen wir zusätzlich einen Namen für deren Anzahl:
+
+```text
+num_heads = 4   -> vier Attention-Köpfe
+head_dim  = 64  -> jeder Kopf erzeugt pro Token eine Query, einen Key
+                  und einen Value mit jeweils 64 Zahlen
+```
+
+**`num_heads` beantwortet „Wie viele Köpfe?“,
+`head_dim` beantwortet „Wie breit ist jeder Kopf?“**
+
+In unserer Multi-Head-Implementierung aus 5.9 wählen wir Modellbreite und
+Kopfanzahl. Die Kopfbreite ergibt sich daraus:
+
+```text
+head_dim = embedding_dim / num_heads
+      64 =           256 / 4
+```
+
+Die Modellbreite muss dort ohne Rest durch die Kopfanzahl teilbar sein.
+Vier Köpfe liefern je 64 Kontext-Zahlen pro Token. Aneinandergehängt ergeben
+ihre Ausgaben wieder 256 Zahlen. Diese Aufteilungsregel gehört zu unserem
+Multi-Head-Baustein; für den einzelnen Kopf ist sie keine Voraussetzung.
+
+<details>
+<summary>Vertiefung: Nach welchen Kriterien wählt man die Breiten?</summary>
+
+| Änderung | Abwägung |
+|---|---|
+| Mehr Köpfe bei gleicher Modellbreite | Mehr getrennte Attention-Verteilungen, aber schmalere Vektoren je Kopf |
+| Weniger Köpfe bei gleicher Modellbreite | Weniger Verteilungen, dafür breitere Vektoren je Kopf |
+| Grössere Modellbreite bei gleicher Kopfanzahl | Breitere Köpfe, aber höherer Ressourcenbedarf |
+
+In der Praxis beginnt man mit bewährten Modellkonfigurationen und vergleicht
+Varianten anhand von **Validierungsverlust, Laufzeit und Speicherbedarf**.
+Den Validierungsverlust behandeln wir später in Kapitel 9. Er bewertet,
+wie gut das Modell auf zurückgehaltenen Daten vorhersagt.
+Es gibt keine Formel, die für jede Aufgabe die beste Kopfbreite liefert.
 
 </details>
 

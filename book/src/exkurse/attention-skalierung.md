@@ -27,6 +27,27 @@ sich nicht gegenseitig aufheben.
 
 ## Eine vereinfachte Annahme
 
+Mit **Query-/Key-Breite** meinen wir die Anzahl der Zahlen in **einem**
+Query- beziehungsweise Key-Vektor. Beide müssen gleich viele Zahlen enthalten,
+damit wir die jeweils gleich positionierten Komponenten multiplizieren können.
+Diese Anzahl nennen wir in der Herleitung `d`; im Code heisst sie `head_dim`.
+
+```text
+Query eines Tokens: [1, 0]   -> zwei Komponenten
+Key einer Quelle:   [0, 1]   -> zwei Komponenten
+
+d = head_dim = 2
+Score = 1 * 0 + 0 * 1        -> zwei Produkte werden addiert
+```
+
+`d` zählt also **nicht die Tokens oder die Attention-Köpfe**, sondern die
+Komponenten pro Query-/Key-Vektor innerhalb eines Kopfes.
+Bei zwei Tokens gibt es zwei Queries und zwei Keys; die Breite jedes
+einzelnen Vektors bleibt in unserem Beispiel `2`.
+Die Vektoren sind Ausgaben der
+[Projektionen aus 5.4](../kapitel/05-04-projektionen.md).
+Ihre Breite muss nicht der Breite des ursprünglichen Token-Vektors entsprechen.
+
 Für die Herleitung nehmen wir an, dass alle Query- und Key-Komponenten
 unabhängig sind, Mittelwert `0` und Varianz `1` haben. Das ist eine
 Modellannahme, keine Garantie für gelernte Attention-Vektoren.
