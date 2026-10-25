@@ -1,6 +1,6 @@
 # Aktivierungsfunktionen und GELU
 
-Dieser Exkurs gehört zu Kapitel 6, Schritt 2 (Feed-Forward-Netz). Er beantwortet
+Dieser Exkurs gehört zu [6.2 Feed-Forward-Netz](../kapitel/06-02-feed-forward.md). Er beantwortet
 drei Fragen: Warum braucht ein Netz überhaupt eine Aktivierungsfunktion? Was ist
 ReLU? Und was macht GELU anders?
 

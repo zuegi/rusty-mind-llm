@@ -26,6 +26,7 @@ impl LayerNormConfig {
         }
     }
 
+    // ANCHOR: init
     pub fn init(&self, device: &Device) -> LayerNorm {
         assert!(self.embedding_dim > 0, "embedding_dim must be positive");
         LayerNorm {
@@ -34,6 +35,7 @@ impl LayerNormConfig {
             epsilon: self.epsilon,
         }
     }
+    // ANCHOR_END: init
 }
 
 impl LayerNorm {
@@ -45,13 +47,17 @@ impl LayerNorm {
             self.scale.dims()[0],
             "embedding dimension mismatch"
         );
+        // ANCHOR: normalize
         let mean = input.clone().mean_dim(2);
         let centered = input - mean;
         let variance = centered.clone().powf_scalar(2.0).mean_dim(2);
         let normalized = centered / (variance + self.epsilon).sqrt();
+        // ANCHOR_END: normalize
+        // ANCHOR: affine
         let scale = self.scale.val().reshape([1, 1, embedding_dim]);
         let shift = self.shift.val().reshape([1, 1, embedding_dim]);
         normalized * scale + shift
+        // ANCHOR_END: affine
     }
     // ANCHOR_END: forward
 }

@@ -87,17 +87,17 @@ cargo run -p model --example ch05_projections
 # Kapitel 5.9: Multi-Head Attention mit Burn
 cargo run -p model --example ch05_multi_head
 
-# Kapitel 6, Schritt 1: LayerNorm mit festen Zahlen
+# Kapitel 6.1: LayerNorm mit festen Zahlen
 cargo run -p model --example ch06_layer_norm
 
-# Kapitel 6, Schritt 2: GELU und Feed-Forward-Netz
+# Kapitel 6.2: GELU und Feed-Forward-Netz
 cargo run -p model --example ch06_gelu
 cargo run -p model --example ch06_feed_forward
 
-# Kapitel 6, Schritt 3: Gradienten mit und ohne Residual-Verbindung
+# Kapitel 6.3: Gradienten mit und ohne Residual-Verbindung
 cargo run -p model --example ch06_residual
 
-# Kapitel 6, Schritt 6: Mehrere Blöcke hinter dem Embedding
+# Kapitel 6.6: Mehrere Blöcke hinter dem Embedding
 cargo run -p model --example ch06
 
 # Kapitel 7: GPT-Modell mit Ausgabe-Logits

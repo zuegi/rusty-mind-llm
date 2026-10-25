@@ -1,4 +1,4 @@
-//! Kapitel 6, Schritt 2: GELU im Vergleich zu ReLU und zur Identität.
+//! Kapitel 6.2: GELU im Vergleich zu ReLU und zur Identität.
 //! Ausführen: cargo run -p model --example ch06_gelu
 
 use burn::tensor::{

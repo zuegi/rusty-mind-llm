@@ -1,4 +1,4 @@
-//! Kapitel 6, Schritt 2: Feed-Forward-Netz Schritt für Schritt.
+//! Kapitel 6.2: Feed-Forward-Netz Schritt für Schritt.
 //! Ausführen: cargo run -p model --example ch06_feed_forward
 
 use burn::module::Module;

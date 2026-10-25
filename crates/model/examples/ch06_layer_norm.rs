@@ -1,4 +1,4 @@
-//! Kapitel 6, Schritt 1: LayerNorm mit festen Zahlen.
+//! Kapitel 6.1: LayerNorm mit festen Zahlen.
 //! Ausführen: cargo run -p model --example ch06_layer_norm
 
 use burn::tensor::{Device, Tensor};

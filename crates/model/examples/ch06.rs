@@ -1,4 +1,4 @@
-//! Kapitel 6, Schritt 6: Transformer-Blöcke hinter dem Embedding.
+//! Kapitel 6.6: Transformer-Blöcke hinter dem Embedding.
 //! Ausführen: cargo run -p model --example ch06
 
 use burn::module::Module;
