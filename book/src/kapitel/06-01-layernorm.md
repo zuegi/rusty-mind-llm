@@ -53,6 +53,22 @@ jeden Token-Vektor einzeln in zwei Schritten:
 Die **Varianz** ist der Mittelwert der quadrierten Abweichungen vom
 Mittelwert. `[10, 10, 30, 30]` streut weit (Varianz 100),
 `[0.1, 0.1, 0.3, 0.3]` eng (Varianz 0.01).
+
+Für den ersten Vektor rechnen wir das kurz nach:
+
+```text
+Mittelwert:              (10 + 10 + 30 + 30) / 4 = 20
+Abweichungen davon:      [-10, -10, 10, 10]
+Quadrierte Abweichungen: [100, 100, 100, 100]
+Varianz:                (100 + 100 + 100 + 100) / 4 = 100
+```
+
+Quadrieren verhindert, dass sich positive und negative Abweichungen
+aufheben. Anschliessend teilen wir durch die Anzahl der Komponenten,
+hier `4`. Beim zweiten Vektor ist der Mittelwert `0.2`; die Abweichungen
+sind jeweils `-0.1` oder `0.1`. Ihre Quadrate sind alle `0.01`,
+also beträgt auch deren Mittelwert, die Varianz, `0.01`.
+
 LayerNorm macht diese unterschiedlichen Skalen vergleichbarer.
 Die endgültige Ausgabe muss wegen `γ` und `β` aber weder Mittelwert 0
 noch Varianz 1 haben.
