@@ -1,7 +1,14 @@
 # 6.2 Feed-Forward-Netz
 
-**Lernziel:** Verstehen, wie zwei lineare Schichten und GELU einen
-Token-Vektor verarbeiten, ohne selbst zwischen Positionen zu mischen.
+**Lernziel:** Du verstehst, wie das Feed-Forward-Netz (FFN) die durch
+Attention aufgenommenen Informationen innerhalb jedes Token-Vektors
+weiterverarbeitet, ohne selbst zwischen Positionen zu mischen. Du kannst
+nachvollziehen, wie die erste lineare Schicht die Einbettungsbreite
+(Embedding Dimension, `E`) auf `4·E` erweitert und die zweite sie wieder
+auf `E` zurückführt. Dabei lernst du, warum dazwischen die nichtlineare
+Aktivierungsfunktion GELU gebraucht wird und warum alle Tokens mit
+denselben Parametern verarbeitet werden. Zum Schluss findest du diese
+Schritte und die zugehörigen Tensorformen im Burn-Code wieder.
 
 ## Anschluss: Normieren ist noch keine Merkmalsverarbeitung
 

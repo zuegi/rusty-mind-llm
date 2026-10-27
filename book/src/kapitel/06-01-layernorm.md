@@ -1,7 +1,13 @@
 # 6.1 LayerNorm verstehen und bauen
 
-**Lernziel:** Einen Token-Vektor normieren und die lernbare Anpassung mit
-`γ` und `β` in der Handrechnung und im Burn-Code wiederfinden.
+**Lernziel:** Du verstehst, warum LayerNorm die Zahlen jedes Token-Vektors
+auf eine vergleichbarere Skala bringt, ohne Informationen zwischen Tokens
+zu mischen. Du kannst anhand eines kleinen Beispiels nachvollziehen, wie
+Mittelwert und Varianz berechnet und zur Normierung verwendet werden.
+Dabei lernst du, warum die feste Konstante `ε` die Division absichert
+und wie die lernbaren Parameter `γ` und `β` das Ergebnis anschliessend
+skalieren und verschieben. Zum Schluss findest du diese Rechenschritte
+in einer eigenen LayerNorm-Implementierung mit Burn wieder.
 
 ## Anschluss: Kontext-Vektoren weiterverarbeiten
 
@@ -95,11 +101,30 @@ Danach folgt ein lernbarer Schritt:
 Ausgabe[i] = γ[i] * x̂[i] + β[i]
 ```
 
-`γ` (scale) und `β` (shift) sind zwei Vektoren der Länge `E`. Sie starten mit
-`γ = 1` und `β = 0`. Das Training darf sie ändern, falls das Modell andere
-Bereiche braucht. Zu Beginn ändern sie nichts.
-Die Rechnung erfolgt **komponentenweise**, nicht als Skalarprodukt:
-Für jede Komponente `i` gibt es einen Faktor und einen Verschiebungswert.
+`γ` (scale) und `β` (shift) sind zwei Vektoren der Länge `E`, also der
+Einbettungsbreite (Embedding Dimension, `embedding_dim`). Für jede
+Komponente des Token-Vektors gibt es einen eigenen Faktor in `γ` und
+einen eigenen Verschiebungswert in `β`.
+
+**Alle Einträge von `γ` starten mit 1, alle Einträge von `β` mit 0.**
+Bei `E = 4` bedeutet das:
+
+```text
+γ = [1, 1, 1, 1]
+β = [0, 0, 0, 0]
+
+Normierter Vektor: [-1.342, -0.447, 0.447, 1.342]
+Ausgabe:          [-1.342 * 1 + 0, -0.447 * 1 + 0,
+                   0.447 * 1 + 0,  1.342 * 1 + 0]
+```
+
+Zu Beginn bleibt der normierte Vektor also unverändert: Jede Zahl wird
+mit 1 multipliziert und um 0 verschoben. Die Rechnung erfolgt
+**komponentenweise**, nicht als Skalarprodukt.
+
+Beim Training können die Einträge einzeln angepasst werden.
+Beispielsweise würde `γ[0] = 2` die erste normierte Komponente
+verdoppeln; `β[0] = 0.5` würde anschliessend 0.5 addieren.
 Dieselben beiden Parametervektoren werden für alle Tokens und Fenster
 dieser LayerNorm verwendet; es gibt keine eigenen Parameter pro Position.
 
