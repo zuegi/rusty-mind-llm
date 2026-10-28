@@ -27,11 +27,19 @@ flowchart TD
     x --> add1
     add1 --> x1["Zwischenergebnis x1"]
     x1 --> n2["Normieren: LayerNorm 2"]
-    n2 --> f["Je Token verarbeiten: Feed-Forward"]
+    n2 --> f["FFN: Feed-Forward-Netz<br/>Linear expand → GELU → Linear contract<br/>Je Token: E → 4·E → E"]
     f --> add2["Zwischenergebnis dazuaddieren"]
     x1 --> add2
     add2 --> y["Ausgabe"]
+    style f stroke:#b45309,stroke-width:3px
 ```
+
+**Das FFN ist der hervorgehobene Knoten in der zweiten Hälfte des Blocks.**
+Es erhält das durch LayerNorm 2 normierte Zwischenergebnis `x1` und
+verarbeitet jeden Token-Vektor einzeln. Die Erweiterung auf `4·E`, GELU
+und die Rückführung auf `E` finden vollständig innerhalb dieses Knotens
+statt. Erst danach wird die FFN-Ausgabe zu `x1` addiert; LayerNorm und
+Residual-Addition gehören nicht zum FFN selbst.
 
 Beide Hälften folgen demselben Muster: **normieren, verarbeiten,
 die jeweilige Eingabe dazuaddieren**. Der direkte Weg zur Addition
