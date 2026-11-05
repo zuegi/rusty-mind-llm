@@ -273,8 +273,9 @@ Fenster ist. Es ersetzt ihn nicht durch einen leeren Datensatz.
 
 ### Ein Trainingsschritt mit erhaltenem Optimizer
 
-Der **Optimizer** ist hier Burns SGD-Objekt: Es wendet die Update-Regel
-auf die Modellgewichte an.
+Der **Optimizer** ist hier Burns SGD-Objekt: Es wendet die
+[Update-Regel aus Kapitel 8](08-loss-und-trainingsschritt.md#sgd-aus-gradienten-werden-neue-gewichte)
+auf die Modellgewichte an: `neues Gewicht = altes Gewicht − Lernrate * Gradient`.
 
 Kapitel 8 erzeugt seinen Optimizer für einen einzelnen Schritt.
 Jetzt erzeugen wir ihn einmal und verwenden ihn in allen Schritten:
@@ -291,10 +292,24 @@ eine veränderbare Referenz verwenden. Sie muss keinen neuen Optimizer
 erzeugen. `ModuleOptimizer` verwaltet Updates und Zustand für ganze Modelle;
 `SgdConfig::new().init()` konfiguriert ihn hier für SGD.
 
-Unser SGD ohne Momentum benötigt keine Verlaufshistorie für seine Regel.
-Wir erhalten das Objekt trotzdem über alle Schritte hinweg. Andere
-Optimizer können frühere Schritte speichern und benötigen genau diese
-Lebensdauer. Ihre Verfahren müssen wir für dieses Kapitel nicht verstehen.
+**„SGD ohne Momentum“ bedeutet: Für das Update zählen nur das aktuelle
+Gewicht, der aktuelle Gradient und die Lernrate.** Der Optimizer merkt
+sich keine früheren Gradienten. Die Gewichte selbst enthalten natürlich
+bereits die Änderungen aus vorherigen Trainingsschritten.
+
+**Momentum** bedeutet sinngemäss „Schwung“: Diese SGD-Variante führt
+zusätzlich pro Parameter eine gespeicherte Bewegungsrichtung mit.
+Sie kombiniert einen Anteil der bisherigen Richtung mit dem aktuellen
+Gradienten. Wiederholt ähnliche Gradienten können sich so verstärken;
+kurzfristige Richtungswechsel können gedämpft werden.
+Momentum garantiert aber weder schnellere Konvergenz noch einen
+kleineren Loss bei jedem Schritt.
+
+Unser einfaches SGD benötigt diesen zusätzlichen Zustand nicht.
+Wir erhalten das Optimizer-Objekt trotzdem über alle Schritte hinweg.
+Würden wir später Momentum einschalten, müsste die gespeicherte
+Bewegungsrichtung zwischen den Schritten erhalten bleiben. Ein jedes
+Mal neu erzeugter Optimizer würde diesen „Schwung“ wieder verlieren.
 
 `train_step` gibt das aktualisierte Modell zurück. `sgd_step` aus Kapitel 8
 ruft dieselbe Funktion auf, mit einem selbst erzeugten SGD-Optimizer.
