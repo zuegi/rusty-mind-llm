@@ -79,11 +79,13 @@ pub struct NaiveMultiHeadAttentionConfig {
     pub num_heads: usize,
 }
 
+// ANCHOR: naive_mha_structure
 #[derive(Module, Debug)]
 pub struct NaiveMultiHeadAttention {
     pub heads: Vec<SelfAttention>,
     pub output_projection: Linear,
 }
+// ANCHOR_END: naive_mha_structure
 
 impl NaiveMultiHeadAttentionConfig {
     pub fn new(embedding_dim: usize, num_heads: usize) -> Self {
@@ -101,13 +103,17 @@ impl NaiveMultiHeadAttentionConfig {
             0,
             "embedding_dim must be divisible by num_heads"
         );
+        // ANCHOR: naive_mha_heads_init
         let head_dim = self.embedding_dim / self.num_heads;
         let head_config = SelfAttentionConfig::new(self.embedding_dim, head_dim);
         let heads = (0..self.num_heads)
             .map(|_| head_config.init(device))
             .collect();
+        // ANCHOR_END: naive_mha_heads_init
+        // ANCHOR: naive_mha_output_init
         let output_projection =
             LinearConfig::new(self.embedding_dim, self.embedding_dim).with_bias(false).init(device);
+        // ANCHOR_END: naive_mha_output_init
         NaiveMultiHeadAttention {
             heads,
             output_projection,
@@ -125,14 +131,20 @@ impl NaiveMultiHeadAttention {
         );
         assert_eq!(embedding_dim, expected_dim, "embedding dimension mismatch");
 
+        // ANCHOR: naive_mha_heads_forward
         let head_outputs: Vec<Tensor<3>> = self
             .heads
             .iter()
             .map(|head| head.forward(input.clone()))
             .collect();
+        // ANCHOR_END: naive_mha_heads_forward
 
+        // ANCHOR: naive_mha_concat
         let concatenated = Tensor::cat(head_outputs, 2);
+        // ANCHOR_END: naive_mha_concat
+        // ANCHOR: naive_mha_output_forward
         self.output_projection.forward(concatenated)
+        // ANCHOR_END: naive_mha_output_forward
     }
 }
 // ANCHOR_END: naive_mha
@@ -199,11 +211,16 @@ impl MultiHeadAttention {
         );
         assert_eq!(embedding_dim, expected_dim, "embedding dimension mismatch");
 
+        // ANCHOR: mha_project
         let q = self.project_and_split(self.query.forward(input.clone()), batch_size, context_length);
         let k = self.project_and_split(self.key.forward(input.clone()), batch_size, context_length);
         let v = self.project_and_split(self.value.forward(input), batch_size, context_length);
+        // ANCHOR_END: mha_project
 
+        // ANCHOR: mha_scores
         let mut scores = q.matmul(k.swap_dims(2, 3)) / (self.head_dim as f64).sqrt();
+        // ANCHOR_END: mha_scores
+        // ANCHOR: mha_mask
         if context_length > 1 {
             let mask = Tensor::<2>::ones([context_length, context_length], &scores.device())
                 .triu(1)
@@ -212,15 +229,23 @@ impl MultiHeadAttention {
                 .unsqueeze::<4>();
             scores = scores.mask_fill(mask, f32::NEG_INFINITY);
         }
+        // ANCHOR_END: mha_mask
+        // ANCHOR: mha_context
         let weights = softmax(scores, 3);
         let context = weights.matmul(v);
+        // ANCHOR_END: mha_context
 
+        // ANCHOR: mha_merge
         let merged = context
             .swap_dims(1, 2)
             .reshape([batch_size, context_length, embedding_dim]);
+        // ANCHOR_END: mha_merge
+        // ANCHOR: mha_output
         self.output_projection.forward(merged)
+        // ANCHOR_END: mha_output
     }
 
+    // ANCHOR: mha_split
     pub fn project_and_split(
         &self,
         tensor: Tensor<3>,
@@ -231,5 +256,6 @@ impl MultiHeadAttention {
             .reshape([batch_size, context_length, self.num_heads, self.head_dim])
             .swap_dims(1, 2)
     }
+    // ANCHOR_END: mha_split
 }
 // ANCHOR_END: mha_forward

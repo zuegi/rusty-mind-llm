@@ -1,4 +1,4 @@
-//! Kapitel 6, Schritt 3: Gradient durch viele Schichten, mit und ohne Residual.
+//! Kapitel 6.3: Gradient durch viele Schichten, mit und ohne Residual.
 //! Ausführen: cargo run -p model --example ch06_residual
 
 use burn::tensor::{Device, Tensor};

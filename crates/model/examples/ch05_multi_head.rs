@@ -1,4 +1,4 @@
-//! Kapitel 5, Schritt 4: Multi-Head Attention mit Burn.
+//! Kapitel 5.9: Multi-Head Attention mit Burn.
 //! Ausführen: cargo run -p model --example ch05_multi_head
 
 use burn::tensor::{Device, Tensor};
