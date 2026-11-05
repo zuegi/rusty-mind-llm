@@ -405,7 +405,20 @@ Kapitel 4 hat gezeigt, wie Burn automatisch Gradienten berechnet. Jetzt
 verwenden wir sie. **SGD** bedeutet *Stochastic Gradient Descent*: Wir
 schätzen die Richtung anhand eines Batches statt des ganzen Datensatzes.
 
-Ohne Momentum oder Weight Decay lautet die Update-Regel für jeden Parameter:
+Wir verwenden hier die einfachste SGD-Variante. Zwei mögliche Erweiterungen
+lassen wir bewusst ausgeschaltet:
+
+- **Momentum („Schwung“):** Der Optimizer speichert pro Parameter eine
+  Bewegungsrichtung aus bisherigen Schritten und kombiniert sie mit dem
+  aktuellen Gradienten. Ähnliche Richtungen können sich verstärken,
+  kurzfristige Richtungswechsel können gedämpft werden. Ohne Momentum
+  verwendet das Update nur den aktuellen Gradienten, keine gespeicherte
+  Richtung. Die Gewichte selbst enthalten aber bereits die bisherigen Updates.
+- **Weight Decay:** Ein zusätzlicher Anteil im Update zieht Gewichte in
+  Richtung null. Das ist eine Form der Regularisierung; wir verwenden sie
+  in diesem Beispiel nicht.
+
+Ohne diese Erweiterungen lautet die Update-Regel für jeden Parameter:
 
 ```text
 neues Gewicht = altes Gewicht - Lernrate * Gradient
@@ -425,6 +438,46 @@ ein günstiges Gebiet hinausspringen und den Loss erhöhen. Ein positiver
 Wert allein garantiert daher noch keine Verbesserung.
 
 ### Der vollständige Trainingsschritt
+
+Das Diagramm trennt drei Aufgaben: **vorwärts Vorhersagen und Loss
+berechnen, rückwärts Gradienten berechnen, danach Gewichte aktualisieren**.
+Die Knotentexte nennen die entsprechenden Aufrufe im folgenden Code.
+
+```mermaid
+flowchart TD
+    inputs["inputs: Token-IDs<br/>[B, T]"] --> forward["Vorwärts<br/>model.forward(inputs)"]
+    current["Modell mit<br/>aktuellen Gewichten"] --> forward
+    forward --> logits["Logits<br/>[B, T, vocab_size]"]
+    logits --> ce["cross_entropy"]
+    targets["targets: nächste Token-IDs<br/>[B, T]"] --> ce
+    ce --> loss["Loss vor dem Update<br/>Tensor mit einer Zahl"]
+    loss --> backward["Rückwärts<br/>loss.clone().backward()<br/>Gradienten berechnen"]
+    backward --> params["GradientsParams::<br/>from_grads<br/>Parameter zuordnen"]
+    current --> params
+    params --> step["Update<br/>optimizer.step"]
+    current --> step
+    rate["learning_rate<br/>Schrittweite"] --> step
+    opt["Optimizer<br/>SGD oder vom Aufrufer"] --> step
+    step --> updated["Modell mit<br/>neuen Gewichten"]
+    loss --> report["loss.without_autodiff()<br/>Loss vor dem Update<br/>für die Rückgabe"]
+    updated --> result["Rückgabe: (model, loss)"]
+    report --> result
+    style backward stroke:#b45309,stroke-width:3px
+    style step stroke:#b45309,stroke-width:3px
+```
+
+`backward()` läuft vom Loss rückwärts durch die aufgezeichneten
+Modelloperationen bis zu den lernbaren Parametern. **Es berechnet nur
+Gradienten und verändert noch keine Gewichte.** Erst `optimizer.step`
+verwendet sie zusammen mit der Lernrate für das Update.
+
+Der zweite Weg vom Loss zur Rückgabe dient nur der Ausgabe seines Werts:
+Dieser Loss wurde mit den **alten Gewichten** berechnet. Das zurückgegebene
+Modell hat dagegen bereits die **neuen Gewichte**. Für den Loss nach dem
+Update ist ein weiterer Vorwärtsdurchlauf nötig.
+
+Im Code erzeugt `sgd_step` einen SGD-Optimizer und übergibt ihn an
+`train_step`. Dort finden die im Diagramm gezeigten Berechnungen statt:
 
 ```rust,ignore
 {{#include ../../../crates/training/src/step.rs}}
