@@ -30,6 +30,41 @@ letzte Position:        Logits für das nächste Token
 argmax:                 wahrscheinlichste Token-ID
 ```
 
+Technisch übergeben wir die Token-IDs als Tensor mit Batch-Achse. Für einen
+Kontext mit drei Token und einem Vokabular aus fünf Token sieht der Ablauf so
+aus:
+
+```rust
+let context = [0, 1, 3];
+let context_tensor = Tensor::<1, Int>::from_ints(context, &device);
+let ids = context_tensor.reshape([1, context.len()]);
+let logits = model.forward(ids);
+```
+
+Der Eingabetensor hat dadurch die Form `[1, 3]`: ein Fenster mit drei
+Positionen. `forward` liefert Logits mit der Form `[1, 3, 5]` zurück:
+Batch, Position und mögliche Token-ID. An jeder der drei Positionen stehen
+also fünf Zahlen, eine pro Vokabular-Eintrag.
+
+Für das nächste Token schneiden wir die letzte Position heraus. Bei einer
+Position mit Index `2` bleiben die Formen `[1, 1, 5]`:
+
+```rust
+let [batch_size, position_count, vocab_size] = logits.dims();
+let last_logits = logits.slice([
+    0..batch_size,
+    (position_count - 1)..position_count,
+    0..vocab_size,
+]);
+let next_token = last_logits.argmax(2);
+let next_id = next_token.into_scalar::<i32>();
+```
+
+`argmax(2)` vergleicht die fünf Logits entlang der Vokabular-Achse. Der
+höchste Wert bestimmt die nächste Token-ID. Die Batch- und Positions-Achse
+bleiben zunächst erhalten; `into_scalar` liest den einzelnen Wert daraus aus.
+Diese ID hängen wir anschliessend an die bisherige Tokenfolge an.
+
 Für die Generierung interessiert uns nur die letzte Position. Die früheren
 Positionen helfen dem Modell beim Berechnen des Kontexts, enthalten aber keine
 neue Vorhersage, die wir jetzt anhängen würden.
