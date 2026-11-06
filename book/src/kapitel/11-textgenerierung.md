@@ -118,6 +118,25 @@ Textgenerierung ist eine Schleife:
 5. mit `argmax` nächste Token-ID bestimmen,
 6. Token-ID an die Folge anhängen.
 
+Im Code wird daraus eine Schleife. `token_ids` enthält die vollständige Folge;
+`context_window` wählt daraus den Teil, den das Modell im aktuellen Schritt
+sieht:
+
+```rust
+let mut token_ids = vec![0, 1, 3];
+
+for _ in 0..new_tokens {
+    let context = context_window(&token_ids, context_length);
+    let next_id = next_token(&model, context, &device);
+    token_ids.push(next_id);
+}
+```
+
+`next_token` bündelt dabei die vorherigen Schritte: Tensor erstellen, `forward`
+ausführen, letzte Position auswählen und mit `argmax` eine Token-ID bestimmen.
+Nach `push` enthält `token_ids` die neue ID und wird beim nächsten
+Schleifendurchlauf wieder als Grundlage verwendet.
+
 Am Anfang gibt es bereits einen Startkontext. Angenommen, die Tokenfolge
 lautet `[0, 1, 3]` und `argmax` wählt als nächste ID `4`:
 
