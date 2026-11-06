@@ -16,8 +16,9 @@ ausführlich erklärt. Die grösste Zahl wählen wir zunächst mit `argmax` aus.
 
 ## Vorhersagen statt ganzer Text
 
-Ein Aufruf von `forward` verarbeitet einen Kontext und liefert für jede
-Position eine Vorhersage:
+Ein Aufruf von `forward` erzeugt **nicht direkt einen fertigen Satz**. GPT
+verarbeitet die vorhandenen Token als Kontext und berechnet für jede Position
+eine Vorhersage für das jeweils nächste Token:
 
 ```text
 Token-IDs:              [Der, Hund, rennt]
