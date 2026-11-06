@@ -8,9 +8,11 @@ Gewichte gespeichert und wieder geladen. Jetzt verwenden wir das Modell:
 Aus einer vorhandenen Tokenfolge erzeugen wir Schritt für Schritt weitere
 Token.
 
-Das Modell erzeugt dabei nicht direkt Wörter. Es gibt für jede Position eine
-Liste von Zahlen zurück, die **Logits**. Jede Zahl gehört zu einer möglichen
-Token-ID. Die grösste Zahl wählen wir zunächst mit `argmax` aus.
+Das Modell erzeugt dabei nicht direkt Wörter. Es gibt für jede Position einen
+**Logit-Vektor** zurück: eine Liste von Zahlen, eine pro mögliche Token-ID.
+Ein einzelner Wert darin heisst **Logit**. Die Bedeutung von Logit und der
+Schreibweise `[B, T, V]` ist in [Kapitel 7: GPT – Das Sprachmodell](07-gpt.md)
+ausführlich erklärt. Die grösste Zahl wählen wir zunächst mit `argmax` aus.
 
 ## Vorhersagen statt ganzer Text
 
