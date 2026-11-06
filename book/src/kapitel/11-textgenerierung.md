@@ -66,19 +66,16 @@ der Form `[1, 3, 5]` zurück:
 Batch, Position und mögliche Token-ID. An jeder der drei Positionen stehen
 also fünf Zahlen, eine pro Vokabular-Eintrag.
 
-Für das nächste Token brauchen wir nur den Logit-Vektor der letzten Position.
+Für die Generierung brauchen wir nur die Vorhersage nach dem vollständigen
+aktuellen Kontext. Das ist die letzte Position. Frühere Positionen sagen
+vorher, welche Tokens danach kämen; diese Tokens liegen aber bereits im
+Kontext. Die Bedeutung der Positionen ist in [Kapitel 7: GPT – Das
+Sprachmodell](07-gpt.md) erklärt.
+
 Unsere Ausgabe hat die Form `[1, 3, 5]`: ein Fenster, drei Positionen und fünf
-Logits je Position. Rust zählt Positionen ab null:
-
-```text
-Position 0: [Logits für Token-ID 0, ..., Logits für Token-ID 4]
-Position 1: [Logits für Token-ID 0, ..., Logits für Token-ID 4]
-Position 2: [Logits für Token-ID 0, ..., Logits für Token-ID 4] ← letzte Position
-```
-
-Die letzte Position hat deshalb den Index `2`, obwohl es insgesamt drei
-Positionen gibt. Wir schneiden genau diese Position heraus. Die beiden anderen
-Achsen bleiben unverändert:
+Logits je Position. Wir schneiden die letzte Position heraus. Rust zählt
+Positionen ab null, deshalb hat sie bei drei Positionen den Index `2`. Die
+beiden anderen Achsen bleiben unverändert:
 
 ```text
 vorher: [1, 3, 5]  = 1 Fenster, 3 Positionen, 5 Logits
