@@ -118,6 +118,40 @@ Textgenerierung ist eine Schleife:
 5. mit `argmax` nächste Token-ID bestimmen,
 6. Token-ID an die Folge anhängen.
 
+Am Anfang gibt es bereits einen Startkontext. Angenommen, die Tokenfolge
+lautet `[0, 1, 3]` und `argmax` wählt als nächste ID `4`:
+
+```text
+Schritt 1:
+Kontext:       [0, 1, 3]
+Vorhersage:    4
+Tokenfolge:    [0, 1, 3, 4]
+```
+
+Für den nächsten Aufruf wird nicht wieder nur der ursprüngliche Kontext
+verwendet. Die neu erzeugte ID `4` gehört jetzt selbst zum Kontext:
+
+```text
+Schritt 2:
+Kontext:       [0, 1, 3, 4]
+Vorhersage:    2
+Tokenfolge:    [0, 1, 3, 4, 2]
+```
+
+Die Schleife verändert also die Tokenfolge nach jedem Durchlauf. Das Modell
+erzeugt nicht mehrere neue Tokens in einem einzigen Aufruf. Jeder neue Token
+entsteht aus einem eigenen Modellaufruf und kann dadurch die folgenden
+Vorhersagen beeinflussen:
+
+```text
+vorhandene Token
+    → nächste ID vorhersagen
+    → ID anhängen
+    → erweiterten Kontext erneut verarbeiten
+    → nächste ID vorhersagen
+    → ...
+```
+
 ```text
 [Der, Hund, rennt]
         ↓
@@ -129,7 +163,9 @@ Textgenerierung ist eine Schleife:
 ```
 
 Jeder neue Schritt sieht auch die Token, die in vorherigen Schritten erzeugt
-wurden. Deshalb wird die Eingabe nach jedem Schritt länger.
+wurden. Deshalb wird die Eingabe nach jedem Schritt länger. Die vollständige
+Folge wird für die spätere Ausgabe behalten; welche Token tatsächlich an das
+Modell übergeben werden, begrenzt die maximale Kontextlänge.
 
 ## Kontextlänge begrenzen
 
