@@ -43,9 +43,24 @@ let ids = context_tensor.reshape([1, context.len()]); // ein Batch mit einem Fen
 let logits = model.forward(ids);
 ```
 
-Der Eingabetensor hat dadurch die Form `[1, 3]`: **ein Fenster** mit drei
-Positionen. Die erste `1` steht für ein Fenster im Batch, die `3` für die
-Tokenpositionen. `forward` liefert Logits mit der Form `[1, 3, 5]` zurück:
+Hier beschreiben `[0, 1, 3]` und `[1, 3]` zwei verschiedene Dinge:
+
+```text
+[0, 1, 3]       die drei gespeicherten Werte
+                → eine Achse mit drei Tokenpositionen
+
+[[0, 1, 3]]     dieselben Werte, zusätzlich in ein Fenster eingeordnet
+                → zwei Achsen: ein Fenster mit drei Tokenpositionen
+```
+
+`context` ist zunächst ein gewöhnliches Rust-Array mit der Form `[3]`. Es
+enthält drei Werte, aber noch keine Batch-Achse. `from_ints` übernimmt diese
+Werte in einen Tensor mit einer Achse. `reshape([1, context.len()])` fügt
+keine Token hinzu und verändert auch keine Werte. Es ordnet die drei Werte nur
+als ein Fenster in einem Batch an. Der Eingabetensor hat dadurch die Form
+`[1, 3]`: **ein Fenster** mit drei Positionen. Die erste `1` steht für ein
+Fenster im Batch, die `3` für die Tokenpositionen. `forward` liefert Logits mit
+der Form `[1, 3, 5]` zurück:
 Batch, Position und mögliche Token-ID. An jeder der drei Positionen stehen
 also fünf Zahlen, eine pro Vokabular-Eintrag.
 
