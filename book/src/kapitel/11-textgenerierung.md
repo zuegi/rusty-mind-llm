@@ -30,19 +30,22 @@ letzte Position:        Logits für das nächste Token
 argmax:                 wahrscheinlichste Token-ID
 ```
 
-Technisch übergeben wir die Token-IDs als Tensor mit Batch-Achse. Für einen
-Kontext mit drei Token und einem Vokabular aus fünf Token sieht der Ablauf so
-aus:
+Das Modell erwartet Token-IDs nicht als einfache Liste, sondern als eine
+Sammlung von Fenstern. Diese äussere Ebene ist die **Batch-Achse**. Auch wenn
+wir nur ein einziges Fenster generieren, legen wir es deshalb in eine Sammlung
+mit genau einem Fenster. Für einen Kontext mit drei Token und einem Vokabular
+mit fünf Einträgen sieht der Ablauf so aus:
 
 ```rust
-let context = [0, 1, 3];
+let context = [0, 1, 3];              // ein Fenster: drei Token
 let context_tensor = Tensor::<1, Int>::from_ints(context, &device);
-let ids = context_tensor.reshape([1, context.len()]);
+let ids = context_tensor.reshape([1, context.len()]); // ein Batch mit einem Fenster
 let logits = model.forward(ids);
 ```
 
-Der Eingabetensor hat dadurch die Form `[1, 3]`: ein Fenster mit drei
-Positionen. `forward` liefert Logits mit der Form `[1, 3, 5]` zurück:
+Der Eingabetensor hat dadurch die Form `[1, 3]`: **ein Fenster** mit drei
+Positionen. Die erste `1` steht für ein Fenster im Batch, die `3` für die
+Tokenpositionen. `forward` liefert Logits mit der Form `[1, 3, 5]` zurück:
 Batch, Position und mögliche Token-ID. An jeder der drei Positionen stehen
 also fünf Zahlen, eine pro Vokabular-Eintrag.
 
