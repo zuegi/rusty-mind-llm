@@ -21,3 +21,17 @@ geprüft. Der Text ist wegen der Gemeinfreiheit im Repository enthalten.
 ```bash
 cargo run -p training --example ch02 -- data/the-verdict.txt
 ```
+
+Kapitel 12 verwendet denselben Text zuerst für einen kurzen Trainingsversuch:
+
+```bash
+cargo run -p training --example ch12
+```
+
+Ein vollständiger Epochenlauf startet nur ausdrücklich:
+
+```bash
+cargo run --release -p training --example ch12_full -- train checkpoints/ch12-model.bpk 1
+```
+
+Dieser Aufruf speichert Modellgewichte und hat keinen Zeitabbruch.

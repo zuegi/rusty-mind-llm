@@ -1,8 +1,9 @@
-use burn::Tensor;
 use burn::prelude::Device;
-use burn::tensor::Int;
 use model::gpt::GptModelConfig;
 use training::checkpoint::load_model;
+use training::generation::{context_window, next_token};
+#[cfg(test)]
+use {burn::Tensor, training::generation::select_next_token};
 
 type Demo = Result<(), Box<dyn std::error::Error>>;
 
@@ -14,31 +15,6 @@ const NUM_BLOCKS: usize = 1;
 const TOKEN_IDS: [[i32; CONTEXT_LENGTH]; 1] = [[0, 1, 3]];
 const NEW_TOKENS: usize = 5;
 const VOCABULARY: [&str; VOCAB_SIZE] = ["Der", "Hund", "Katze", "rennt", "."];
-
-fn context_window(token_ids: &[i32], context_length: usize) -> &[i32] {
-    assert!(context_length > 0, "context_length muss größer als 0 sein");
-    let start = token_ids.len().saturating_sub(context_length);
-    &token_ids[start..]
-}
-
-fn next_token(model: &model::gpt::GptModel, context: &[i32], device: &Device) -> i32 {
-    let context_tensor = Tensor::<1, Int>::from_ints(context, device);
-    let ids = context_tensor.reshape([1, context.len()]);
-    let logits = model.forward(ids);
-    select_next_token(logits)
-}
-
-fn select_next_token(logits: Tensor<3>) -> i32 {
-    let [batch_size, position_count, vocab_size] = logits.dims();
-    assert_eq!(batch_size, 1, "Generierung erwartet ein Fenster");
-    assert!(position_count > 0, "Generierung braucht einen Kontext");
-    let last_logits = logits.slice([
-        0..batch_size,
-        (position_count - 1)..position_count,
-        0..vocab_size,
-    ]);
-    last_logits.argmax(2).into_scalar::<i32>()
-}
 
 fn generate(
     model: &model::gpt::GptModel,

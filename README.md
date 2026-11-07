@@ -35,15 +35,26 @@ Bisher umgesetzt:
 - **Checkpoints:** Modellgewichte mit Burns Burnpack-API speichern und
   mit expliziter Modellkonfiguration laden. Der Optimizer-Zustand wird noch
   nicht gespeichert.
+- **Textgenerierung:** Mit `argmax` schrittweise Token erzeugen, den Kontext
+  begrenzen und optional gespeicherte Modellgewichte laden. Die Demo nutzt
+  weiterhin ein künstliches Vokabular mit fünf Einträgen.
+- **Echter Text:** Kapitel 12 verbindet den GPT-2-Tokenizer mit einem
+  begrenzten CPU-Trainingsversuch auf `data/the-verdict.txt`: getrennte
+  Datenbereiche, wenige Fenster, höchstens drei SGD-Updates und
+  Loss-Messungen vor und nach dem Training. Ein eigener Aufruf ergänzt
+  ganze Epochen, Checkpoints und Generierung mit dem GPT-2-Tokenizer.
 
-Als Nächstes folgt Textgenerierung. `model` enthält bewusst nur
-Modellberechnung; Trainingsinfrastruktur bleibt im Crate `training`.
+Kapitel 11 ist in `main` abgeschlossen. Kapitel 12 ist als Buchtext und
+kleine Trainingsdemo umgesetzt. Als Nächstes folgt Auswertung und
+Overfitting. Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
+`model` enthält bewusst nur Modellberechnung; Trainingsinfrastruktur bleibt
+im Crate `training`.
 
 ## Projektstruktur
 
 ```text
 crates/
-  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2, 8, 9 und 10
+  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2 und 8 bis 12
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -114,7 +125,35 @@ cargo run -p training --example ch09
 
 # Kapitel 10: Modellgewichte speichern und laden
 cargo run -p training --example ch10
+
+# Kapitel 11: Token schrittweise generieren (ohne Checkpoint: Zufallsgewichte)
+cargo run -p training --example ch11
+
+# Kapitel 12: Echter Text, höchstens drei Updates mit GPT-2-Vokabular
+cargo run -p training --example ch12
 ```
+
+Kapitel 12 prüft ein Trainingszeitbudget von 30 Sekunden zwischen Updates.
+Ein laufendes Update und die Loss-Messungen werden nicht unterbrochen;
+das ist keine harte Prozess-Laufzeitgrenze. Die Demo speichert keinen
+Checkpoint. Das kleine Modell ist kein vortrainiertes GPT-2.
+
+Der vollständige Ablauf startet nur ausdrücklich, mit einer bis drei
+Epochen. Er hat keinen Zeitabbruch und speichert nach jeder Epoche die
+Modellgewichte; ein erneuter Trainingsaufruf startet neu, nicht als Resume:
+
+```bash
+# Längerer Lauf: eine volle Epoche auf dem enthaltenen Text
+cargo run --release -p training --example ch12_full -- train checkpoints/ch12-model.bpk 1
+
+# Passende Gewichte laden und 16 neue Tokens erzeugen
+cargo run --release -p training --example ch12_full -- generate checkpoints/ch12-model.bpk "I HAD always" 16
+```
+
+Die Generierung verwendet `argmax` und denselben GPT-2-Tokenizer.
+Sinnvolle Sätze sind nicht garantiert; ungültiges UTF-8 wird als Fehler
+gemeldet. Details und Grenzen stehen in
+[Kapitel 12](book/src/kapitel/12-echter-text-und-tokenizer.md).
 
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
 
@@ -175,6 +214,12 @@ cargo test -p training --test ch09
 
 # Modellgewichte speichern und laden
 cargo test -p training --test ch10
+
+# Echter Text, Tensorformen und begrenzter Trainingsversuch
+cargo test -p training --example ch12
+
+# Ganze Epochen auf kurzem Testtext, Checkpoint und Generierung
+cargo test -p training --example ch12_full
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
