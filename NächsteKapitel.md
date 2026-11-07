@@ -27,6 +27,12 @@ Wichtige Inhalte:
 
 ## Kapitel 11: Textgenerierung
 
+**Status (18.10.2026): pausiert, nicht abgeschlossen.** Die vorhandenen Commits
+und die Demo `crates/training/examples/ch11.rs` sind ein Lern-Zwischenstand.
+Der Zwischenstand auf Branch `rene-weishaupt-kapitel-11-generieren` ist
+committet und nach `origin` gepusht. Zuerst werden die Grundlagen in der
+Lernsession „Kapitel selbst programmieren“ schrittweise aufgearbeitet.
+
 **Lernziel:** Aus bisherigem Text neue Token vorhersagen.
 
 Ablauf:

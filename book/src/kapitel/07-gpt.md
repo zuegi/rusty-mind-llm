@@ -33,9 +33,59 @@ Vektor in `V` Zahlen:
 versteckter Vektor [E]  →  Ausgabeprojektion [E, V]  →  Logits [V]
 ```
 
-Diese Zahlen heißen **Logits**. Sie sind noch keine Wahrscheinlichkeiten.
-Später wandelt Softmax sie in Wahrscheinlichkeiten um und Cross-Entropy
-vergleicht sie mit dem richtigen nächsten Token.
+### Was ist ein Logit?
+
+Ein **Logit** ist ein einzelner Zahlenwert, den das Modell als Bewertung für
+eine mögliche Token-ID berechnet. Die Zahl ist nicht auf `0` bis `1`
+beschränkt und deshalb noch keine Wahrscheinlichkeit. Ein grösserer Logit
+bedeutet zunächst nur: Das Modell bewertet diese Token-ID im aktuellen
+Kontext höher als eine Token-ID mit kleinerem Logit.
+
+Für ein Vokabular mit fünf Token kann die Ausgabe für **eine Position** zum
+Beispiel so aussehen:
+
+```text
+Token-ID:       0     1     2     3     4
+Logit:        1.2  -0.4   0.8   2.1   0.3
+```
+
+Jede einzelne Zahl ist ein Logit. Die fünf Zahlen zusammen bilden einen
+**Logit-Vektor**. Der grösste Wert steht hier bei Token-ID `3`; bei einer
+einfachen `argmax`-Auswahl wäre das die nächste Token-ID. Softmax kann aus
+dem gesamten Logit-Vektor zusätzlich Wahrscheinlichkeiten berechnen. Für
+Training und Textgenerierung behalten wir zunächst die rohen Logits.
+
+### Was bedeutet `[B, T, V]`?
+
+`[B, T, V]` ist keine Folge von drei Logits. Die Buchstaben sind Platzhalter
+für die Grössen der drei Tensor-Achsen:
+
+| Kürzel | Bedeutung | Beispiel |
+| ------ | --------- | -------- |
+| `B` | Anzahl der Fenster im Batch | `1` |
+| `T` | Anzahl der Tokenpositionen je Fenster | `3` |
+| `V` | Anzahl möglicher Token-IDs | `5` |
+
+Ein Tensor mit der Form `[1, 3, 5]` enthält deshalb:
+
+```text
+1 Fenster
+  └── 3 Positionen
+        └── 5 Logits pro Position
+```
+
+Man kann sich die Ausgabe als drei Logit-Vektoren vorstellen:
+
+```text
+Position 0: [logit für ID 0, logit für ID 1, ..., logit für ID 4]
+Position 1: [logit für ID 0, logit für ID 1, ..., logit für ID 4]
+Position 2: [logit für ID 0, logit für ID 1, ..., logit für ID 4]
+```
+
+Die Form `[B, T, V]` sagt also, **wie viele** Vektoren es gibt und **wie lang**
+jeder Vektor ist. Für die Textgenerierung verwenden wir den Vektor der
+letzten Position. Seine fünf Logits bewerten die fünf möglichen nächsten
+Token.
 
 Der Logit an Position `t` beschreibt die Vorhersage für das Token **nach**
 Position `t`. Durch die kausale Maske in Attention hängt er nur von den
