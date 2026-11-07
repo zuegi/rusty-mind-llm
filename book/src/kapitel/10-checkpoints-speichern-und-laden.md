@@ -163,6 +163,29 @@ Original und geladenes Modell dieselben Logits. Die Demo räumt ihre temporäre 
 cargo run -p training --example ch10
 ```
 
+### Trainierte Gewichte für die spätere Nutzung speichern
+
+Optional nimmt diese Demo einen Dateipfad entgegen. In diesem Modus verwendet
+sie die Trainingsbausteine aus Kapitel 9, trainiert zehn Epochen auf dem
+künstlichen ID-Muster `0, 1, 2, 3, 4, 0, ...` und speichert die Gewichte:
+
+```bash
+cargo run -p training --example ch10 -- checkpoints/ch11-model.bpk
+```
+
+Wie in Kapitel 9 werden Trainings- und Validierungsdaten getrennt. Die Ausgabe
+zeigt beide Loss-Werte vor dem Training (Epoche `0`) und nach jeder Epoche.
+So bleibt der Lernfortschritt sichtbar, bevor die Gewichte gespeichert werden.
+
+Das Zielverzeichnis wird bei Bedarf angelegt. `checkpoints/` ist von Git
+ausgeschlossen und liegt bewusst ausserhalb von `target/`: `cargo clean`
+entfernt Build-Artefakte, aber nicht die gespeicherten Modellgewichte.
+
+Diese Datei bleibt erhalten. Kapitel 11 kann sie anschliessend zur Generierung
+laden. Ohne Dateipfad bleibt die bisherige Speichern-/Laden-Demo unverändert.
+Das neue Lernziel ist weiterhin das Speichern: Die Trainingsschleife stammt
+aus Kapitel 9, die Textgenerierung folgt erst in Kapitel 11.
+
 ## 5. Test und Grenzen
 
 Die Integrationstests wiederholen denselben Vergleich und prüfen explizite

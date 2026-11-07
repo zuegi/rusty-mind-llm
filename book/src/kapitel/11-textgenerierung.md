@@ -107,6 +107,26 @@ Für die Generierung interessiert uns nur die letzte Position. Die früheren
 Positionen helfen dem Modell beim Berechnen des Kontexts, enthalten aber keine
 neue Vorhersage, die wir jetzt anhängen würden.
 
+## Warum zunächst `argmax`?
+
+`argmax` ist deterministisch: Für dieselben Gewichte und denselben Kontext
+wird immer dieselbe Token-ID gewählt. Dadurch können wir den Ablauf prüfen,
+ohne zusätzlich Zufallszahlen oder Sampling-Regeln zu erklären.
+
+Später können wir die Auswahl erweitern:
+
+```text
+Logits
+  → Temperatur
+  → Top-k oder Top-p
+  → Zufallsstichprobe
+  → nächste Token-ID
+```
+
+Diese Verfahren können abwechslungsreicheren Text erzeugen, ändern aber nicht
+den grundlegenden Ablauf: Das Modell sagt immer eine nächste Token-Verteilung
+für den aktuellen Kontext voraus.
+
 ## Ein Token nach dem anderen
 
 Textgenerierung ist eine Schleife:
@@ -188,25 +208,75 @@ Modell übergeben werden, begrenzt die maximale Kontextlänge.
 
 ## Kontextlänge begrenzen
 
-Das Modell wurde mit einer maximalen Kontextlänge gebaut. Nach einigen
-Generierungsschritten kann die vollständige Tokenfolge länger sein als dieser
-Wert. Dann verwenden wir nur den hinteren Teil:
+Die vollständige Tokenfolge wächst bei jedem Generierungsschritt. Das Modell
+hat aber eine feste maximale Kontextlänge: In unserer Demo sind das drei
+Token. Seine Positions-Embedding-Tabelle hat deshalb nur Einträge für die
+Positionen `0`, `1` und `2`. Wir dürfen ihm nicht einfach vier oder fünf Token
+auf einmal übergeben.
+
+Wir behalten daher die vollständige Folge für die Ausgabe, verwenden für
+jeden Modellaufruf aber nur die letzten höchstens drei Token. Die Hilfsfunktion
+aus der Demo berechnet diesen Ausschnitt:
 
 ```rust
-let start = token_ids.len().saturating_sub(context_length);
-let context = &token_ids[start..];
+fn context_window(token_ids: &[i32], context_length: usize) -> &[i32] {
+    assert!(context_length > 0, "context_length muss größer als 0 sein");
+    let start = token_ids.len().saturating_sub(context_length);
+    &token_ids[start..]
+}
 ```
 
-Bei einer Kontextlänge von `3` ergibt sich:
+### Startposition mit `saturating_sub` berechnen
+
+`token_ids.len()` zählt die vorhandenen Token. Davon ziehen wir die erlaubte
+Kontextlänge ab. Bei fünf Token und einer Kontextlänge von drei ergibt sich
+`5 - 3 = 2`: Der Ausschnitt beginnt am Index `2`.
+
+Wenn die Folge kürzer als die Kontextlänge ist, behalten wir alle Token.
+`saturating_sub` liefert dafür mindestens `0`. Bei zwei Token ergibt
+`2usize.saturating_sub(3)` also `0`, statt eine negative Zahl zu erzeugen.
+Das ist wichtig, weil Längen und Indizes vom Typ `usize` nicht negativ sein
+können.
 
 ```text
-gesamte Folge: [0, 1, 3, 4, 4]
-verwendeter Kontext:       [3, 4, 4]
+Anzahl Token    Kontextlänge    Startindex    verwendeter Kontext
+2               3               0             alle 2 Token
+3               3               0             alle 3 Token
+4               3               1             letzte 3 Token
+5               3               2             letzte 3 Token
 ```
 
-Das Modell sieht weiterhin höchstens drei Token. Bereits erzeugte Token bleiben
-in der vollständigen Folge erhalten, damit wir am Ende den gesamten Text
-ausgeben können.
+### Ausschnitt mit `&token_ids[start..]` auswählen
+
+`start..` bedeutet: vom Index `start` bis zum Ende. Das `&` leiht diesen
+Ausschnitt als Slice aus. Die Funktion kopiert oder löscht keine Token.
+
+Bei fünf Token und einer Kontextlänge von `3` sieht das so aus:
+
+```text
+Index:          0  1  2  3  4
+gesamte Folge: [0, 1, 3, 4, 4]
+                     └─────┘
+Kontext:            [3, 4, 4]
+```
+
+Das Modell sieht hier nur `[3, 4, 4]`; `token_ids` enthält weiterhin
+`[0, 1, 3, 4, 4]`. Für den Modellaufruf werden die drei ausgewählten Token
+wieder an den lokalen Positionen `0`, `1` und `2` eingeordnet.
+
+Beim nächsten angehängten Token verschiebt sich der Ausschnitt um eine
+Position nach rechts. Die vollständige Folge wächst, die Länge des
+Modellkontexts bleibt höchstens drei:
+
+```text
+gesamte Folge: [0, 1, 3, 4]       → Kontext: [1, 3, 4]
+gesamte Folge: [0, 1, 3, 4, 2]    → Kontext: [3, 4, 2]
+gesamte Folge: [0, 1, 3, 4, 2, 0] → Kontext: [4, 2, 0]
+```
+
+Token ausserhalb dieses Ausschnitts gehen nicht mehr direkt in die nächste
+Vorhersage ein. Kontextbegrenzung ist also nicht nur eine Formanpassung:
+Das Modell kann ältere Teile der Folge nicht mehr sehen.
 
 ## Erste Demo
 
@@ -221,30 +291,110 @@ Die Ausgabe zeigt pro Schritt den verwendeten Kontext und die wachsende
 Tokenfolge. Am Ende werden die Token-IDs über ein kleines Vokabular in Wörter
 umgewandelt.
 
+### Token-IDs wieder als Text ausgeben
+
+Das Modell und die Generierungsschleife arbeiten nur mit Zahlen. Um die
+Ausgabe lesen zu können, brauchen wir dieselbe Zuordnung zwischen Token-ID
+und Text wie bei der Eingabe. In unserer Demo übernimmt das ein kleines Array:
+
+```rust
+const VOCABULARY: [&str; 5] = ["Der", "Hund", "Katze", "rennt", "."];
+```
+
+Der Array-Index entspricht der Token-ID: `VOCABULARY[0]` liefert `"Der"`,
+`VOCABULARY[3]` liefert `"rennt"`. Wir gehen die vollständige Tokenfolge durch
+und schlagen jeden Eintrag nach:
+
+```rust
+for token_id in &token_ids {
+    print!("{} ", VOCABULARY[*token_id as usize]);
+}
+println!();
+```
+
+`&token_ids` leiht die Folge aus, ohne sie zu verbrauchen. Deshalb ist
+`token_id` eine Referenz auf eine Zahl. `*token_id` liest diese Zahl;
+`as usize` wandelt sie in den Typ um, den Rust für Array-Indizes erwartet.
+In dieser Demo sind die IDs gültige Indizes: Die Start-IDs liegen im
+Vokabular, und `argmax` liefert einen Index innerhalb der fünf Logits.
+
+```text
+Tokenfolge: [0, 1, 3, 4]
+Ausgabe:    Der Hund rennt .
+```
+
+Das Leerzeichen nach jedem Eintrag stammt aus `print!("{} ", ...)`, nicht
+aus dem Modell. Deshalb steht hier auch vor dem Punkt ein Leerzeichen.
+Diese einfache Worttabelle genügt für die Demo. Bei einem echten Tokenizer
+würden wir dessen Decodierung verwenden, weil Tokens auch Wortteile,
+Leerzeichen oder Satzzeichen darstellen können.
+
+Wir geben die gesamte Folge aus, also Startkontext und neu erzeugte Token.
+Der begrenzte Kontext beeinflusst nur den Modellaufruf, nicht diese Ausgabe.
+
+### Was zeigt die Demo?
+
 Das Modell ist in dieser Demo nur zufällig initialisiert. Die Ausgabe ist
 deshalb noch kein sinnvoller deutscher Satz. Sinnvolle Vorhersagen entstehen
 erst mit einem trainierten Checkpoint. Die Generierungslogik ist davon
 unabhängig.
 
-## Warum zunächst `argmax`?
+## Mit geladenen Gewichten generieren
 
-`argmax` ist deterministisch: Für dieselben Gewichte und denselben Kontext
-wird immer dieselbe Token-ID gewählt. Dadurch können wir den Ablauf prüfen,
-ohne zusätzlich Zufallszahlen oder Sampling-Regeln zu erklären.
+Jetzt verbinden wir Training, Speichern und Generierung. Die Demo aus
+Kapitel 10 nimmt optional einen Dateipfad entgegen und speichert dort nach dem
+Training ihre Modellgewichte. Die Demo aus Kapitel 11 lädt diese Datei:
 
-Später können wir die Auswahl erweitern:
-
-```text
-Logits
-  → Temperatur
-  → Top-k oder Top-p
-  → Zufallsstichprobe
-  → nächste Token-ID
+```bash
+cargo run -p training --example ch10 -- checkpoints/ch11-model.bpk
+cargo run -p training --example ch11 -- checkpoints/ch11-model.bpk
 ```
 
-Diese Verfahren können abwechslungsreicheren Text erzeugen, ändern aber nicht
-den grundlegenden Ablauf: Das Modell sagt immer eine nächste Token-Verteilung
-für den aktuellen Kontext voraus.
+Beide Demos verwenden dieselbe Modellkonfiguration: fünf Token-IDs, maximal
+drei Kontextpositionen, acht Embedding-Komponenten, zwei Attention-Köpfe und
+einen Transformer-Block. Das ist wichtig: Der Checkpoint enthält Gewichte,
+nicht die Konfiguration oder die Zuordnung zwischen IDs und Text.
+
+Im Generierungsprogramm ersetzen wir die zufällige Initialisierung durch die
+Ladefunktion aus Kapitel 10:
+
+```rust
+let model = load_model(&config, path, &device)?;
+let token_ids = generate(
+    &model,
+    vec![0, 1, 3],
+    NEW_TOKENS,
+    CONTEXT_LENGTH,
+    &device,
+);
+```
+
+`generate` kapselt die bereits erklärte Schleife. Nur die Herkunft der
+Gewichte ändert sich; Kontextbegrenzung, letzte Position und `argmax` bleiben
+gleich. Die Generierung berechnet weder einen Loss noch Gradienten und führt
+keine Optimizer-Updates aus.
+
+Ein angegebener, aber fehlender oder inkompatibler Checkpoint führt zu einem
+Fehler. Das Programm ersetzt ihn nicht stillschweigend durch zufällige
+Gewichte. Ohne Pfad bleibt die bisherige Zufallsdemo verfügbar und weist
+darauf in ihrer Ausgabe hin.
+
+**Grenze dieses Lernbeispiels:** Die Checkpoint-Demo trainiert wie Kapitel 9 auf dem künstlichen
+ID-Muster `0, 1, 2, 3, 4, 0, ...`, nicht auf deutschen Sätzen. Die geladenen
+Gewichte enthalten deshalb ein gelerntes Zahlenmuster, kein deutsches
+Sprachverständnis. Unsere Worttabelle macht diese IDs nur lesbar; sie
+verwandelt das Training nicht nachträglich in Sprachtraining. Der
+Startkontext `[0, 1, 3]` entspricht zudem nicht genau dem Trainingsmuster.
+Echter Text und ein passender Tokenizer folgen in Kapitel 12.
+
+Die Tests prüfen die Auswahl anhand fester Logits, die Anzahl neuer Token,
+die Erhaltung des Startkontexts und die Generierung über die Kontextgrenze
+hinaus. Ein weiterer Test vergleicht die erzeugten Token vor und nach dem
+Speichern und Laden:
+
+```bash
+cargo test -p training --example ch11 --test ch10
+```
 
 ## Zusammenfassung
 
@@ -254,3 +404,4 @@ für den aktuellen Kontext voraus.
 - Die neue ID wird an die vollständige Folge angehängt.
 - Für den nächsten Modellaufruf wird der Kontext auf die Modellgrösse gekürzt.
 - Ein zufällig initialisiertes Modell erzeugt noch keinen sinnvollen Text.
+- Geladene Gewichte werden mit derselben Generierungsschleife verwendet.
