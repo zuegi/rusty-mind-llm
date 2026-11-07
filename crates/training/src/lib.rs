@@ -3,6 +3,7 @@
 
 pub mod checkpoint;
 pub mod dataset;
+pub mod generation;
 pub mod loss;
 pub mod runner;
 pub mod step;

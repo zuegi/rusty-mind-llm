@@ -40,3 +40,4 @@
 - [9. Trainingsschleife und Validierung](kapitel/09-trainingsschleife-und-validierung.md)
 - [10. Checkpoints speichern und laden](kapitel/10-checkpoints-speichern-und-laden.md)
 - [11. Textgenerierung](kapitel/11-textgenerierung.md)
+- [12. Echter Text und Tokenizer](kapitel/12-echter-text-und-tokenizer.md)

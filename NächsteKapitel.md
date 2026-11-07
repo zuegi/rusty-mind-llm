@@ -27,11 +27,11 @@ Wichtige Inhalte:
 
 ## Kapitel 11: Textgenerierung
 
-**Status (18.10.2026): pausiert, nicht abgeschlossen.** Die vorhandenen Commits
-und die Demo `crates/training/examples/ch11.rs` sind ein Lern-Zwischenstand.
-Der Zwischenstand auf Branch `rene-weishaupt-kapitel-11-generieren` ist
-committet und nach `origin` gepusht. Zuerst werden die Grundlagen in der
-Lernsession „Kapitel selbst programmieren“ schrittweise aufgearbeitet.
+**Status (07.11.2026): abgeschlossen und in `main`.** Kapiteltext und Demo
+`crates/training/examples/ch11.rs` sind mit PR #12 integriert. Die Demo
+generiert mit `argmax`, begrenzt den Kontext und kann gespeicherte Gewichte
+laden. Das Training verwendet weiterhin künstliche Token-IDs; die kleine
+Worttabelle ist kein GPT-2-Tokenizer.
 
 **Lernziel:** Aus bisherigem Text neue Token vorhersagen.
 
@@ -67,7 +67,19 @@ Zuerst nur `argmax`; Sampling erst als Erweiterung. So bleibt der Grundablauf ve
 
 ## Kapitel 12: Echter Text und Tokenizer
 
-Bisher nutzt Kapitel 9 künstliche IDs. Danach sinnvoll:
+**Status (07.11.2026): abgeschlossen; zur Integration in `main` bereit.**
+`book/src/kapitel/12-echter-text-und-tokenizer.md` und
+`crates/training/examples/ch12.rs` verbinden den vorhandenen GPT-2-Tokenizer
+mit getrennten echten Trainings- und Validierungsdaten. Die Demo verwendet
+höchstens acht Trainingsfenster, zwei Validierungsfenster und drei Updates.
+`crates/training/examples/ch12_full.rs` ergänzt ausdrücklich gestartete
+volle Epochen (eins bis drei), Auswertung aller Fenster der getrennten
+Bereiche, Speichern/Laden passender Modellgewichte und Textgenerierung.
+Ein längerer Trainingslauf auf der gesamten Geschichte wurde nicht
+automatisch ausgeführt. Tests verwenden dafür einen kurzen Testtext.
+Die Integration in `main` erfolgt über einen Pull Request.
+
+Kapitel 9 nutzt künstliche IDs. Kapitel 12 ergänzt:
 
 - `data/the-verdict.txt` tokenisieren
 - echtes Vokabular verwenden
@@ -77,7 +89,33 @@ Bisher nutzt Kapitel 9 künstliche IDs. Danach sinnvoll:
 
 Dieses Kapitel sollte **nach** Checkpoints und Generierung kommen: Erst Mechanik beweisen, dann echten Text einsetzen.
 
+**Einstieg durchgeführt:** Die vorhandene Demo aus Kapitel 2 mit
+`data/the-verdict.txt` wurde ausgeführt; der Weg vom Text zu Token-IDs,
+verschobenen Zielen und der Logit-Form wurde gemeinsam besprochen.
+`Gpt2Tokenizer` verwendet bereits GPT-2 (`r50k_base`) mit 50'257
+Vokabular-Einträgen. Diese Grösse ist nicht die Anzahl Tokens im Text.
+Der Token-Strom wird vor der Fensterbildung in Training und Validierung
+geteilt; kein Fenster darf über diese Grenze reichen.
+
+Der freigegebene kleine Trainingsversuch verwendet Kontextlänge acht,
+Batch-Grösse zwei und höchstens drei Updates. Ein Zeitbudget von 30 Sekunden
+wird zwischen Updates geprüft; laufende Updates und Auswertung dürfen
+länger dauern. Das ist keine harte Prozess-Laufzeitgrenze. Das grössere
+Vokabular vergrössert Embedding, Ausgabeprojektion und Logits gegenüber den
+fünf IDs aus Kapitel 9. Die Demo zeigt verstrichene Trainingszeit und die
+Grösse des Logit-Tensors, nicht den gesamten RAM-Bedarf. Allgemeingültige
+Speicher- oder Laufzeitwerte lassen sich daraus nicht ableiten.
+Ein kleines Modell mit einem einzelnen kurzen Text dient dem Lernen,
+nicht als allgemein brauchbares Sprachmodell.
+
+Der vollständige Epochenlauf hat keinen Zeitabbruch. Seine Checkpoints
+enthalten nur Modellgewichte, keinen Optimizer-Zustand oder Epochenzähler.
+Erneutes Training startet neu; Training-Resume ist nicht umgesetzt.
+Generierung lädt die feste passende Konfiguration und decodiert GPT-2-IDs.
+
 ## Kapitel 13: Auswertung und Overfitting
+
+**Status: nächster geplanter Schritt, noch nicht umgesetzt.**
 
 Optional, aber didaktisch wertvoll:
 
