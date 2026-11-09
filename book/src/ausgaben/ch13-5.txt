@@ -1,0 +1,10 @@
+Text: data/the-verdict.txt, Epochen: 5, Lernrate: 0.05, Seed: 42
+Epoche  0: Training 11.1860 (PPL 72115.5), Validierung 11.1926 (PPL 72594.6)  <- neuer bester Stand
+Epoche  1: Training 10.2675 (PPL 28780.5), Validierung 10.4021 (PPL 32929.5)  <- neuer bester Stand
+Epoche  2: Training 8.7421 (PPL 6260.7), Validierung 8.8930 (PPL 7280.7)  <- neuer bester Stand
+Epoche  3: Training 8.0989 (PPL 3290.7), Validierung 8.2360 (PPL 3774.3)  <- neuer bester Stand
+Epoche  4: Training 7.7052 (PPL 2219.8), Validierung 7.7753 (PPL 2381.0)  <- neuer bester Stand
+Epoche  5: Training 7.4433 (PPL 1708.4), Validierung 7.5009 (PPL 1809.6)  <- neuer bester Stand
+
+Bester Stand: Epoche 5 (Validierung 7.5009, PPL 1809.6) in checkpoints/ch13-5.bpk
+Das geprüfte Warnsignal liegt nicht vor; das schliesst Overfitting nicht aus.
