@@ -44,9 +44,14 @@ Bisher umgesetzt:
   Loss-Messungen vor und nach dem Training. Ein eigener Aufruf ergänzt
   ganze Epochen, Checkpoints und Generierung mit dem GPT-2-Tokenizer.
 
-Kapitel 11 ist in `main` abgeschlossen. Kapitel 12 ist als Buchtext und
-kleine Trainingsdemo umgesetzt. Als Nächstes folgt Auswertung und
-Overfitting. Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
+- **Auswertung und Overfitting:** Kapitel 13 misst Trainings- und
+  Validierungs-Loss je Epoche, berechnet die Perplexity (`exp(loss)`),
+  meldet ein Overfitting-Warnsignal und speichert nur den Stand mit dem
+  besten Validierungs-Loss (einschliesslich der Ausgangsmessung).
+  Das Buch zeigt echte Vergleichsläufe, Loss-Kurven und deren Einordnung.
+
+Kapitel 11 und 12 sind in `main`. Kapitel 13 ist als Buchtext und
+Demo umgesetzt. Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
 `model` enthält bewusst nur Modellberechnung; Trainingsinfrastruktur bleibt
 im Crate `training`.
 
@@ -54,7 +59,7 @@ im Crate `training`.
 
 ```text
 crates/
-  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2 und 8 bis 12
+  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2 und 8 bis 13
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -155,6 +160,20 @@ Sinnvolle Sätze sind nicht garantiert; ungültiges UTF-8 wird als Fehler
 gemeldet. Details und Grenzen stehen in
 [Kapitel 12](book/src/kapitel/12-echter-text-und-tokenizer.md).
 
+Kapitel 13 startet nur ausdrücklich, mit 1 bis 20 Epochen, und speichert den
+Stand mit dem besten Validierungs-Loss:
+
+```bash
+cargo run --release -p training --example ch13 -- checkpoints/ch13-best.bpk 20
+
+# Gleiche Daten und Initialisierung, kleinere Lernrate
+cargo run --release -p training --example ch13 -- checkpoints/ch13-lr002.bpk 20 --learning-rate 0.02
+```
+
+Jeder Aufruf startet neu und ersetzt einen vorhandenen Checkpoint am
+gewählten Pfad zuerst durch den Ausgangsstand. Unterschiedliche Pfade
+bewahren die Modelle verschiedener Experimente.
+
 Der DataLoader kann auch den enthaltenen Beispieltext verwenden:
 
 ```bash
@@ -220,6 +239,9 @@ cargo test -p training --example ch12
 
 # Ganze Epochen auf kurzem Testtext, Checkpoint und Generierung
 cargo test -p training --example ch12_full
+
+# Perplexity, Bestmodell-Regel und Overfitting-Signal
+cargo test -p training --example ch13
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,

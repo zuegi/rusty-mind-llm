@@ -1,0 +1,25 @@
+Text: data/the-verdict.txt, Epochen: 20, Lernrate: 0.02, Seed: 42
+Epoche  0: Training 11.1860 (PPL 72115.5), Validierung 11.1926 (PPL 72594.6)  <- neuer bester Stand
+Epoche  1: Training 10.9476 (PPL 56818.7), Validierung 10.9888 (PPL 59205.5)  <- neuer bester Stand
+Epoche  2: Training 10.6116 (PPL 40601.5), Validierung 10.6941 (PPL 44096.8)  <- neuer bester Stand
+Epoche  3: Training 9.8174 (PPL 18350.2), Validierung 10.0082 (PPL 22207.8)  <- neuer bester Stand
+Epoche  4: Training 9.1226 (PPL 9160.1), Validierung 9.3226 (PPL 11188.1)  <- neuer bester Stand
+Epoche  5: Training 8.7070 (PPL 6044.9), Validierung 8.8811 (PPL 7194.4)  <- neuer bester Stand
+Epoche  6: Training 8.4143 (PPL 4511.3), Validierung 8.5668 (PPL 5254.1)  <- neuer bester Stand
+Epoche  7: Training 8.1635 (PPL 3510.5), Validierung 8.3036 (PPL 4038.3)  <- neuer bester Stand
+Epoche  8: Training 7.9665 (PPL 2882.7), Validierung 8.0661 (PPL 3184.7)  <- neuer bester Stand
+Epoche  9: Training 7.8041 (PPL 2450.6), Validierung 7.9010 (PPL 2700.1)  <- neuer bester Stand
+Epoche 10: Training 7.6742 (PPL 2152.1), Validierung 7.7533 (PPL 2329.4)  <- neuer bester Stand
+Epoche 11: Training 7.5469 (PPL 1894.8), Validierung 7.6348 (PPL 2069.0)  <- neuer bester Stand
+Epoche 12: Training 7.4352 (PPL 1694.5), Validierung 7.5230 (PPL 1850.1)  <- neuer bester Stand
+Epoche 13: Training 7.3435 (PPL 1546.1), Validierung 7.4368 (PPL 1697.4)  <- neuer bester Stand
+Epoche 14: Training 7.2572 (PPL 1418.3), Validierung 7.3833 (PPL 1608.9)  <- neuer bester Stand
+Epoche 15: Training 7.1805 (PPL 1313.6), Validierung 7.3110 (PPL 1496.6)  <- neuer bester Stand
+Epoche 16: Training 7.1053 (PPL 1218.5), Validierung 7.2292 (PPL 1379.2)  <- neuer bester Stand
+Epoche 17: Training 7.0295 (PPL 1129.5), Validierung 7.1785 (PPL 1311.0)  <- neuer bester Stand
+Epoche 18: Training 6.9677 (PPL 1061.8), Validierung 7.1577 (PPL 1284.0)  <- neuer bester Stand
+Epoche 19: Training 6.9141 (PPL 1006.4), Validierung 7.1012 (PPL 1213.4)  <- neuer bester Stand
+Epoche 20: Training 6.8412 (PPL 935.6), Validierung 7.0658 (PPL 1171.3)  <- neuer bester Stand
+
+Bester Stand: Epoche 20 (Validierung 7.0658, PPL 1171.3) in checkpoints/ch13-lr002.bpk
+Das geprüfte Warnsignal liegt nicht vor; das schliesst Overfitting nicht aus.

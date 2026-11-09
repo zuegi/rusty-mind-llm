@@ -115,9 +115,26 @@ Generierung lädt die feste passende Konfiguration und decodiert GPT-2-IDs.
 
 ## Kapitel 13: Auswertung und Overfitting
 
-**Status: nächster geplanter Schritt, noch nicht umgesetzt.**
+**Status (09.11.2026): inhaltlich abgeschlossen; noch nicht in `main`.**
+`book/src/kapitel/13-auswertung-und-overfitting.md` und
+`crates/training/examples/ch13.rs` trainieren bis zu 20 Epochen auf echtem
+Text, messen je Epoche Trainings- und Validierungs-Loss samt Perplexity
+(`exp(loss)`), speichern nur bei strikt kleinerem Validierungs-Loss und
+melden ein Overfitting-Warnsignal. Epoche 0 zählt als Ausgangskandidat
+für den besten Checkpoint. Das Buch enthält echte Ausgaben, beide
+Loss-Kurven sowie ausgewertete Vergleiche von 5/20 Epochen bei Lernrate
+0,05 und 20 Epochen bei 0,02. Lernraten lassen sich über
+`--learning-rate` vergleichen. In diesen Läufen war Epoche 16 bei 0,05
+der beste Stand (Validierungs-Loss 6,6642, Perplexity 783,9).
+Tests verwenden einen kurzen Text; die drei dokumentierten Echttext-Läufe
+wurden für den Kapitelabschluss ausgeführt. Grenzen, unabhängige
+Testdaten und der Übergang zu Kapitel 14 sind erklärt. Laden und
+Generierung mit dem besten Checkpoint sind anhand einer echten Ausgabe
+beschrieben. Der Lernpfad führt vom Trainingslauf über Auswertung und
+Bestmodell-Auswahl bis zur Verwendung der gespeicherten Gewichte.
+Kapitel 12 blieb unverändert. Kein Commit, Push oder PR erstellt.
 
-Optional, aber didaktisch wertvoll:
+Behandelte Themen:
 
 - Trainings-Loss und Validierungs-Loss visualisieren
 - Perplexity aus dem Loss erklären
@@ -125,9 +142,9 @@ Optional, aber didaktisch wertvoll:
 - Epochenzahl und Lernrate vergleichen
 - Bestes Modell anhand Validierungs-Loss speichern
 
-Teile davon könnten auch in Kapitel 10 integriert werden.
-
 ## Kapitel 14: Bessere Optimierung
+
+**Status: nächster geplanter Schritt, noch nicht begonnen.**
 
 Optional:
 
