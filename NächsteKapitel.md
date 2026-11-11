@@ -115,7 +115,7 @@ Generierung lädt die feste passende Konfiguration und decodiert GPT-2-IDs.
 
 ## Kapitel 13: Auswertung und Overfitting
 
-**Status (09.11.2026): inhaltlich abgeschlossen; noch nicht in `main`.**
+**Status (10.11.2026): abgeschlossen und in `main` (PR #14).**
 `book/src/kapitel/13-auswertung-und-overfitting.md` und
 `crates/training/examples/ch13.rs` trainieren bis zu 20 Epochen auf echtem
 Text, messen je Epoche Trainings- und Validierungs-Loss samt Perplexity
@@ -132,7 +132,7 @@ Testdaten und der Übergang zu Kapitel 14 sind erklärt. Laden und
 Generierung mit dem besten Checkpoint sind anhand einer echten Ausgabe
 beschrieben. Der Lernpfad führt vom Trainingslauf über Auswertung und
 Bestmodell-Auswahl bis zur Verwendung der gespeicherten Gewichte.
-Kapitel 12 blieb unverändert. Kein Commit, Push oder PR erstellt.
+Kapitel 12 blieb unverändert. Der Abschluss wurde mit PR #14 integriert.
 
 Behandelte Themen:
 
@@ -144,9 +144,21 @@ Behandelte Themen:
 
 ## Kapitel 14: Bessere Optimierung
 
-**Status: nächster geplanter Schritt, noch nicht begonnen.**
+**Status (11.11.2026): Konzept und praktische Demo im Kapitel-14-Worktree.**
+`book/src/kapitel/14-bessere-optimierung.md` erklärt SGD, Momentum, Adam,
+Lernratenpläne pro Update, Warmup, Clipping-Varianten und den nötigen
+Zustand für eine vollständige Trainingswiederaufnahme.
+`crates/training/examples/ch14.rs` verwendet die vorhandenen Trainingsfunktionen
+für fünf Vergleiche: SGD, Momentum, Adam, Adam mit Warmup/linearer Absenkung
+und zusätzlich Norm-Clipping je Parametergradiententensor. Gleiche
+Ausgangsgewichte, gleiche Batches und zwölf Updates je Variante machen
+den begrenzten Vergleich nachvollziehbar. Alle fünf Echttext-Läufe wurden
+ausgeführt; `book/src/ausgaben/ch14-vergleich.txt` enthält ihre echten
+Messwerte, das Kapitel die Rust-Beispiele und deren Einordnung.
+Die Demo nutzt nur acht Trainings- und zwei Validierungsfenster und
+speichert keine Checkpoints. Vollständiger Trainings-Resume bleibt offen.
 
-Optional:
+Themen:
 
 - Adam statt SGD
 - Momentum

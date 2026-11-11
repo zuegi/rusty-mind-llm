@@ -50,8 +50,12 @@ Bisher umgesetzt:
   besten Validierungs-Loss (einschliesslich der Ausgangsmessung).
   Das Buch zeigt echte Vergleichsläufe, Loss-Kurven und deren Einordnung.
 
-Kapitel 11 und 12 sind in `main`. Kapitel 13 ist als Buchtext und
-Demo umgesetzt. Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
+Kapitel 11 bis 13 sind in `main`. Kapitel 14 ergänzt
+[bessere Optimierung](book/src/kapitel/14-bessere-optimierung.md):
+SGD, Momentum, Adam, Warmup mit linearer Absenkung und Norm-Clipping
+je Parametergradiententensor. Fünf begrenzte Echttext-Läufe samt
+Messausgaben sind enthalten; vollständige Trainingswiederaufnahme bleibt offen.
+Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
 `model` enthält bewusst nur Modellberechnung; Trainingsinfrastruktur bleibt
 im Crate `training`.
 
@@ -59,7 +63,7 @@ im Crate `training`.
 
 ```text
 crates/
-  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2 und 8 bis 13
+  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2 und 8 bis 14
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -136,6 +140,9 @@ cargo run -p training --example ch11
 
 # Kapitel 12: Echter Text, höchstens drei Updates mit GPT-2-Vokabular
 cargo run -p training --example ch12
+
+# Kapitel 14: Fünf Optimizer-Vergleiche, je drei Epochen auf acht Trainingsfenstern
+cargo run --release -p training --example ch14
 ```
 
 Kapitel 12 prüft ein Trainingszeitbudget von 30 Sekunden zwischen Updates.
