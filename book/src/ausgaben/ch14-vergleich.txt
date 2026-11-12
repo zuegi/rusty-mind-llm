@@ -1,0 +1,49 @@
+Seed 42, Fenster: Training 8, Validierung 2, Epochen 3
+SGD 0.05, Momentum 0.01, Adam 0.001; Clipping-Norm je Tensor 0.1
+
+Sgd: 12 Updates
+Epoche 0: Training 11.110244, Validierung 10.768029
+Lernraten für Updates ab 1: [0.05000000, 0.05000000, 0.05000000, 0.05000000]
+Epoche 1: Training 11.036317, Validierung 10.751710
+Lernraten für Updates ab 5: [0.05000000, 0.05000000, 0.05000000, 0.05000000]
+Epoche 2: Training 10.965129, Validierung 10.736713
+Lernraten für Updates ab 9: [0.05000000, 0.05000000, 0.05000000, 0.05000000]
+Epoche 3: Training 10.896419, Validierung 10.722695
+
+Momentum: 12 Updates
+Epoche 0: Training 11.110244, Validierung 10.768029
+Lernraten für Updates ab 1: [0.01000000, 0.01000000, 0.01000000, 0.01000000]
+Epoche 1: Training 11.076604, Validierung 10.758872
+Lernraten für Updates ab 5: [0.01000000, 0.01000000, 0.01000000, 0.01000000]
+Epoche 2: Training 11.003859, Validierung 10.744164
+Lernraten für Updates ab 9: [0.01000000, 0.01000000, 0.01000000, 0.01000000]
+Epoche 3: Training 10.910263, Validierung 10.724759
+
+Adam: 12 Updates
+Epoche 0: Training 11.110244, Validierung 10.768029
+Lernraten für Updates ab 1: [0.00100000, 0.00100000, 0.00100000, 0.00100000]
+Epoche 1: Training 11.070697, Validierung 10.754624
+Lernraten für Updates ab 5: [0.00100000, 0.00100000, 0.00100000, 0.00100000]
+Epoche 2: Training 11.027311, Validierung 10.742922
+Lernraten für Updates ab 9: [0.00100000, 0.00100000, 0.00100000, 0.00100000]
+Epoche 3: Training 10.984851, Validierung 10.731487
+
+AdamSchedule: 12 Updates
+Epoche 0: Training 11.110244, Validierung 10.768029
+Lernraten für Updates ab 1: [0.00025000, 0.00050000, 0.00075000, 0.00100000]
+Epoche 1: Training 11.084061, Validierung 10.759906
+Lernraten für Updates ab 5: [0.00088750, 0.00077500, 0.00066250, 0.00055000]
+Epoche 2: Training 11.052551, Validierung 10.751366
+Lernraten für Updates ab 9: [0.00043750, 0.00032500, 0.00021250, 0.00010000]
+Epoche 3: Training 11.040843, Validierung 10.748151
+
+AdamScheduleClipping: 12 Updates
+Epoche 0: Training 11.110244, Validierung 10.768029
+Lernraten für Updates ab 1: [0.00025000, 0.00050000, 0.00075000, 0.00100000]
+Epoche 1: Training 11.088040, Validierung 10.762357
+Lernraten für Updates ab 5: [0.00088750, 0.00077500, 0.00066250, 0.00055000]
+Epoche 2: Training 11.061204, Validierung 10.756515
+Lernraten für Updates ab 9: [0.00043750, 0.00032500, 0.00021250, 0.00010000]
+Epoche 3: Training 11.051207, Validierung 10.754271
+
+Begrenzter Lernversuch; kein Checkpoint, kein Resume, kein Qualitätsnachweis.

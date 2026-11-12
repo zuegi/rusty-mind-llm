@@ -115,7 +115,7 @@ Generierung lädt die feste passende Konfiguration und decodiert GPT-2-IDs.
 
 ## Kapitel 13: Auswertung und Overfitting
 
-**Status (09.11.2026): inhaltlich abgeschlossen; noch nicht in `main`.**
+**Status (10.11.2026): abgeschlossen und in `main` (PR #14).**
 `book/src/kapitel/13-auswertung-und-overfitting.md` und
 `crates/training/examples/ch13.rs` trainieren bis zu 20 Epochen auf echtem
 Text, messen je Epoche Trainings- und Validierungs-Loss samt Perplexity
@@ -132,7 +132,7 @@ Testdaten und der Übergang zu Kapitel 14 sind erklärt. Laden und
 Generierung mit dem besten Checkpoint sind anhand einer echten Ausgabe
 beschrieben. Der Lernpfad führt vom Trainingslauf über Auswertung und
 Bestmodell-Auswahl bis zur Verwendung der gespeicherten Gewichte.
-Kapitel 12 blieb unverändert. Kein Commit, Push oder PR erstellt.
+Kapitel 12 blieb unverändert. Der Abschluss wurde mit PR #14 integriert.
 
 Behandelte Themen:
 
@@ -144,9 +144,21 @@ Behandelte Themen:
 
 ## Kapitel 14: Bessere Optimierung
 
-**Status: nächster geplanter Schritt, noch nicht begonnen.**
+**Status (11.11.2026): Konzept und praktische Demo im Kapitel-14-Worktree.**
+`book/src/kapitel/14-bessere-optimierung.md` erklärt SGD, Momentum, Adam,
+Lernratenpläne pro Update, Warmup, Clipping-Varianten und den nötigen
+Zustand für eine vollständige Trainingswiederaufnahme.
+`crates/training/examples/ch14.rs` verwendet die vorhandenen Trainingsfunktionen
+für fünf Vergleiche: SGD, Momentum, Adam, Adam mit Warmup/linearer Absenkung
+und zusätzlich Norm-Clipping je Parametergradiententensor. Gleiche
+Ausgangsgewichte, gleiche Batches und zwölf Updates je Variante machen
+den begrenzten Vergleich nachvollziehbar. Alle fünf Echttext-Läufe wurden
+ausgeführt; `book/src/ausgaben/ch14-vergleich.txt` enthält ihre echten
+Messwerte, das Kapitel die Rust-Beispiele und deren Einordnung.
+Die Demo nutzt nur acht Trainings- und zwei Validierungsfenster und
+speichert keine Checkpoints. Die separate Resume-Demo folgt in Kapitel 15.
 
-Optional:
+Themen:
 
 - Adam statt SGD
 - Momentum
@@ -156,6 +168,25 @@ Optional:
 - Warum Optimizer-Zustand gespeichert werden muss
 
 Nicht vor Checkpoints behandeln. Kapitel 9 soll erst den grundlegenden Ablauf festigen.
+
+## Kapitel 15: Training unterbrechen und fortsetzen
+
+**Status: separate Demo und Kapitel umgesetzt.**
+`crates/training/examples/ch15.rs` speichert Modell- und Adam-Zustand
+als Burnpack-Records sowie Konfiguration, Token-IDs, Lernratenplan,
+Seed und Update-Zähler als JSON. Neue Checkpoint-Ordner werden nicht
+überschrieben; Prüfsummen prüfen die zusammengehörigen Record-Dateien.
+Ein neuer Prozess setzt auch innerhalb einer Epoche beim nächsten Batch
+fort. Die kleine Demo verwendet acht Echttext-Fenster und zwölf Updates,
+ohne Validierung oder Bestmodell-Auswahl. `ch13` und `ch14` bleiben
+eigenständige Demos ohne Resume-Modus.
+
+Tests vergleichen alle Modellgewichte nach Unterbrechungen vor, auf und
+nach der Epochengrenze exakt mit einem ununterbrochenen CPU-Lauf.
+Ein neuer Adam ohne gespeicherten Zustand liefert dagegen ein anderes
+nächstes Update. Zwei separate Prozessläufe auf echten Tokens zeigen
+dieselben angezeigten Lernraten und Loss-Werte wie der durchgehende Lauf.
+Lernratenplan und Berechnung bleiben mit Kapitel 14 gemeinsam.
 
 ## Empfohlener Lernpfad
 
@@ -171,6 +202,8 @@ Kapitel 12 Echter Text + echter Tokenizer
 Kapitel 13 Perplexity + Overfitting
     ↓
 Kapitel 14 Adam und bessere Optimierung
+    ↓
+Kapitel 15 Training unterbrechen und fortsetzen
 ```
 
 **Wichtig:** Kein Kapitel muss mehr Architektur im `model`-Crate hinzufügen. Die nächsten Kapitel gehören fast vollständig in `training` oder einen separaten Inference-Bereich. `model` bleibt für Vorwärtsberechnung und Parameter zuständig.
