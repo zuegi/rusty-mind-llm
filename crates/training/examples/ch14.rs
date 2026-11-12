@@ -11,6 +11,7 @@ use model::gpt::{GptModel, GptModelConfig};
 use training::{
     dataset::{Batch, Dataset, split_tokens},
     runner::evaluate,
+    schedule::WarmupDecay,
     step::train_step,
     tokenizer::{Gpt2Tokenizer, VOCAB_SIZE},
 };
@@ -84,16 +85,12 @@ impl Experiment {
 
 // ANCHOR: schedule
 fn scheduled_rate(update: usize, total: usize) -> f64 {
-    assert!(
-        update > 0 && update <= total,
-        "Update muss in 1..=total liegen"
-    );
-    let warmup = WARMUP_UPDATES.min(total);
-    if update <= warmup {
-        return ADAM_RATE * update as f64 / warmup as f64;
+    WarmupDecay {
+        peak_rate: ADAM_RATE,
+        warmup_updates: WARMUP_UPDATES,
+        final_fraction: FINAL_RATE_FRACTION,
     }
-    let progress = (update - warmup) as f64 / (total - warmup) as f64;
-    ADAM_RATE * (1.0 - progress * (1.0 - FINAL_RATE_FRACTION))
+    .rate(update, total)
 }
 // ANCHOR_END: schedule
 

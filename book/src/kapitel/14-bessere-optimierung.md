@@ -79,10 +79,24 @@ neues Gewicht = altes Gewicht - Lernrate * neuer Schwung
 Der Momentum-Faktor bestimmt, wie viel vom vorherigen Schwung bleibt.
 Bei 0,9 bleiben davon 90 Prozent erhalten; der neue Gradient kommt hinzu.
 Die Demo wählt dafür in Burn `MomentumConfig::new().with_momentum(0.9)`
-mit `with_dampening(0.0)`: Der neue Gradient wird nicht abgeschwächt.
-Ohne diese ausdrückliche Wahl wäre Burns Dampening standardmässig 0,1.
-Nesterov bleibt ausgeschaltet. Andere Varianten gewichten auch den neuen
-Gradienten oder verwenden eine zusätzliche Vorausschau.
+mit `with_dampening(0.0)`.
+
+**Dampening** bedeutet hier Dämpfung: Es schwächt den Beitrag des neuen
+Gradienten zum Schwung ab. Der neue Gradient wird dafür mit
+`1 - Dampening` multipliziert. Bei Dampening 0,1 gehen also nur 90 Prozent
+des neuen Gradienten ein; bei 0,0 geht er vollständig ein, wie in unserer
+Formel oben. Der Momentum-Faktor bestimmt dagegen, wie viel vom **alten**
+Schwung bleibt. Ohne die ausdrückliche Wahl wäre Burns Dampening
+standardmässig 0,1.
+
+**Nesterov-Momentum** ist eine Variante mit einer Vorausschau: Anschaulich
+berücksichtigt sie, wohin der bisherige Schwung die Gewichte bereits
+bewegen würde, und korrigiert diese Bewegung anhand der Gradienteninformation.
+Gängige SGD-Implementierungen kombinieren dafür den aktuellen Gradienten
+mit dem aktualisierten Schwung, statt nur den Schwung als Update-Richtung
+zu verwenden. Das kann helfen, eine Bewegung früher abzubremsen, garantiert
+aber kein besseres Ergebnis. In unserer Demo bleibt Nesterov ausgeschaltet;
+es gilt die einfachere Momentum-Formel oben.
 
 Zeigen mehrere Gradienten in dieselbe Richtung, baut sich Schwung auf.
 Wechseln ihre Vorzeichen häufig, können sich ihre Beiträge teilweise
@@ -163,10 +177,32 @@ oder Autograd zu ändern. `run` erzeugt den Optimizer einmal pro
 Vergleichslauf, **nicht** einmal pro Batch oder Epoche.
 
 Die Demo verwendet die Adam-Standardwerte von Burn 0.22:
-`beta_1 = 0.9`, `beta_2 = 0.999`, `epsilon = 1e-5`, ohne AMSGrad
-oder Weight Decay. Die Lernraten sind 0,05 für SGD, 0,01 für Momentum
-und 0,001 für Adam. Das sind ausdrücklich Versuchswerte, keine
-abgestimmten Optima.
+
+- `beta_1 = 0.9`: Der Richtungsverlauf behält 90 Prozent seines bisherigen
+  Werts und nimmt 10 Prozent des aktuellen Gradienten auf.
+- `beta_2 = 0.999`: Der zweite Verlauf behält 99,9 Prozent seines bisherigen
+  Werts und nimmt 0,1 Prozent des aktuellen quadrierten Gradienten auf.
+- `epsilon = 1e-5`: Die kleine positive Zahl 0,00001 im Nenner verhindert
+  eine Division durch null.
+
+Zwei optionale Erweiterungen bleiben ausgeschaltet:
+
+**AMSGrad** verändert Adams zweiten Verlauf: Für jedes Gewicht merkt es
+sich zusätzlich den bisher grössten Wert dieses Verlaufs und verwendet
+ihn zur Berechnung der Skala. Sinkt der aktuelle Verlauf, sinkt diese
+Grundlage der Skala dadurch nicht mit. So soll die adaptive Schrittweite
+nicht allein wegen eines kleineren zweiten Verlaufs wieder stark wachsen.
+AMSGrad ist keine Garantie für bessere Ergebnisse.
+
+**Weight Decay** wirkt zusätzlich zur Anpassung anhand des Loss-Gradienten
+darauf hin, Gewichte in Richtung null zu ziehen. Es soll übermässig grosse
+Gewichte begrenzen und kann gegen Overfitting helfen. Anders als eine
+kleinere Lernrate verkleinert es nicht bloss die nächsten Lernschritte,
+sondern wirkt den Gewichtswerten selbst entgegen. Unsere Demo verwendet
+diese zusätzliche Massnahme nicht.
+
+Die Lernraten sind 0,05 für SGD, 0,01 für Momentum und 0,001 für Adam.
+Das sind ausdrücklich Versuchswerte, keine abgestimmten Optima.
 
 Adam kann die Optimierung erleichtern, verhindert aber kein Overfitting.
 Ein schneller sinkender Trainings-Loss beweist weder bessere
@@ -194,7 +230,11 @@ und erhöhen die Lernrate über einige Updates bis zum geplanten Wert.
 Das kann sehr grosse Änderungen zu Trainingsbeginn begrenzen, während
 Gewichte und Optimizer-Verläufe sich erst entwickeln.
 
-Ein rein illustrativer Plan, keine gemessene Empfehlung:
+Dieser Warmup ist in `crates/training/examples/ch14.rs` bereits umgesetzt:
+`scheduled_rate` berechnet ihn für `AdamSchedule` und
+`AdamScheduleClipping`. Die Rust-Umsetzung folgt
+[weiter unten](#warmup-und-absenkung-in-rust).
+Die Demo verwendet diesen Plan, keine allgemeine Empfehlung:
 
 ```text
 Update 1:          Lernrate 0,00025
@@ -274,7 +314,21 @@ Begrenzen einzelner Werte auf ein Intervall. Diese Varianten haben
 nicht dieselbe Wirkung.
 
 Die Demo wählt `GradientClippingConfig::Norm(0.1)` über
-`AdamConfig::with_grad_clipping`. In Burn 0.22 begrenzt diese API die
+`AdamConfig::with_grad_clipping`:
+
+```rust
+use burn::{grad_clipping::GradientClippingConfig, optim::AdamConfig};
+
+const CLIP_NORM: f32 = 0.1;
+
+let optimizer = AdamConfig::new()
+    .with_grad_clipping(Some(GradientClippingConfig::Norm(CLIP_NORM)))
+    .init();
+```
+
+`Some(...)` schaltet Clipping mit dem gewählten Grenzwert ein;
+`init()` erzeugt den Optimizer mit dieser Konfiguration.
+In Burn 0.22 begrenzt diese API die
 L2-Norm **jedes einzelnen Parametergradiententensors**, nicht die globale
 Norm aller Gradienten zusammen. Jeder Tensor erhält seinen eigenen
 Skalierungsfaktor; die gemeinsame Richtung aller Parametergradienten
@@ -334,11 +388,12 @@ aus Epoche 5 mit Optimizer-Zustand aus Epoche 8 sind kein konsistenter
 Checkpoint. Auch mit vollständigem Zustand hängt bitgenaue
 Reproduzierbarkeit von Backend und deterministischen Operationen ab.
 
-**Aktueller Stand:** Vollständiger Trainings-Resume ist nicht umgesetzt.
-`ch13` startet bei jedem Aufruf ein neu initialisiertes Modell und einen
-neuen SGD-Optimizer. Die vorhandenen Ladefunktionen erlauben die Nutzung
-gespeicherter Gewichte, stellen aber keinen gesamten Trainingslauf wieder
-her. Auch `ch14` startet neu und speichert keinen Trainingszustand.
+**Stand dieser Demos:** `ch13` startet bei jedem Aufruf ein neu
+initialisiertes Modell und einen neuen SGD-Optimizer. Die bisherigen
+Ladefunktionen stellen nur Gewichte wieder her. Auch `ch14` startet neu
+und speichert keinen Trainingszustand. Die separate Demo in
+[Kapitel 15](15-training-fortsetzen.md) ergänzt die Wiederaufnahme eines
+Adam-Laufs einschliesslich Optimizer-Zustand, Lernratenplan und Batch-Position.
 
 ## 7. Fünf echte Trainingsläufe
 
@@ -425,8 +480,8 @@ Die Werte sind nicht direkt mit Kapitel 13 vergleichbar: Dort wurden
 alle Trainings- und Validierungsfenster ausgewertet, hier nur ein kleiner
 Ausschnitt. Für belastbare Optimizer-Vergleiche brauchen wir längere
 Läufe, mehrere Seeds, abgestimmte Lernraten und mehr zurückgehaltene Daten.
-Vollständiges Resume braucht zusätzlich einen eigenen Speichern-/Laden-
-Vergleich gegen einen ununterbrochenen Lauf und bleibt offen.
+Den eigenen Speichern-/Laden-Vergleich gegen einen ununterbrochenen
+Adam-Lauf führt [Kapitel 15](15-training-fortsetzen.md) durch.
 
 ## Das nehmen wir mit
 

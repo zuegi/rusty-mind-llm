@@ -156,7 +156,7 @@ den begrenzten Vergleich nachvollziehbar. Alle fünf Echttext-Läufe wurden
 ausgeführt; `book/src/ausgaben/ch14-vergleich.txt` enthält ihre echten
 Messwerte, das Kapitel die Rust-Beispiele und deren Einordnung.
 Die Demo nutzt nur acht Trainings- und zwei Validierungsfenster und
-speichert keine Checkpoints. Vollständiger Trainings-Resume bleibt offen.
+speichert keine Checkpoints. Die separate Resume-Demo folgt in Kapitel 15.
 
 Themen:
 
@@ -168,6 +168,25 @@ Themen:
 - Warum Optimizer-Zustand gespeichert werden muss
 
 Nicht vor Checkpoints behandeln. Kapitel 9 soll erst den grundlegenden Ablauf festigen.
+
+## Kapitel 15: Training unterbrechen und fortsetzen
+
+**Status: separate Demo und Kapitel umgesetzt.**
+`crates/training/examples/ch15.rs` speichert Modell- und Adam-Zustand
+als Burnpack-Records sowie Konfiguration, Token-IDs, Lernratenplan,
+Seed und Update-Zähler als JSON. Neue Checkpoint-Ordner werden nicht
+überschrieben; Prüfsummen prüfen die zusammengehörigen Record-Dateien.
+Ein neuer Prozess setzt auch innerhalb einer Epoche beim nächsten Batch
+fort. Die kleine Demo verwendet acht Echttext-Fenster und zwölf Updates,
+ohne Validierung oder Bestmodell-Auswahl. `ch13` und `ch14` bleiben
+eigenständige Demos ohne Resume-Modus.
+
+Tests vergleichen alle Modellgewichte nach Unterbrechungen vor, auf und
+nach der Epochengrenze exakt mit einem ununterbrochenen CPU-Lauf.
+Ein neuer Adam ohne gespeicherten Zustand liefert dagegen ein anderes
+nächstes Update. Zwei separate Prozessläufe auf echten Tokens zeigen
+dieselben angezeigten Lernraten und Loss-Werte wie der durchgehende Lauf.
+Lernratenplan und Berechnung bleiben mit Kapitel 14 gemeinsam.
 
 ## Empfohlener Lernpfad
 
@@ -183,6 +202,8 @@ Kapitel 12 Echter Text + echter Tokenizer
 Kapitel 13 Perplexity + Overfitting
     ↓
 Kapitel 14 Adam und bessere Optimierung
+    ↓
+Kapitel 15 Training unterbrechen und fortsetzen
 ```
 
 **Wichtig:** Kein Kapitel muss mehr Architektur im `model`-Crate hinzufügen. Die nächsten Kapitel gehören fast vollständig in `training` oder einen separaten Inference-Bereich. `model` bleibt für Vorwärtsberechnung und Parameter zuständig.

@@ -54,7 +54,9 @@ Kapitel 11 bis 13 sind in `main`. Kapitel 14 ergänzt
 [bessere Optimierung](book/src/kapitel/14-bessere-optimierung.md):
 SGD, Momentum, Adam, Warmup mit linearer Absenkung und Norm-Clipping
 je Parametergradiententensor. Fünf begrenzte Echttext-Läufe samt
-Messausgaben sind enthalten; vollständige Trainingswiederaufnahme bleibt offen.
+Messausgaben sind enthalten. Kapitel 15 ergänzt eine separate
+[Resume-Demo](book/src/kapitel/15-training-fortsetzen.md) mit Adam-Zustand,
+Lernratenplan und Wiederaufnahme innerhalb einer Epoche.
 Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
 `model` enthält bewusst nur Modellberechnung; Trainingsinfrastruktur bleibt
 im Crate `training`.
@@ -143,7 +145,17 @@ cargo run -p training --example ch12
 
 # Kapitel 14: Fünf Optimizer-Vergleiche, je drei Epochen auf acht Trainingsfenstern
 cargo run --release -p training --example ch14
+
+# Kapitel 15: Nach Update 5 speichern; in neuem Prozess bis Update 12 fortsetzen
+cargo run --release -p training --example ch15 -- train checkpoints/ch15-teil 5
+cargo run --release -p training --example ch15 -- resume checkpoints/ch15-teil checkpoints/ch15-fortgesetzt 12
 ```
+
+`ch15` speichert Modell- und Adam-Records sowie Konfiguration, verwendete
+Tokens, Update-Stand und Prüfsummen in einem neuen Checkpoint-Ordner.
+Vorhandene Zielordner werden nicht überschrieben. Die Ziel-Update-Nummer
+ist absolut; der Lernratenplan umfasst von Anfang an zwölf Updates.
+`ch12_full`, `ch13` und `ch14` behalten ihr bisheriges Verhalten.
 
 Kapitel 12 prüft ein Trainingszeitbudget von 30 Sekunden zwischen Updates.
 Ein laufendes Update und die Loss-Messungen werden nicht unterbrochen;
@@ -249,6 +261,9 @@ cargo test -p training --example ch12_full
 
 # Perplexity, Bestmodell-Regel und Overfitting-Signal
 cargo test -p training --example ch13
+
+# Trainings-Resume: alle Gewichte gegen einen ununterbrochenen Lauf vergleichen
+cargo test -p training --example ch15
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
