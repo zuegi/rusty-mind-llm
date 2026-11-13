@@ -221,6 +221,18 @@ Danach ist das Buch unter <http://localhost:3000> erreichbar.
 Ohne lokalen Server lässt es sich mit `mdbook build book` nach `target/book`
 bauen.
 
+### GitHub Pages
+
+Jeder Push auf `main` baut das Buch automatisch und veröffentlicht es über
+GitHub Pages. Die Seite ist anschließend unter
+<https://zuegi.github.io/rusty-mind-llm/> erreichbar.
+
+Falls GitHub Pages für das Repository noch nicht aktiviert ist, einmalig unter
+**Settings → Pages → Build and deployment → Source** die Option **GitHub
+Actions** auswählen. Danach kann der Workflow unter **Actions → Deploy mdBook
+site to Pages** manuell gestartet werden; weitere Pushes auf `main` lösen ihn
+automatisch aus.
+
 `mdbook-mermaid` wird bewusst ohne `--locked` gebaut: Sein veröffentlichtes
 Lockfile bindet die mdBook-API an 0.5.0 und erzeugt mit mdBook 0.5.4 einen
 Versionshinweis. Ohne dieses Lockfile wird die kompatible 0.5.4-API verwendet.
