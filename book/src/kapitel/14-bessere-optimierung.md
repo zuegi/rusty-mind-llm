@@ -82,8 +82,10 @@ Die Demo wählt dafür in Burn `MomentumConfig::new().with_momentum(0.9)`
 mit `with_dampening(0.0)`.
 
 **Dampening** bedeutet hier Dämpfung: Es schwächt den Beitrag des neuen
-Gradienten zum Schwung ab. Der neue Gradient wird dafür mit
-`1 - Dampening` multipliziert. Bei Dampening 0,1 gehen also nur 90 Prozent
+Gradienten zum Schwung ab. In Burn 0.22 wird der erste Gradient
+ungedämpft als Anfangsschwung übernommen. Erst ab dem zweiten Update
+wird der neue Gradient mit `1 - Dampening` multipliziert.
+Bei Dampening 0,1 gehen dann also nur 90 Prozent
 des neuen Gradienten ein; bei 0,0 geht er vollständig ein, wie in unserer
 Formel oben. Der Momentum-Faktor bestimmt dagegen, wie viel vom **alten**
 Schwung bleibt. Ohne die ausdrückliche Wahl wäre Burns Dampening

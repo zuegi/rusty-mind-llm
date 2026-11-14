@@ -50,7 +50,7 @@ Bisher umgesetzt:
   besten Validierungs-Loss (einschliesslich der Ausgangsmessung).
   Das Buch zeigt echte Vergleichsläufe, Loss-Kurven und deren Einordnung.
 
-Kapitel 11 bis 13 sind in `main`. Kapitel 14 ergänzt
+Kapitel 11 bis 15 sind in `main`. Kapitel 14 ergänzt
 [bessere Optimierung](book/src/kapitel/14-bessere-optimierung.md):
 SGD, Momentum, Adam, Warmup mit linearer Absenkung und Norm-Clipping
 je Parametergradiententensor. Fünf begrenzte Echttext-Läufe samt
