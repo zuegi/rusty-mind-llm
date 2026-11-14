@@ -125,9 +125,16 @@ der gespeicherten Konfiguration und laden anschliessend seinen Zustand.
 {{#include ../../../crates/training/examples/ch15.rs:load}}
 ```
 
-Die zusätzliche Prüfung in `load_optimizer` erwartet beide Moment-Tensoren
-für jeden Modellparameter. Ein unvollständig rekonstruierter Adam-Zustand
-wird als Fehler abgelehnt, statt unbemerkt mit frischen Verläufen zu starten.
+Die zusätzliche Prüfung in `load_optimizer` erwartet insgesamt doppelt
+so viele Moment-Tensoren wie Modellparameter. Sie erkennt damit etwa
+einen leeren oder teilweise rekonstruierten Adam-Zustand, prüft aber
+nicht die Zuordnung der Parameter-IDs. Ein eigens zusammengestellter
+Checkpoint mit passenden Prüfsummen und gleich vielen Moment-Tensoren
+für fremde IDs kann diese Prüfung bestehen. Beim nächsten Update würde
+Adam für die betroffenen Modellparameter unbemerkt neue Verläufe anlegen.
+Die Prüfung ist deshalb keine vollständige Garantie für einen
+konsistenten Optimizer-Zustand; Modell und Optimizer müssen weiterhin
+aus demselben Speichervorgang stammen.
 Die Demo verwendet normales Adam, ohne AMSGrad, Weight Decay oder Clipping.
 
 Der Lernratenplan verwendet dieselbe gemeinsame Implementierung

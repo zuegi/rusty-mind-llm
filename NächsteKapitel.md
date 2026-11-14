@@ -144,7 +144,7 @@ Behandelte Themen:
 
 ## Kapitel 14: Bessere Optimierung
 
-**Status (11.11.2026): Konzept und praktische Demo im Kapitel-14-Worktree.**
+**Status (14.11.2026): abgeschlossen und in `main` (PR #15), Review durchgeführt.**
 `book/src/kapitel/14-bessere-optimierung.md` erklärt SGD, Momentum, Adam,
 Lernratenpläne pro Update, Warmup, Clipping-Varianten und den nötigen
 Zustand für eine vollständige Trainingswiederaufnahme.
@@ -171,7 +171,7 @@ Nicht vor Checkpoints behandeln. Kapitel 9 soll erst den grundlegenden Ablauf fe
 
 ## Kapitel 15: Training unterbrechen und fortsetzen
 
-**Status: separate Demo und Kapitel umgesetzt.**
+**Status (14.11.2026): abgeschlossen und in `main` (PR #15), Review durchgeführt.**
 `crates/training/examples/ch15.rs` speichert Modell- und Adam-Zustand
 als Burnpack-Records sowie Konfiguration, Token-IDs, Lernratenplan,
 Seed und Update-Zähler als JSON. Neue Checkpoint-Ordner werden nicht
@@ -187,6 +187,88 @@ Ein neuer Adam ohne gespeicherten Zustand liefert dagegen ein anderes
 nächstes Update. Zwei separate Prozessläufe auf echten Tokens zeigen
 dieselben angezeigten Lernraten und Loss-Werte wie der durchgehende Lauf.
 Lernratenplan und Berechnung bleiben mit Kapitel 14 gemeinsam.
+
+## Ausblick: Vom eigenen Training zum lokalen Chatbot
+
+**Kapitel 16 bis 25 sind geplant, noch nicht umgesetzt.**
+Der Lernpfad behält die Vertiefung des eigenen Trainings bei und ergänzt
+danach den Import vortrainierter Gewichte sowie einen lokal ansprechbaren
+Chatbot. Ziel ist ein vollständiger, nachvollziehbarer Weg, nicht das
+Versprechen guter Antworten.
+
+## Kapitel 16: Temperatur und Sampling
+
+Temperatur, Top-k, Top-p, Zufallsseed und Stoppbedingungen erweitern die
+bisherige Generierung mit `argmax`. Gleicher Checkpoint und gleicher Prompt
+machen die Verfahren vergleichbar. Sampling verändert die Auswahl und
+Vielfalt der Antworten, nicht die gelernte Modellqualität.
+
+## Kapitel 17: Regularisierung gegen Overfitting
+
+AdamW, Weight Decay und Dropout werden anhand von Trainings- und
+Validierungs-Loss untersucht. Dropout braucht einen expliziten
+Trainings-/Auswertungsmodus; seine Auswirkungen auf reproduzierbares
+Resume werden erklärt.
+
+## Kapitel 18: Ein vollständiger Trainingslauf
+
+Die Bausteine aus Kapitel 13 bis 15 zusammenführen: Adam, Lernratenplan,
+Validierung, Bestmodell-Auswahl und Resume. Letzten Trainingsstand und
+besten Validierungsstand getrennt speichern; beim Resume auch den
+bisherigen Bestwert erhalten.
+
+## Kapitel 19: Trainingsdaten und Datenqualität
+
+Mehrere Dokumente, Dokumentgrenzen, Duplikate und Datenlecks behandeln.
+Training, Validierung und unabhängigen Testdatensatz trennen.
+Eine überprüfbare Datenversion und Trainingsposition ersetzen bei
+grösseren Datensätzen die vollständige Tokenliste im Checkpoint.
+
+## Kapitel 20: Laufzeit und Speicher verstehen
+
+Engpässe messen, Batch- und Kontextgrösse vergleichen und Gradient
+Accumulation einführen. GPU und reduzierte Präzision erst darauf aufbauend
+betrachten; Grenzen deterministischer Ergebnisse erläutern.
+
+## Kapitel 21: Unser Modell mit GPT-2 abgleichen
+
+Architekturunterschiede sichtbar machen und gezielt schliessen:
+finale LayerNorm, Aktivierungsfunktion, Biases, Weight Tying und
+Modellkonfiguration. Das aktuelle Modell ist GPT-2-artig, aber noch
+kein direkt kompatibler GPT-2-Nachbau. Noch keine fremden Gewichte laden.
+
+## Kapitel 22: Vortrainierte GPT-2-Gewichte laden
+
+Die kleinste GPT-2-Variante importieren: Tensoren zuordnen, Formen und
+nötige Transpositionen prüfen. Tokenizer und Logits gegen eine
+Referenzimplementierung vergleichen. Plausibler Text allein beweist
+keinen korrekten Gewichtsimport.
+
+## Kapitel 23: Mit dem Modell im Terminal chatten
+
+Eine Eingabeschleife mit Rollen als Textvorlage, Gesprächsverlauf,
+Kontextbudget und begrenzten Antworten bauen. Zunächst ohne
+Weboberfläche bleibt das Modellverhalten sichtbar. Eigene Mini-Gewichte
+und vortrainiertes GPT-2 über denselben Chatpfad vergleichen:
+korrekte Mechanik gegenüber durch Vortraining erworbener Fähigkeit.
+
+## Kapitel 24: Lokaler Modelldienst und Chatoberfläche
+
+Inferenz hinter eine lokale HTTP-API stellen und eine einfache
+Chatoberfläche anbinden. Generierung begrenzen sowie Abbruch und
+Fehler behandeln; Streaming anschliessend ergänzen.
+
+## Kapitel 25: Vom Textfortsetzer zum Assistenten
+
+Basismodell und Instruction-/Chat-Modell unterscheiden, Halluzinationen
+und fehlende zuverlässige Rollentrennung erklären. Ein kleines
+Instruction-Fine-Tuning als Experiment durchführen und Vorher/Nachher
+an festen Dialogen vergleichen.
+
+GPT-2 ist ein Textfortsetzungsmodell, kein trainierter Chatassistent.
+Eine Chatoberfläche ändert das nicht. Abschweifende Antworten, erfundene
+Rollen und unsinnige Texte sind mögliche Ergebnisse; gerade diese Grenzen
+sollen nachvollziehbar werden.
 
 ## Empfohlener Lernpfad
 
@@ -204,6 +286,32 @@ Kapitel 13 Perplexity + Overfitting
 Kapitel 14 Adam und bessere Optimierung
     ↓
 Kapitel 15 Training unterbrechen und fortsetzen
+    ↓
+Kapitel 16 Temperatur und Sampling
+    ↓
+Kapitel 17 Regularisierung gegen Overfitting
+    ↓
+Kapitel 18 Vollständiger Trainingslauf
+    ↓
+Kapitel 19 Trainingsdaten und Datenqualität
+    ↓
+Kapitel 20 Laufzeit und Speicher
+    ↓
+Kapitel 21 Architektur mit GPT-2 abgleichen
+    ↓
+Kapitel 22 Vortrainierte Gewichte importieren und prüfen
+    ↓
+Kapitel 23 Terminal-Chat
+    ↓
+Kapitel 24 Lokaler HTTP-Dienst und Chatoberfläche
+    ↓
+Kapitel 25 Instruction-Tuning und Grenzen
 ```
 
-**Wichtig:** Kein Kapitel muss mehr Architektur im `model`-Crate hinzufügen. Die nächsten Kapitel gehören fast vollständig in `training` oder einen separaten Inference-Bereich. `model` bleibt für Vorwärtsberechnung und Parameter zuständig.
+Kapitel 17 bis 20 sind keine zwingenden Voraussetzungen für den
+Gewichtsimport, vertiefen aber das Verständnis des eigenen Trainings.
+
+**Wichtig:** Modellberechnung und Parameter bleiben im `model`-Crate;
+Trainingssteuerung gehört in `training`, Generierung und Chat-Anbindung
+in den passenden Inference-Bereich. Dropout und der GPT-2-Abgleich
+erfordern gezielte Änderungen an der Modellimplementierung.
