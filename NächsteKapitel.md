@@ -190,7 +190,7 @@ Lernratenplan und Berechnung bleiben mit Kapitel 14 gemeinsam.
 
 ## Ausblick: Vom eigenen Training zum lokalen Chatbot
 
-**Kapitel 16 bis 25 sind geplant, noch nicht umgesetzt.**
+**Kapitel 16 bis 28 sind geplant, noch nicht umgesetzt.**
 Der Lernpfad behält die Vertiefung des eigenen Trainings bei und ergänzt
 danach den Import vortrainierter Gewichte sowie einen lokal ansprechbaren
 Chatbot. Ziel ist ein vollständiger, nachvollziehbarer Weg, nicht das
@@ -212,10 +212,12 @@ Resume werden erklärt.
 
 ## Kapitel 18: Ein vollständiger Trainingslauf
 
-Die Bausteine aus Kapitel 13 bis 15 zusammenführen: Adam, Lernratenplan,
-Validierung, Bestmodell-Auswahl und Resume. Letzten Trainingsstand und
-besten Validierungsstand getrennt speichern; beim Resume auch den
-bisherigen Bestwert erhalten.
+Die Bausteine aus Kapitel 13 bis 15 und 17 zusammenführen: Adam,
+Lernratenplan, Weight Decay oder Dropout, Validierung,
+Bestmodell-Auswahl und Resume. Letzten Trainingsstand und besten
+Validierungsstand getrennt speichern; beim Resume auch den bisherigen
+Bestwert erhalten. Kapitel 16 bleibt als Inferenzthema ausserhalb dieses
+Trainingslaufs.
 
 ## Kapitel 19: Trainingsdaten und Datenqualität
 
@@ -227,8 +229,10 @@ grösseren Datensätzen die vollständige Tokenliste im Checkpoint.
 ## Kapitel 20: Laufzeit und Speicher verstehen
 
 Engpässe messen, Batch- und Kontextgrösse vergleichen und Gradient
-Accumulation einführen. GPU und reduzierte Präzision erst darauf aufbauend
-betrachten; Grenzen deterministischer Ergebnisse erläutern.
+Accumulation einführen. CPU, GPU, Batching und reduzierte Präzision
+vergleichen; Grenzen deterministischer Ergebnisse erläutern.
+Quantisierung als Möglichkeit zur Speicher- und Laufzeitreduktion
+einordnen.
 
 ## Kapitel 21: Unser Modell mit GPT-2 abgleichen
 
@@ -256,19 +260,64 @@ korrekte Mechanik gegenüber durch Vortraining erworbener Fähigkeit.
 
 Inferenz hinter eine lokale HTTP-API stellen und eine einfache
 Chatoberfläche anbinden. Generierung begrenzen sowie Abbruch und
-Fehler behandeln; Streaming anschliessend ergänzen.
+Fehler behandeln; Streaming, Batching, Timeouts und Ressourcenlimits
+anschliessend ergänzen. Modellformat und reproduzierbare
+Inferenzkonfiguration dokumentieren.
 
-## Kapitel 25: Vom Textfortsetzer zum Assistenten
+## Kapitel 25: Retrieval-Augmented Generation
 
-Basismodell und Instruction-/Chat-Modell unterscheiden, Halluzinationen
-und fehlende zuverlässige Rollentrennung erklären. Ein kleines
-Instruction-Fine-Tuning als Experiment durchführen und Vorher/Nachher
-an festen Dialogen vergleichen.
+Dokumente laden, in Abschnitte teilen und relevante Abschnitte über
+ein Embedding-Modell und eine lokale Vektorsuche finden. Chunking,
+Overlap, Metadaten und optionales Reranking behandeln. Die Treffer werden
+zusammen mit der Frage in den Prompt eingesetzt. Kontextgrenzen,
+Quellenangaben, Trefferqualität, Dokumentaktualisierung und die Grenzen
+von RAG werden anhand eines kleinen lokalen Beispiels erklärt.
+
+RAG ergänzt Wissen zur Laufzeit, ohne Modellgewichte zu verändern. Es ist
+deshalb vom Fine-Tuning zu unterscheiden: Neue oder geänderte Dokumente
+erfordern kein erneutes Training. Dokumentinhalte sind untrusted input:
+Prompt Injection aus Treffern muss begrenzt und sichtbar behandelt werden.
+
+## Kapitel 26: Fine-Tuning und Instruction-Tuning
+
+Vortrainierte Gewichte mit eigenen Beispielen weitertrainieren:
+Datenformat, getrennte Trainings-/Validierungs-/Testdaten, Lernrate,
+kleine Batches, Overfitting und Evaluation. Checkpoint-Auswahl und
+frühes Beenden ergänzen. Anschliessend ein kleines
+Instruction-Fine-Tuning mit festen Dialogen durchführen und
+Vorher/Nachher vergleichen. Optional wird LoRA als ressourcenschonende
+Alternative eingeordnet.
+
+Fine-Tuning verändert die Modellgewichte und eignet sich für Verhalten,
+Stil und Aufgabenformate. Catastrophic Forgetting und Datenqualität
+begrenzen den Nutzen. Aktuelles Faktenwissen gehört dagegen eher in RAG.
+
+## Kapitel 27: Vom Textfortsetzer zum Assistenten
+
+RAG und Fine-Tuning über denselben Chatpfad vergleichen. Basismodell und
+Instruction-/Chat-Modell unterscheiden, Halluzinationen und fehlende
+zuverlässige Rollentrennung erklären. Feste Dialoge und Fragen mit
+Quellen dienen als nachvollziehbare Evaluation. Datenschutz,
+Lizenzierung und Prompt-Injection-Schutz werden als Grenzen des
+Assistenten eingeordnet.
 
 GPT-2 ist ein Textfortsetzungsmodell, kein trainierter Chatassistent.
 Eine Chatoberfläche ändert das nicht. Abschweifende Antworten, erfundene
 Rollen und unsinnige Texte sind mögliche Ergebnisse; gerade diese Grenzen
 sollen nachvollziehbar werden.
+
+## Kapitel 28: Evaluation, Sicherheit und Betrieb
+
+Feste Testfälle, Benchmarks und Regressionstests für Logits und Antworten
+einführen. Eigene Gewichte, vortrainiertes GPT-2, RAG und Fine-Tuning
+anhand derselben Aufgaben vergleichen. Qualitative Bewertung darf
+quantitative Messungen ergänzen, aber nicht ersetzen.
+
+Modell-, Daten- und Konfigurationsversionen dokumentieren. Logging,
+reproduzierbare Inferenz, Token- und Kostenlimits, Timeouts,
+Ressourcenverbrauch und Fehlerfälle behandeln. Datenschutz,
+Lizenzprüfung und der sichere Umgang mit Benutzer- und Dokumentdaten
+gehören zum Betrieb, nicht erst zur späteren Weboberfläche.
 
 ## Empfohlener Lernpfad
 
@@ -305,7 +354,13 @@ Kapitel 23 Terminal-Chat
     ↓
 Kapitel 24 Lokaler HTTP-Dienst und Chatoberfläche
     ↓
-Kapitel 25 Instruction-Tuning und Grenzen
+Kapitel 25 Retrieval-Augmented Generation
+    ↓
+Kapitel 26 Fine-Tuning und Instruction-Tuning
+    ↓
+Kapitel 27 Assistentenverhalten, Vergleiche und Grenzen
+    ↓
+Kapitel 28 Evaluation, Sicherheit und Betrieb
 ```
 
 Kapitel 17 bis 20 sind keine zwingenden Voraussetzungen für den
