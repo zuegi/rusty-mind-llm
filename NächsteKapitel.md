@@ -190,13 +190,32 @@ Lernratenplan und Berechnung bleiben mit Kapitel 14 gemeinsam.
 
 ## Ausblick: Vom eigenen Training zum lokalen Chatbot
 
-**Kapitel 16 bis 28 sind geplant, noch nicht umgesetzt.**
+**Kapitel 17 bis 28 sind geplant, noch nicht umgesetzt.**
 Der Lernpfad behält die Vertiefung des eigenen Trainings bei und ergänzt
 danach den Import vortrainierter Gewichte sowie einen lokal ansprechbaren
 Chatbot. Ziel ist ein vollständiger, nachvollziehbarer Weg, nicht das
 Versprechen guter Antworten.
 
 ## Kapitel 16: Temperatur und Sampling
+
+**Status (15.11.2026): abgeschlossen im Arbeitsbranch,
+noch nicht in `main` integriert.**
+`book/src/kapitel/16-temperatur-und-sampling.md` und
+`crates/training/examples/ch16.rs` zeigen feste Logit-Verteilungen sowie
+den Vergleich von fünf Auswahlvarianten mit demselben geladenen
+Checkpoint und Prompt. Der Checkpoint-Aufruf verwendet die
+GPT-2-Konfiguration aus Kapitel 12/13; er startet kein Training.
+Die feste Logit-Demo wurde ausgeführt; eine vom Nutzer ausgeführte
+Echttext-Ausgabe mit dem Kapitel-13-Checkpoint wurde gemeinsam besprochen
+und als Beispiel ins Kapitel aufgenommen. Die Ausgabe trennt Starttext
+und erzeugte Fortsetzung. Der Kapiteltext erklärt Normalisierung vor
+numerischen Details, zeigt den Temperaturvergleich direkt und führt
+vom Kernablauf zur Validierung. Eine Vergleichsaufgabe mit Seeds 42 und 43
+vertieft Auswahlverhalten und Wiederholbarkeit.
+Tests prüfen Sampling-Verteilungen, Seeds, Kontextbegrenzung, Stopp-Token
+und gleiche Ergebnisse nach Speichern/Laden. Tests, Clippy und Buchbuild
+sind erfolgreich. Die offene Mathematik-Vertiefung bleibt separat
+vorgemerkt; als nächstes folgt Kapitel 17.
 
 Temperatur, Top-k, Top-p, Zufallsseed und Stoppbedingungen erweitern die
 bisherige Generierung mit `argmax`. Gleicher Checkpoint und gleicher Prompt
@@ -370,3 +389,45 @@ Gewichtsimport, vertiefen aber das Verständnis des eigenen Trainings.
 Trainingssteuerung gehört in `training`, Generierung und Chat-Anbindung
 in den passenden Inference-Bereich. Dropout und der GPT-2-Abgleich
 erfordern gezielte Änderungen an der Modellimplementierung.
+
+## Offene Vertiefung: Mathematische Grundlagen
+
+**Erinnerung:** Beim gemeinsamen Durchgehen des Buchs prüfen, ob die
+Mathematik hinter unserer Implementierung nachvollziehbar erklärt ist.
+Funktionierender Code oder die Beschreibung einer Burn-API allein
+ersetzen diese Erklärung nicht. Fehlende Grundlagen als offene Exkurse
+festhalten und am passenden Kapitel ergänzen, nicht gesammelt erst am
+Buchende.
+
+Je Baustein prüfen:
+
+- Welche mathematische Operation führt unser Code aus?
+- Sind Begriffe, Symbole, Tensorformen und Voraussetzungen erklärt?
+- Können wir die Berechnung mit kleinen Zahlen von Hand nachvollziehen?
+- Wird deutlich, warum die Operation gebraucht wird und wie sie das
+  Modell oder Training beeinflusst?
+- Gibt es bereits einen passenden Exkurs, der verlinkt oder erweitert
+  werden kann, statt denselben Inhalt erneut zu erklären?
+
+Ein Exkurs soll vom konkreten Zahlenbeispiel über die mathematische
+Beschreibung zu unserem Rust-/Burn-Code führen. Dabei auch Annahmen
+und numerische Grenzen erklären. Wenn beim Lesen eine dieser
+Verbindungen fehlt, die Lücke ausdrücklich notieren; mathematisches
+Vorwissen nicht stillschweigend voraussetzen.
+
+Zu prüfende Grundlagen sind Vektoren und Matrixoperationen,
+Ableitungen und Kettenregel, Wahrscheinlichkeitsverteilungen,
+Mittelwert und Varianz, Cross-Entropy und Perplexity, Optimierung
+sowie numerische Stabilität. Vorhandene Exkurse, etwa zu Ableitungen
+und Attention-Skalierung, zuerst berücksichtigen.
+
+**Konkreter Prüfpunkt: Optimizer in Kapitel 14 und 15.**
+Beim bisherigen Lesen entstand der Eindruck, dass die mathematische
+Herleitung hinter SGD, Momentum und Adam zu kurz kommt. Prüfen, ob
+ein Exkurs fehlt: Gradientenrichtung und Lernrate, ein von Hand
+berechnetes SGD-Update, gespeicherter Verlauf bei Momentum sowie
+erste und zweite Momente, Bias-Korrektur und stabilisierendes Epsilon
+bei Adam. Mehrere kleine Updates sollen zeigen, wie sich die Verfahren
+unterscheiden und warum Adams Zustand beim Resume erhalten bleiben muss.
+Diese vermutete Lücke anhand des vorhandenen Kapiteltexts prüfen,
+bevor neue Inhalte ergänzt werden.

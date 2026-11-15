@@ -57,6 +57,11 @@ je Parametergradiententensor. Fünf begrenzte Echttext-Läufe samt
 Messausgaben sind enthalten. Kapitel 15 ergänzt eine separate
 [Resume-Demo](book/src/kapitel/15-training-fortsetzen.md) mit Adam-Zustand,
 Lernratenplan und Wiederaufnahme innerhalb einer Epoche.
+Kapitel 16 ergänzt [Temperatur und Sampling](book/src/kapitel/16-temperatur-und-sampling.md):
+feste Logit-Verteilungen und Vergleich von Greedy, Temperatur, Top-k und
+Top-p mit einem geladenen Checkpoint. Ein Seed macht die Zufallsfolge
+wiederholbar; Tokenlimit und Stopp-Token begrenzen die neue Generierung.
+Bisherige Greedy-Demos bleiben unverändert.
 Den Lernstatus beschreibt [NächsteKapitel.md](NächsteKapitel.md).
 `model` enthält bewusst nur Modellberechnung; Trainingsinfrastruktur bleibt
 im Crate `training`.
@@ -65,7 +70,7 @@ im Crate `training`.
 
 ```text
 crates/
-  training/   Tokenizer, Daten, Loss, Training; Demos für Kapitel 1, 2 und 8 bis 14
+  training/   Tokenizer, Daten, Loss, Training und Generierung; Demos für Kapitel 1, 2 und 8 bis 16
   model/      Burn-Modellbausteine und Demos für Kapitel 3 bis 7
 book/         Deutsches mdBook mit Kapiteln und Exkursen
 data/         Beispieltext und Herkunftshinweise
@@ -149,6 +154,12 @@ cargo run --release -p training --example ch14
 # Kapitel 15: Nach Update 5 speichern; in neuem Prozess bis Update 12 fortsetzen
 cargo run --release -p training --example ch15 -- train checkpoints/ch15-teil 5
 cargo run --release -p training --example ch15 -- resume checkpoints/ch15-teil checkpoints/ch15-fortgesetzt 12
+
+# Kapitel 16: Feste Logit-Verteilungen; kein Training, kein Checkpoint nötig
+cargo run -p training --example ch16
+
+# Kapitel 16: Vorhandenen Kapitel-12/13-Checkpoint mit fünf Auswahlvarianten nutzen
+cargo run --release -p training --example ch16 -- checkpoints/ch13-best.bpk "I HAD always" 16 42
 ```
 
 `ch15` speichert Modell- und Adam-Records sowie Konfiguration, verwendete
@@ -276,6 +287,9 @@ cargo test -p training --example ch13
 
 # Trainings-Resume: alle Gewichte gegen einen ununterbrochenen Lauf vergleichen
 cargo test -p training --example ch15
+
+# Temperatur, Top-k, Top-p, Seeds, Stopp-Token und Greedy-Kompatibilität
+cargo test -p training --lib --example ch16 --example ch11 --test ch10
 ```
 
 Die Tests prüfen unter anderem Datenfenster, Token-/Positions-Nachschlagen,
