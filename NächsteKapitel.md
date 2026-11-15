@@ -198,8 +198,8 @@ Versprechen guter Antworten.
 
 ## Kapitel 16: Temperatur und Sampling
 
-**Status (15.11.2026): abgeschlossen im Arbeitsbranch,
-noch nicht in `main` integriert.**
+**Status (15.11.2026): abgeschlossen und in `main` integriert
+(Commit `523446f`).**
 `book/src/kapitel/16-temperatur-und-sampling.md` und
 `crates/training/examples/ch16.rs` zeigen feste Logit-Verteilungen sowie
 den Vergleich von fünf Auswahlvarianten mit demselben geladenen
