@@ -229,6 +229,11 @@ Validierungs-Loss untersucht. Dropout braucht einen expliziten
 Trainings-/Auswertungsmodus; seine Auswirkungen auf reproduzierbares
 Resume werden erklärt.
 
+**Status (20.11.2026): gestartet.** Der Modell-Block unterstützt jetzt
+konfigurierbares Dropout; Tests prüfen den Trainings-/Validierungsmodus.
+Eine erste AdamW-/Weight-Decay-Demo vergleicht drei Varianten auf denselben
+kleinen Daten. Vollständige Auswertungen und Resume-Erweiterungen folgen.
+
 ## Kapitel 18: Ein vollständiger Trainingslauf
 
 Die Bausteine aus Kapitel 13 bis 15 und 17 zusammenführen: Adam,

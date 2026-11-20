@@ -45,3 +45,4 @@
 - [14. Bessere Optimierung](kapitel/14-bessere-optimierung.md)
 - [15. Training unterbrechen und fortsetzen](kapitel/15-training-fortsetzen.md)
 - [16. Temperatur und Sampling](kapitel/16-temperatur-und-sampling.md)
+- [17. Regularisierung gegen Overfitting](kapitel/17-regularisierung.md)

@@ -1,5 +1,5 @@
-use burn::tensor::Device;
 use burn::optim::{LearningRate, ModuleOptimizer};
+use burn::tensor::Device;
 use model::gpt::GptModel;
 
 use crate::{dataset::Dataset, loss::cross_entropy, step::train_step};
@@ -24,12 +24,7 @@ pub fn train_epoch(
 
 // ANCHOR: evaluate
 /// Mittlerer Loss aller Positionen mit festen Gewichten, ohne Autodiff.
-pub fn evaluate(
-    model: &GptModel,
-    dataset: &Dataset,
-    batch_size: usize,
-    device: &Device,
-) -> f64 {
+pub fn evaluate(model: &GptModel, dataset: &Dataset, batch_size: usize, device: &Device) -> f64 {
     assert!(
         !device.is_autodiff(),
         "Auswertung braucht ein Backend ohne Autodiff"
