@@ -245,6 +245,17 @@ Validierungsstand getrennt speichern; beim Resume auch den bisherigen
 Bestwert erhalten. Kapitel 16 bleibt als Inferenzthema ausserhalb dieses
 Trainingslaufs.
 
+**Status (21.11.2026): umgesetzt, noch nicht in `main`.**
+`crates/training/examples/ch18.rs` und
+`book/src/kapitel/18-vollstaendiger-trainingslauf.md` kombinieren AdamW
+mit Weight Decay, Lernratenplan, Dropout, Validierung am Epochenende,
+Bestmodell und Resume. Ein Checkpoint-Ordner enthält `last/` (Trainingsstand)
+und `best/` (bester Validierungsstand); der Bestwert wird beim Resume
+wiederhergestellt. Dropout-Masken folgen aus Seed und Update-Nummer. Tests
+vergleichen Gewichte und Bestmodell nach Unterbrechungen exakt mit einem
+ununterbrochenen CPU-Lauf. Die Demo ist klein (zwei Validierungsfenster)
+und zeigt keinen Qualitätsnachweis.
+
 ## Kapitel 19: Trainingsdaten und Datenqualität
 
 Mehrere Dokumente, Dokumentgrenzen, Duplikate und Datenlecks behandeln.
