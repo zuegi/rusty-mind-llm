@@ -12,6 +12,7 @@ pub struct GptModelConfig {
     pub embedding_dim: usize,
     pub num_heads: usize,
     pub num_blocks: usize,
+    pub dropout: f64,
 }
 
 #[derive(Module, Debug)]
@@ -36,7 +37,13 @@ impl GptModelConfig {
             embedding_dim,
             num_heads,
             num_blocks,
+            dropout: 0.0,
         }
+    }
+
+    pub fn with_dropout(mut self, dropout: f64) -> Self {
+        self.dropout = dropout;
+        self
     }
 
     // ANCHOR: init
@@ -45,7 +52,8 @@ impl GptModelConfig {
         let gpt_embedding =
             GptEmbeddingConfig::new(self.vocab_size, self.max_context_length, self.embedding_dim)
                 .init(device);
-        let block_config = TransformerBlockConfig::new(self.embedding_dim, self.num_heads);
+        let block_config = TransformerBlockConfig::new(self.embedding_dim, self.num_heads)
+            .with_dropout(self.dropout);
         let blocks = (0..self.num_blocks)
             .map(|_| block_config.init(device))
             .collect();

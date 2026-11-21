@@ -4,19 +4,46 @@ use model::embedding::GptEmbeddingConfig;
 use model::feed_forward::FeedForwardConfig;
 use model::transformer_block::TransformerBlockConfig;
 
-
 #[test]
 fn feed_forward_keeps_shape() {
     let device = Device::flex();
     let ff = FeedForwardConfig::new(4).init(&device);
-    assert_eq!(ff.forward(Tensor::zeros([2, 3, 4], &device)).dims(), [2, 3, 4]);
+    assert_eq!(
+        ff.forward(Tensor::zeros([2, 3, 4], &device)).dims(),
+        [2, 3, 4]
+    );
 }
 
 #[test]
 fn block_keeps_shape() {
     let device = Device::flex();
     let block = TransformerBlockConfig::new(4, 2).init(&device);
-    assert_eq!(block.forward(Tensor::ones([2, 3, 4], &device)).dims(), [2, 3, 4]);
+    assert_eq!(
+        block.forward(Tensor::ones([2, 3, 4], &device)).dims(),
+        [2, 3, 4]
+    );
+}
+
+#[test]
+fn dropout_switches_between_training_and_validation() {
+    let training_device = Device::flex().autodiff();
+    let block = TransformerBlockConfig::new(4, 2)
+        .with_dropout(0.5)
+        .init(&training_device);
+    let input = Tensor::<3>::ones([2, 3, 4], &training_device);
+    let training = block
+        .forward(input.clone())
+        .into_data()
+        .try_to_vec::<f32>()
+        .unwrap();
+    let validation = block
+        .valid()
+        .forward(input)
+        .into_data()
+        .try_to_vec::<f32>()
+        .unwrap();
+    assert_ne!(training, validation);
+    assert!(validation.iter().all(|value| value.is_finite()));
 }
 
 #[test]
@@ -25,8 +52,16 @@ fn block_does_not_look_into_the_future() {
     let block = TransformerBlockConfig::new(4, 2).init(&device);
     let first = Tensor::<3>::from_data([[[1.0, 2.0, 3.0, 4.0], [0.0, 1.0, 0.0, 1.0]]], &device);
     let changed = Tensor::<3>::from_data([[[1.0, 2.0, 3.0, 4.0], [9.0, 8.0, 7.0, 6.0]]], &device);
-    let a = block.forward(first).into_data().try_to_vec::<f32>().unwrap();
-    let b = block.forward(changed).into_data().try_to_vec::<f32>().unwrap();
+    let a = block
+        .forward(first)
+        .into_data()
+        .try_to_vec::<f32>()
+        .unwrap();
+    let b = block
+        .forward(changed)
+        .into_data()
+        .try_to_vec::<f32>()
+        .unwrap();
     for (x, y) in a[..4].iter().zip(&b[..4]) {
         assert!((x - y).abs() < 1e-5);
     }
@@ -48,7 +83,15 @@ fn propagates_gradients_to_all_sublayers() {
     let input = Tensor::<3>::from_data([[[1.0, 2.0, 3.0, 4.0], [0.5, -1.0, 2.0, 0.0]]], &device);
     let grads = block.forward(input).powf_scalar(2.0).sum().backward();
     assert!(block.attention.query.weight.val().grad(&grads).is_some());
-    assert!(block.feed_forward.expand.weight.val().grad(&grads).is_some());
+    assert!(
+        block
+            .feed_forward
+            .expand
+            .weight
+            .val()
+            .grad(&grads)
+            .is_some()
+    );
     assert!(block.feed_forward_norm.scale.val().grad(&grads).is_some());
     assert!(block.attention_norm.shift.val().grad(&grads).is_some());
 }

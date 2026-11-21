@@ -2,7 +2,6 @@ use burn::module::Module;
 use burn::tensor::{Device, Int, Tensor};
 use model::gpt::GptModelConfig;
 
-
 const VOCAB_SIZE: usize = 10;
 const CONTEXT_LENGTH: usize = 3;
 const EMBEDDING_DIM: usize = 4;
@@ -103,4 +102,21 @@ fn gradients_reach_gpt_embedding_blocks_and_output_projection() {
 fn rejects_zero_blocks() {
     GptModelConfig::new(VOCAB_SIZE, CONTEXT_LENGTH, EMBEDDING_DIM, NUM_HEADS, 0)
         .init(&Device::flex());
+}
+
+#[test]
+fn dropout_config_reaches_every_transformer_block() {
+    let device = Device::flex();
+    let model = GptModelConfig::new(
+        VOCAB_SIZE,
+        CONTEXT_LENGTH,
+        EMBEDDING_DIM,
+        NUM_HEADS,
+        NUM_BLOCKS,
+    )
+    .with_dropout(0.25)
+    .init(&device);
+    assert!(model.blocks.iter().all(|block| {
+        block.attention_dropout.prob == 0.25 && block.residual_dropout.prob == 0.25
+    }));
 }
