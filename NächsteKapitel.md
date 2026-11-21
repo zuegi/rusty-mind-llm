@@ -229,10 +229,12 @@ Validierungs-Loss untersucht. Dropout braucht einen expliziten
 Trainings-/Auswertungsmodus; seine Auswirkungen auf reproduzierbares
 Resume werden erklärt.
 
-**Status (20.11.2026): gestartet.** Der Modell-Block unterstützt jetzt
+**Status (21.11.2026): abgeschlossen.** Der Modell-Block unterstützt
 konfigurierbares Dropout; Tests prüfen den Trainings-/Validierungsmodus.
-Eine erste AdamW-/Weight-Decay-Demo vergleicht drei Varianten auf denselben
-kleinen Daten. Vollständige Auswertungen und Resume-Erweiterungen folgen.
+`crates/training/examples/ch17.rs` vergleicht vier Varianten (keine,
+Weight Decay, Dropout, beides) über drei Seeds, 60 Epochen und gleiche
+Anfangsgewichte je Seed. Das Kapitel behandelt Resume mit Dropout nur als
+Hinweis; eine Resume-Demo folgt in Kapitel 18.
 
 ## Kapitel 18: Ein vollständiger Trainingslauf
 
