@@ -302,7 +302,10 @@ vorne beginnen lassen.
 
 Kapitel 15 speichert derzeit einen Seed und die Trainingsposition, aber
 kein Dropout; die Demo in diesem Kapitel implementiert kein Resume. Das
-holen wir in Kapitel 18 beim vollständigen Trainingslauf nach.
+holen wir in [Kapitel 18](18-vollstaendiger-trainingslauf.md) beim
+vollständigen Trainingslauf nach: Dort leiten wir die Dropout-Masken
+pro Update aus Seed und Update-Nummer ab, statt einen Generatorzustand zu
+speichern.
 
 ## 7. Was prüfen wir?
 

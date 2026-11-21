@@ -46,3 +46,4 @@
 - [15. Training unterbrechen und fortsetzen](kapitel/15-training-fortsetzen.md)
 - [16. Temperatur und Sampling](kapitel/16-temperatur-und-sampling.md)
 - [17. Regularisierung gegen Overfitting](kapitel/17-regularisierung.md)
+- [18. Ein vollständiger Trainingslauf](kapitel/18-vollstaendiger-trainingslauf.md)

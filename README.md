@@ -160,7 +160,17 @@ cargo run -p training --example ch16
 
 # Kapitel 16: Vorhandenen Kapitel-12/13-Checkpoint mit fünf Auswahlvarianten nutzen
 cargo run --release -p training --example ch16 -- checkpoints/ch13-best.bpk "I HAD always" 16 42
+
+# Kapitel 18: Vollständiger Lauf (AdamW, Plan, Dropout, Validierung, Bestmodell); 40 Updates
+cargo run --release -p training --example ch18 -- train checkpoints/ch18-teil 20
+cargo run --release -p training --example ch18 -- resume checkpoints/ch18-teil checkpoints/ch18-fertig 40
 ```
+
+`ch18` speichert je Lauf `last/` (Modell, AdamW-Zustand, Daten, Update-Stand,
+bisheriger Bestwert) und `best/` (Gewichte des besten Validierungs-Loss) in
+einem neuen Ordner. Dropout-Masken werden pro Update aus Seed und Update-Nummer
+abgeleitet, daher ist Resume reproduzierbar. Vorhandene Zielordner werden nicht
+überschrieben.
 
 `ch15` speichert Modell- und Adam-Records sowie Konfiguration, verwendete
 Tokens, Update-Stand und Prüfsummen in einem neuen Checkpoint-Ordner.
@@ -287,6 +297,9 @@ cargo test -p training --example ch13
 
 # Trainings-Resume: alle Gewichte gegen einen ununterbrochenen Lauf vergleichen
 cargo test -p training --example ch15
+
+# Vollständiger Lauf: Resume mit Dropout, Bestwert, last/ und best/ getrennt
+cargo test -p training --example ch18
 
 # Temperatur, Top-k, Top-p, Seeds, Stopp-Token und Greedy-Kompatibilität
 cargo test -p training --lib --example ch16 --example ch11 --test ch10
