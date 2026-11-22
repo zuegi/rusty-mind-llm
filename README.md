@@ -222,6 +222,23 @@ cargo run -p training --example ch02 -- data/the-verdict.txt
 
 Herkunft und Hinweise zum Text stehen in [data/README.md](data/README.md).
 
+## Präsentation
+
+Die Browser-Präsentation liegt separat in [presentation/](presentation/README.md).
+Eine gemeinsame Slidev-Installation baut unabhängige Decks zu statischen
+HTML-Websites. Das erste Deck liegt in
+[presentation/decks/llm-grundlagen/slides.md](presentation/decks/llm-grundlagen/slides.md);
+eine Vorlage bereitet weitere Präsentationen vor.
+Voraussetzung ist Node.js ab 22.22.0
+(empfohlen: 24 LTS); der Cargo-Workspace und die Buch-Veröffentlichung bleiben
+unverändert.
+
+```bash
+cd presentation
+npm ci
+npm run dev -- decks/llm-grundlagen/slides.md
+```
+
 ## Dokumentation lesen
 
 Die Dokumentation liegt in [book/src](book/src). Einstieg:

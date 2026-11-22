@@ -1,0 +1,19 @@
+{
+  "name": "rusty-mind-llm-presentation",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "dev": "slidev",
+    "build": "slidev build",
+    "build:public": "slidev build --without-notes",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "devDependencies": {
+    "@slidev/cli": "53.1.0",
+    "@slidev/theme-default": "0.25.0",
+    "vue": "3.5.46"
+  }
+}
