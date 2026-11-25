@@ -53,6 +53,8 @@ Lernziel: nächste Wort-/Tokenvorhersage, Lernen und Grenzen der Auswertung vers
 
 ---
 
+<PhaseBadge phase="inference" />
+
 # Schritt 1: Text in Stücke und Nummern
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
@@ -89,6 +91,8 @@ Wichtig: Tokenizer und Sprachmodell sind getrennte Bausteine.
 
 ---
 
+<PhaseBadge phase="inference" />
+
 # Schritt 2: Nummern werden zu Zahlenlisten
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
@@ -122,6 +126,8 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 -->
 
 ---
+
+<PhaseBadge phase="inference" />
 
 # Masked Attention: Wer gehört zu wem?
 
@@ -175,6 +181,8 @@ Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
 
 ---
 
+<PhaseBadge phase="inference" />
+
 # Verarbeiten, stabil halten, wiederholen
 
 <div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
@@ -220,6 +228,8 @@ Hinweis bei Rückfragen:
 -->
 
 ---
+
+<PhaseBadge phase="inference" />
 
 # Ein nächstes Wort entsteht
 
@@ -296,6 +306,8 @@ dafür wäre Softmax rechnerisch gar nicht nötig.
 
 ---
 
+<PhaseBadge phase="inference" />
+
 # Wort anhängen — und wieder von vorn
 
 <div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
@@ -347,6 +359,8 @@ Hinweis bei Rückfragen: Praktische Systeme speichern Zwischenergebnisse
 
 ---
 
+<PhaseBadge phase="training" />
+
 # Wie das Modell lernt
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
@@ -378,6 +392,8 @@ wären sprachlich oft genauso sinnvoll.
 -->
 
 ---
+
+<PhaseBadge phase="validation" />
 
 # Lernen oder Auswendiglernen?
 
@@ -415,6 +431,8 @@ Testdaten.
 -->
 
 ---
+
+<PhaseBadge phase="inference" label="Praxis · Echte Inferenz" />
 
 # Was unser kleines Modell wirklich schreibt
 
@@ -457,6 +475,8 @@ bessere Texte noch korrekte Fakten.
 
 ---
 
+<PhaseBadge phase="overview" />
+
 # Vier Begriffe klar getrennt
 
 <div class="grid grid-cols-[1.05fr_0.95fr] gap-4 items-center mt-2">
@@ -497,6 +517,8 @@ Hier kurz auf die passenden Bereiche in der Grafik rechts zeigen.
 
 ---
 
+<PhaseBadge phase="overview" />
+
 # Zwei Speicherstände — zwei Zwecke
 
 <div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-2">
@@ -535,6 +557,8 @@ Technische Details bei Rückfragen:
 
 ---
 
+<PhaseBadge phase="summary" />
+
 # Was bleibt — und was nicht
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
@@ -564,6 +588,8 @@ Für eine unabhängige Schlussbewertung wäre ein unberührter Testdatensatz nö
 -->
 
 ---
+
+<PhaseBadge phase="summary" />
 
 # Wie es im Buch weitergeht
 
