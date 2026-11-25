@@ -31,6 +31,9 @@ Ansatz fehlten passende Libraries, und der Implementierungsaufwand wurde zu
 groß; deshalb folgte der Wechsel zu Rust mit Burn und einem strukturierten
 Lernpfad. Das ist persönliche Projekterfahrung, keine allgemeine Bewertung
 von Kotlin.
+Hinweis auf das offene Lernprojekt und begleitende deutsche Buch
+(`https://github.com/zuegi/rusty-mind-llm`, Buch:
+`https://zuegi.github.io/rusty-mind-llm/`, aktueller Stand: Kapitel 1–18).
 
 Danach die Frage an das Publikum: Wie geht „Der Hund …“ weiter?
 Mehrere plausible Antworten zeigen die Grundaufgabe: Das Modell bewertet
@@ -114,6 +117,7 @@ Beim nächsten Klick wird „rennt“ angehängt: Der Kontext lautet nun
 nächste Token. Die vorherigen Kandidaten werden nicht der Reihe nach
 abgearbeitet. Ohne weitere belegte Zahlen zeigen wir für diesen zweiten
 Schritt nur den Ablauf, keine erfundene Ergebnisverteilung.
+Dieses Anwenden des Modells mit festen Gewichten heißt **Inferenz**.
 
 **Visual:** Logits → Wahrscheinlichkeitsbalken → Auswahl → erweiterter
 Kontext → erneute Vorhersage. Eine spätere Button-Demo könnte diesen Ablauf
@@ -176,7 +180,8 @@ zeigt Wiederholungen und unverständlichen Text. Vorgegebener Prompt und neu
 erzeugte Fortsetzung werden sichtbar getrennt.
 Die Generierung funktioniert technisch, liefert aber noch keine gute Sprache.
 
-Greedy und Sampling verändern die Tokenauswahl, nicht die Modellgewichte.
+Greedy und Sampling gehören zur Inferenz: Sie verändern die Tokenauswahl,
+nicht die Modellgewichte.
 Bei Sampling verändert Temperatur die Wahrscheinlichkeitsverteilung:
 Niedrigere Temperatur konzentriert sie stärker auf hoch bewertete Tokens,
 höhere Temperatur macht sie flacher. Sie bestimmt nicht direkt, ob ein Text
@@ -204,6 +209,15 @@ Kapitel 18 verbindet diese Mechanik, verwendet aber nur acht Trainings-
 und zwei Validierungsfenster. Ein vollständiger Ablauf ist damit gezeigt,
 kein belastbarer Generalisierungsnachweis.
 
+**Vier Begriffe klar getrennt:**
+
+| Begriff | Gewichte | Braucht Zieltoken? | Zweck |
+| --- | --- | --- | --- |
+| **Modell** | enthält sie | nein | berechnet Logits aus Token-IDs |
+| **Training** | werden geändert | ja | Fehler (Loss) senken |
+| **Validierung** | fest | ja | Qualität auf getrennten Daten messen |
+| **Inferenz** | fest | nein | Vorhersage anwenden (z. B. Text generieren) |
+
 **Visual:** Ablaufgrafik mit zwei Speicherständen:
 „Weitertrainieren“ und „bestes Validierungsmodell“.
 **Architektur-Grafik (größer):** Erweitert um Checkpoints außerhalb des
@@ -229,12 +243,25 @@ ist eine zusätzliche Bewertungsaufgabe.
 **Architektur-Grafik:** Vollständige Übersicht mit klarer Abgrenzung zwischen
 Modellkern (`GptModel`) und umgebender Trainings- sowie Generierungsinfrastruktur.
 
+**Kurzer Ausblick — nächste geplante Kapitel im Buch (Kapitel 19–28):**
+
+- **Daten & Effizienz (Kap. 19–20):** Datenqualität, unabhängiger Testdatensatz, Laufzeit und Speicher.
+- **Vortrainiertes GPT-2 (Kap. 21–22):** Architektur mit GPT-2 abgleichen (u. a. finale LayerNorm) und vortrainierte Gewichte importieren.
+- **Lokaler Chat (Kap. 23–24):** Terminal-Chat, lokaler HTTP-Dienst und Chatoberfläche.
+- **Anwendung & Betrieb (Kap. 25–28):** RAG (Wissen zur Laufzeit ohne Gewichtsänderung), Fine-Tuning/Instruction-Tuning, Grenzen von Assistenten, Evaluation, Sicherheit und Betrieb.
+
+(Geplanter Lernpfad aus `NächsteKapitel.md`, noch nicht umgesetzt.)
+
 ## Fragen (18:00–20:00)
 
 Zwei Minuten für Rückfragen. Als Verständnisfrage eignet sich:
 „Was verändert sich beim Training, und was verändert sich beim Generieren?“
 Damit wird das Lernziel aufgegriffen, ohne weitere technische Details
 einzuführen.
+
+**Projekt & Buch (während der Fragerunde sichtbar lassen):**
+Repository: `https://github.com/zuegi/rusty-mind-llm`
+Buch (aktuell Kapitel 1–18): `https://zuegi.github.io/rusty-mind-llm/`
 
 ## Inspirationsquelle und Abgrenzung
 
