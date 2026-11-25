@@ -10,6 +10,12 @@ Grundlage: Kapitel 1 bis 18 von `rusty-mind-llm`; kein Kotlin-Code und kein Spra
 das nächste Token vorhersagt, wie Training diese Vorhersage verändert und
 warum bessere Messwerte noch keine verlässlichen Antworten beweisen.
 
+**Sprache auf den Folien:** Alltagssprache für Laien ohne LLM-Vorkenntnisse
+(z. B. „Textstücke“, „Punkte“, „Fehlerwert“, „Stellschrauben“, „Übungs- vs.
+Prüfungsdaten“). Fachbegriffe stehen nur dort, wo sie direkt erklärt werden
+oder in der Architektur-Grafik verortet sind; Buch-Kapitelverweise,
+Hyperparameter und Detail-Abgrenzungen gehören in die Sprechernotizen.
+
 **Roter Faden:** „Der Hund …“ begleitet Einstieg, Tokenisierung,
 Kontextverarbeitung, Tokenauswahl und Training. Für dieses didaktische
 Beispiel verwenden wir eine künstliche Worttabelle. Echte Tokenisierung,
