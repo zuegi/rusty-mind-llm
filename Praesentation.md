@@ -17,11 +17,18 @@ gemessene Loss-Werte und dokumentierte Modellfortsetzungen werden davon
 sichtbar getrennt.
 
 **Wachsende Architektur-Grafik:** Jede Folie zeigt eine positionsstabile
-Übersichtsgrafik, die sich schrittweise zur Architektur von `rusty-mind-llm`
-erweitert. Bisher eingeführte Komponenten bleiben sichtbar, die aktuelle
-Komponente wird farbig hervorgehoben. Modellkern (`GptEmbedding`,
+Übersichtsgrafik im Bottom-to-Top-Stil von *„Attention Is All You Need“*
+(farbige abgerundete Blöcke, `⊕`-Knoten, Residual-Pfeile, `N×`-Klammer),
+die sich schrittweise zur Architektur von `rusty-mind-llm` erweitert.
+Gegenüber dem Original-Paper gelten vier Projekt-Anpassungen:
+(1) Decoder-only-Stack (kein Encoder, keine Cross-Attention),
+(2) Pre-LayerNorm (`LayerNorm` vor Attention/Feed-Forward, danach Residual-`⊕`),
+(3) lernbares Positions-Embedding am `⊕`-Knoten,
+(4) gestrichelter Modellkern endet bei `output_projection` → `Logits` (ohne
+Softmax im Modell). Bisher eingeführte Komponenten bleiben sichtbar, die
+aktuelle Komponente wird farbig hervorgehoben. Modellkern (`GptEmbedding`,
 `TransformerBlock` 1..N, `output_projection`) und Infrastruktur (Tokenizer,
-Generierungsschleife, Training, Validierung, Checkpoints) bleiben visuell
+Inferenz-Schleife, Training, Validierung, Checkpoints) bleiben visuell
 klar getrennt. Auf Folien 3 und 8 wird die Grafik größer gezeigt.
 
 ## 1. Wie geht dieser Text weiter? (0:00–1:00)

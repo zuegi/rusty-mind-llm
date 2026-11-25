@@ -1,5 +1,6 @@
 ---
 theme: default
+layout: default
 title: Vom Text zum kleinen Sprachmodell
 info: |
   Ein Lernprojekt in Rust mit Burn, basierend auf Kapitel 1 bis 18.
@@ -15,13 +16,26 @@ fonts:
 
 # Vom Text zum kleinen Sprachmodell
 
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
+<div>
+
 Wie ein GPT-artiges Modell Text fortsetzt
 
-**Wie geht „Der Hund …“ weiter?**
+<div class="mt-5 p-4 rounded-lg bg-slate-100 border border-slate-300">
+  <div class="text-sm uppercase tracking-wide text-slate-500">Einstiegsfrage</div>
+  <div class="text-xl font-bold mt-1">Wie geht „Der Hund …“ weiter?</div>
+</div>
 
-Rust · Burn · Ein nachvollziehbares Lernprojekt
+- Modell bewertet mögliche Fortsetzungen — kein Nachschlagen fertiger Sätze.
+- Offenes Lernprojekt & Buch in Rust + Burn (Kapitel 1–18):
+  - Code: `github.com/zuegi/rusty-mind-llm`
+  - Buch: `zuegi.github.io/rusty-mind-llm/`
 
-Kann ich hier direkt
+</div>
+<div>
+  <LlmArchitecture :step="1" />
+</div>
+</div>
 
 <!--
 0:00–1:00.
@@ -32,7 +46,10 @@ passende Libraries; der eigene Implementierungsaufwand wurde zu groß.
 Deshalb bin ich zu Rust mit Burn gewechselt und habe dort einen strukturierten
 Lernpfad aufgebaut.“ Kein allgemeiner Vergleich der Sprachen.
 
-Danach das Publikum mögliche Fortsetzungen nennen lassen.
+Hinweis auf das offene Repo und das begleitende deutsche Buch (aktueller Stand:
+Kapitel 1–18).
+
+Danach das Publikum mögliche Fortsetzungen für „Der Hund …“ nennen lassen.
 Lernziel: nächste Tokenvorhersage, Lernen und Grenzen der Auswertung verstehen.
 -->
 
@@ -40,54 +57,75 @@ Lernziel: nächste Tokenvorhersage, Lernen und Grenzen der Auswertung verstehen.
 
 # Text wird Zahlen
 
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
+<div>
+
 ```text
-Text → Tokens → IDs → lernbare Vektoren + Positionen
+„Der Hund“ → Tokens → IDs → Embeddings + Positionen
 ```
 
-- Ein Token kann ein Wort, ein Wortteil oder ein Satzzeichen sein.
-- IDs sind Kennungen, keine Bedeutungen oder Wahrscheinlichkeiten.
-- Das Modell verarbeitet Zahlen; der Tokenizer übersetzt zurück in Text.
+- **Tokenizer (außerhalb):** zerlegt Text in Wörter, Wortteile oder Satzzeichen → Token-IDs.
+- **IDs** sind Kennungen, keine Bedeutungen oder Wahrscheinlichkeiten.
+- **Token-Embedding:** lernbarer Zahlenvektor pro ID.
+- **Positions-Embedding:** ergänzt Reihenfolge (im Projekt ebenfalls lernbar).
 
-**Tokenizer und Sprachmodell sind unterschiedliche Bausteine.**
+**Welche Beziehungen Embeddings abbilden, entsteht erst durch Training.**
+
+</div>
+<div>
+  <LlmArchitecture :step="2" />
+</div>
+</div>
 
 <!--
 1:00–3:00. Grundlage: Kapitel 1–3.
 
-Textkarten und IDs gedanklich nebeneinanderlegen. Die Worttabelle auf der
-nächsten Beispiel-Folie ist künstlich; der echte GPT-2-Tokenizer hat 50.257 IDs.
-Das vorhandene Tokenizer-Vokabular wird verwendet, nicht hier neu trainiert.
+Drei Schritte nacheinander betonen: Textkarten → Token-IDs → lernbare Vektoren,
+danach Positionen ergänzen. Embeddings sind kein fest vergebener „Bedeutungscode“.
+Die Worttabelle auf Folie 4 ist künstlich; der echte GPT-2-Tokenizer hat 50.257 IDs.
 Keine Tensorformen oder Rust-Syntax erklären.
 -->
 
 ---
 
-# Der bisherige Kontext zählt
+# Warum der bisherige Kontext zählt
 
-```text
-Bisherige Tokens → Attention → Transformer-Blöcke
-                                           ↓
-                           Bewertung nächster Tokens
-```
+<div class="grid grid-cols-[0.95fr_1.05fr] gap-5 items-center mt-2">
+<div>
 
-- Attention gewichtet Informationen aus dem bisherigen Kontext.
-- Die Positionen der Tokens spielen eine Rolle.
-- Die kausale Maske verhindert den Blick in die Zukunft.
+- Ein Token wird nicht isoliert vorhergesagt: der bisherige Kontext („Der Hund …“) zählt.
+- **Attention** gewichtet und verbindet Informationen aus dem Kontext.
+- **Kausale Maske** verhindert den Blick auf zukünftige Tokens.
+- **N× Transformer-Blöcke** verfeinern die Darstellung schrittweise (Pre-LayerNorm + Residual `+`).
 
-**Das nächste Token wird nicht isoliert bewertet.**
+**Keine feste Rollenverteilung wie „Schicht 1 = Grammatik“ — was wichtig ist, hängt von Eingabe und Schicht ab.**
+
+</div>
+<div>
+  <LlmArchitecture :step="3" />
+</div>
+</div>
 
 <!--
 3:00–5:00. Grundlage: Kapitel 5–7.
 
-Attention als gewichtetes Verbinden von Informationen erklären, nicht als
-menschliche Aufmerksamkeit. Spätere Tokens bleiben für eine frühere
-Vorhersage unsichtbar. Q/K/V, Matrizen und Ableitungen auslassen.
+Grafik bewusst größer: Aufbau eines Transformer-Blocks im Stil von „Attention Is
+All You Need“, angepasst an rusty-mind-llm (Decoder-only, Pre-LayerNorm vor
+Attention/Feed-Forward, Residual-Verbindungen danach).
+Kurze Wörter oder Artikel sind nicht grundsätzlich unwichtiger.
+Keine Q/K/V-Formeln oder Tensorformen im Hauptteil.
 -->
 
 ---
 
 # Ein nächstes Token entsteht
 
-**Illustrativ — keine gemessene Modellvorhersage**
+<div class="grid grid-cols-[1.15fr_0.85fr] gap-5 items-center mt-1">
+<div>
+
+<div class="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">
+  Illustratives Beispiel — keine gemessene Modellvorhersage
+</div>
 
 Kontext: **Der Hund**
 
@@ -95,59 +133,72 @@ Kontext: **Der Hund**
 | --- | --- | --- | --- | --- | --- |
 | Token | Der | Hund | Katze | **rennt** | . |
 | Logit | 1.2 | -0.4 | 0.8 | **2.1** | 0.3 |
+| Softmax | 21.10% | 4.26% | 14.15% | **51.91%** | 8.58% |
 
-`argmax` → ID `3` → **Der Hund rennt**
+- `argmax` → ID `3` → **„rennt“** (Greedy braucht kein Softmax).
+- Neuer Kontext **„Der Hund rennt“** → erneut berechnen.
+- Anwenden mit festen Gewichten heißt **Inferenz**.
 
-Token anhängen → **neu berechnen** → nächstes Token auswählen
-
-Logits = Bewertungen, keine Prozentwerte. Softmax liefert Wahrscheinlichkeiten.
+</div>
+<div>
+  <LlmArchitecture :step="4" />
+</div>
+</div>
 
 <!--
-5:00–7:00.
+5:00–7:00. Grundlage: Kapitel 7, 11 und 16.
 
-Quellen: book/src/kapitel/07-gpt.md, Abschnitt „Was ist ein Logit?“;
-book/src/kapitel/11-textgenerierung.md, „Token-IDs wieder als Text ausgeben“.
-Die Verbindung dieser Logits mit dem Kontext „Der Hund“ ist eine Illustration.
-Die IDs sind künstliche Worttabellen-IDs, nicht echte GPT-2-IDs.
+Quellen: Kapitel 7 (Logits), Kapitel 11 (künstliche Worttabelle). Zuordnung zu
+„Der Hund“ dient nur der Erklärung; IDs sind keine echten GPT-2-IDs.
+Softmax bei Temperatur 1 aus den illustrativen Logits berechnet — kein Maß für
+Faktentreue.
 
-Greedy kann direkt den höchsten Logit auswählen. Danach nicht die übrigen
-Kandidaten abarbeiten, sondern mit dem erweiterten Kontext erneut vorhersagen.
-Kapitel 11 nutzt ohne Checkpoint Zufallsgewichte und beweist keine Sprachleistung.
+Nach dem Anhängen von „rennt“ werden nicht die übrigen Kandidaten abgearbeitet,
+sondern der neue Kontext erneut bewertet.
+Praktische Systeme können frühere Berechnungen zwischenspeichern (KV-Cache);
+keine pauschale Tokens/Sekunde-Zahl nennen.
 -->
 
 ---
 
 # Wie das Modell lernt
 
-```text
-Trainingstext liefert das nächste Zieltoken
-                    ↓
-Vorhersage → Loss → Gradienten → Gewichtsupdate
-                    ↑                 |
-                    └── wiederholen ──┘
-```
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div>
 
-- Loss bewertet die Wahrscheinlichkeit des Zieltokens.
-- „Richtig“ bedeutet: Dieses Token folgt im Trainingstext.
-- Beim Generieren bleiben die Gewichte fest.
+Beispieltext **„Der Hund rennt“**:
+Kontext **„Der Hund“** → Zieltoken **„rennt“**
 
-**Training verändert Gewichte. Generierung verlängert Text.**
+- **Cross-Entropy Loss** bewertet, wie viel Wahrscheinlichkeit das Modell dem Zieltoken gibt.
+- **Gradienten & Optimizer** passen die Modellgewichte an.
+- „Richtig“ bedeutet: dieses Token steht im Trainingstext — nicht, dass andere Fortsetzungen falsch sind.
+
+**Training ändert Gewichte. Inferenz hält Gewichte fest und verlängert Text.**
+
+</div>
+<div>
+  <LlmArchitecture :step="5" />
+</div>
+</div>
 
 <!--
 7:00–10:00. Grundlage: Kapitel 2, 4, 8 und 9.
 
-Beispieltext „Der Hund rennt“: Kontext „Der Hund“, Ziel „rennt“.
-Andere Fortsetzungen können ebenfalls plausibel sein.
-Ein Optimizer verändert Gewichte anhand der Gradienten; viele Updates sollen
-die durchschnittlichen Vorhersagen verbessern, nicht jeder Schritt garantiert
-eine Verbesserung auf unbekannten Daten.
+Dasselbe Beispiel wird jetzt zum Trainingsfall. Die hohen Werte von Folie 4 sind
+keine Ausgangsmessung vor einem Update. Viele Schritte sollen Vorhersagen
+verbessern, garantieren aber nicht bei jedem Schritt eine bessere Generalisierung.
 -->
 
 ---
 
 # Lernen oder Auswendiglernen?
 
-**Dokumentierter Lauf aus Kapitel 13**
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div>
+
+<div class="text-xs font-semibold uppercase tracking-wide text-cyan-800 mb-1">
+  Dokumentierte Messwerte — Kapitel 13 (Lernrate 0.05)
+</div>
 
 | Epoche | Trainings-Loss | Validierungs-Loss |
 | --- | --- | --- |
@@ -155,34 +206,39 @@ eine Verbesserung auf unbekannten Daten.
 | **16** | **6.0976** | **6.6642 — bester Stand** |
 | 20 | 5.7849 | 6.7019 |
 
-Training verbessert sich weiter; Validierung nicht.
+- **Validierung** misst auf getrennten Daten bei **festen Gewichten**.
+- Nach Epoche 16 sinkt Training weiter, Validierung steigt wieder → **Overfitting-Warnsignal**.
 
-**Besten Validierungsstand speichern, nicht einfach letzten Stand.**
+**Besten Validierungsstand speichern — nicht einfach den letzten Stand.**
 
-Kleiner ist besser. Kleine Validierung → Warnsignal, kein allgemeiner Beweis.
+</div>
+<div>
+  <LlmArchitecture :step="6" />
+</div>
+</div>
 
 <!--
-10:00–13:00.
+10:00–13:00. Grundlage: Kapitel 9 und 13.
 
-Quelle: book/src/kapitel/13-auswertung-und-overfitting.md,
-dokumentierter Lauf mit Lernrate 0.05 und Loss-Kurven.
-Dies sind dokumentierte Messwerte, keine neu ausgeführte Präsentationsdemo.
-Die Tabelle ist die Basis; die vollständigen Kurven können später ergänzt werden.
-
-Training und Validierung sind getrennte Datenbereiche derselben kurzen
-Geschichte. Ein einzelner Anstieg beweist kein Overfitting. Die Auswahl auf
-Validierungsdaten ersetzt keinen unberührten Testdatensatz.
+Dokumentierte Messwerte aus Kapitel 13 (kein neu ausgeführter Lauf).
+Kleinerer Loss ist besser. Kleine Validierung ist ein Warnsignal, kein Beweis
+für allgemeines Sprachverständnis — und ersetzt keinen unberührten Testdatensatz.
 -->
 
 ---
 
-# Funktionierende Generierung ≠ gute Sprache
+# Was unser Modell tatsächlich erzeugt
 
-**Dokumentierte Ausgabe mit trainiertem Checkpoint — Kapitel 16**
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div>
+
+<div class="text-xs font-semibold uppercase tracking-wide text-emerald-800 mb-1">
+  Dokumentierte Ausgabe mit trainiertem Checkpoint — Kapitel 16
+</div>
 
 Vorgegebener Prompt: `I HAD always`
 
-Neu erzeugte Fortsetzung:
+Neu erzeugte Fortsetzung (Greedy / `argmax`):
 
 ```text
 .
@@ -190,94 +246,127 @@ Neu erzeugte Fortsetzung:
 ""I to-- to I to I to I to I
 ```
 
-Greedy wählt jeweils den höchsten Logit. Wiederholungen bleiben möglich.
+- Generierung funktioniert technisch — liefert aber noch keine gute Sprache.
+- **Greedy, Sampling & Temperatur** gehören zur **Inferenz**: sie ändern die Tokenauswahl, **nicht** die Gewichte.
 
-**Sampling verändert die Auswahl, nicht das Wissen oder die Gewichte.**
+**Andere Auswahlverfahren garantieren weder bessere Texte noch korrekte Fakten.**
+
+</div>
+<div>
+  <LlmArchitecture :step="7" />
+</div>
+</div>
 
 <!--
-13:00–15:00.
+13:00–15:00. Grundlage: Kapitel 11, 12 und 16.
 
-Quelle: book/src/kapitel/16-temperatur-und-sampling.md,
-Abschnitt „Gleicher Checkpoint, gleicher Prompt“.
-Die dokumentierte argmax-Ausgabe nutzt den Kapitel-13-Checkpoint,
-Prompt „I HAD always“ und 16 neue Tokens. Der Punkt, zwei Zeilenumbrüche
-und der folgende Text gehören zur Fortsetzung, nicht zum Prompt.
-Andere Checkpoints können andere Ausgaben liefern.
-
-Noch kein eigener Mitschnitt vorhanden. Die dokumentierte Ausgabe genügt
-für die Basis. Nicht die erfundene „the the“-Illustration aus Kapitel 12
-als gemessene Generierung zeigen.
+Quelle: Kapitel 16 („Gleicher Checkpoint, gleicher Prompt“), 16 neue Tokens.
+Prompt und Fortsetzung klar trennen. Niedrigere Temperatur konzentriert die
+Verteilung stärker, höhere macht sie flacher — sie steuert nicht direkt „sicher“
+vs. „kreativ“. Die Zufalls-Demo aus Kapitel 11 wird nicht als Sprachleistung
+präsentiert.
 -->
 
 ---
 
-# Der vollständige Ablauf
+# Der vollständige Lern- und Trainingsablauf
 
-```text
-Daten → Training → Validierung → gespeichertes Modell → Generierung
-                         ↓
-              letzter Stand / bester Stand
-```
+<div class="grid grid-cols-[1.02fr_0.98fr] gap-4 items-start mt-1">
+<div class="text-sm">
 
-- **Letzter Stand:** Training mit Optimizer-Zustand fortsetzen.
-- **Bester Validierungsstand:** Modell zum Anwenden auswählen.
-- Optimizer und Regularisierung beeinflussen das Lernen.
+<table class="w-full text-xs border-collapse mb-3">
+  <thead>
+    <tr class="border-b border-slate-300 text-left">
+      <th class="py-1 pr-2">Begriff</th>
+      <th class="py-1 pr-2">Gewichte</th>
+      <th class="py-1 pr-2">Ziel?</th>
+      <th class="py-1">Zweck</th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-slate-200">
+    <tr><td class="py-1 pr-2 font-bold">Modell</td><td class="py-1 pr-2">enthält sie</td><td class="py-1 pr-2">nein</td><td class="py-1">Logits aus Token-IDs</td></tr>
+    <tr><td class="py-1 pr-2 font-bold">Training</td><td class="py-1 pr-2">geändert</td><td class="py-1 pr-2">ja</td><td class="py-1">Loss senken</td></tr>
+    <tr><td class="py-1 pr-2 font-bold">Validierung</td><td class="py-1 pr-2">fest</td><td class="py-1 pr-2">ja</td><td class="py-1">auf neuen Daten messen</td></tr>
+    <tr><td class="py-1 pr-2 font-bold">Inferenz</td><td class="py-1 pr-2">fest</td><td class="py-1 pr-2">nein</td><td class="py-1">Vorhersage anwenden</td></tr>
+  </tbody>
+</table>
 
-Kapitel 18: **8 Trainingsfenster, 2 Validierungsfenster**
+- `last/`: Modell + Optimizer zum **Weitertrainieren**.
+- `best/`: bester Validierungsstand zum **Anwenden**.
+- Kapitel 18: **8 Trainings-, 2 Validierungsfenster** → vollständige Mechanik, kein Generalisierungsnachweis.
 
-**Vollständige Mechanik — kein Generalisierungsnachweis.**
+</div>
+<div>
+  <LlmArchitecture :step="8" />
+</div>
+</div>
 
 <!--
 15:00–17:00. Grundlage: Kapitel 10, 14, 15, 17 und 18.
 
-Speichern nur der Modellgewichte reicht nicht für exaktes Trainings-Resume.
-Kapitel 18 unterscheidet last/ und best/. In seinem kurzen dokumentierten Lauf
-fällt die Validierung durchgehend; dort fällt best/ nicht hinter last/ zurück.
-Den Unterschied der Auswahl zeigt der Lauf aus Kapitel 13.
-Keine Details zu AdamW, Dropout-Seeds oder Checkpoint-Dateiformaten vertiefen.
+Vier zentrale Begriffe klar trennen: Modell, Training, Validierung, Inferenz.
+Nur Modellgewichte reichen nicht für exaktes Trainings-Resume — daher last/
+mit Optimizer-Zustand vs. best/ für die Anwendung.
 -->
 
 ---
-layout: center
----
 
-# Was bleibt?
+# Was die Experimente zeigen — und was nicht
 
-**Ein Sprachmodell lernt, Text fortzusetzen.**
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-1">
+<div>
 
-Vorhersage → Lernen → getrennte Bewertung → Generierung
+**Kernaussage:** Ein Sprachmodell lernt Textfortsetzung. Verlässlichkeit im Einsatz ist eine zusätzliche Bewertungsaufgabe.
 
-Besserer Loss garantiert keine:
+- Besserer Loss garantiert **keine** Faktentreue, allgemeines Verständnis oder Produktionstauglichkeit (unberührter Testdatensatz nötig).
 
-- korrekten Fakten,
-- allgemeinen Sprachfähigkeiten,
-- Produktionstauglichkeit.
+<div class="mt-3 text-sm">
+  <div class="font-bold text-slate-700 mb-1">Ausblick — geplante Kapitel 19–28:</div>
+  <ul class="space-y-1 text-xs leading-snug">
+    <li><strong>Kap. 19–20:</strong> Datenqualität, Testdatensatz, Effizienz</li>
+    <li><strong>Kap. 21–22:</strong> GPT-2-Abgleich (u. a. finale LayerNorm) & Gewichtsimport</li>
+    <li><strong>Kap. 23–24:</strong> Lokaler Terminal- & Web-Chat</li>
+    <li><strong>Kap. 25–28:</strong> RAG, Fine-Tuning, Evaluation & Betrieb</li>
+  </ul>
+</div>
 
-**Verlässlichkeit für einen Einsatz muss zusätzlich geprüft werden.**
+</div>
+<div>
+  <LlmArchitecture :step="9" />
+</div>
+</div>
 
 <!--
 17:00–18:00.
 
-Das kleine Lernprojekt macht die Mechanik nachvollziehbar. Begrenzte Daten
-und winzige Modelle erlauben keine allgemeinen Aussagen über große LLMs.
-Für eine unabhängige Schlussbewertung wäre ein unberührter Testbereich nötig.
+Das Projekt macht Vorhersage, Gewichtsupdates, Validierung und Generierung
+nachvollziehbar. Aus dem Next-Token-Prinzip allein folgt weder ein Beweis für
+menschliches Denken noch der Beweis, dass komplexe Fähigkeiten unmöglich sind —
+unsere kleinen Experimente beantworten diese allgemeinen Fragen nicht.
+
+Ausblick basiert auf dem geplanten Lernpfad in NächsteKapitel.md (noch nicht
+umgesetzt).
 -->
 
 ---
 layout: center
 ---
 
-# Fragen
+# Fragen & Diskussion
 
-Was verändert sich beim **Training**?
+Was verändert sich beim **Training** — was bei der **Inferenz**?
 
-Was verändert sich beim **Generieren**?
+<div class="mt-6 text-sm text-slate-600 space-y-1">
+  <div>Repository: <code>https://github.com/zuegi/rusty-mind-llm</code></div>
+  <div>Buch (Kapitel 1–18): <code>https://zuegi.github.io/rusty-mind-llm/</code></div>
+</div>
 
-18 Minuten Vortrag · 2 Minuten Fragen
+<div class="mt-4 text-xs text-slate-500">18 Minuten Vortrag · 2 Minuten Fragen</div>
 
 <!--
 18:00–20:00.
 
-Verständnisfrage und Rückfragen. Gewichte versus wachsende Tokenfolge
-als zentrale Unterscheidung aufgreifen.
+Verständnisfrage und Rückfragen. Gewichte (Training) versus wachsende
+Tokenfolge bei festen Gewichten (Inferenz) als zentrale Unterscheidung
+aufgreifen.
 -->
