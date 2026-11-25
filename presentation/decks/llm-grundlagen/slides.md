@@ -82,7 +82,7 @@ Computer können nur rechnen — nicht lesen.
 <!--
 1:00–2:00. Grundlage: Kapitel 1–2.
 
-Die IDs 0 und 1 gehören zu unserer künstlichen Beispieltabelle auf Folie 5.
+Die IDs 0 und 1 gehören zu unserer künstlichen Beispieltabelle auf Folie 6.
 Der echte GPT-2-Tokenizer im Projekt kennt 50.257 verschiedene Tokens.
 Wichtig: Tokenizer und Sprachmodell sind getrennte Bausteine.
 -->
@@ -123,17 +123,34 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 
 ---
 
-# Der bisherige Satz zählt
+# Masked Attention: Wer gehört zu wem?
 
-<div class="grid grid-cols-[0.95fr_1.05fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
 <div>
 
-- **Attention (Masked):** verknüpft wichtige frühere Wörter — spätere bleiben verdeckt.
-- **Feed-Forward:** verarbeitet jedes Wort nach dem Austausch einzeln weiter.
-- **LayerNorm & `+`:** halten die Zahlen stabil, ohne die bisherige Info zu verlieren.
-- **`N×` Durchläufe:** dieselben Bausteine verfeinern das Ergebnis Schritt für Schritt.
+<div class="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-1.5">
+  Anschauungsbeispiel: Worauf bezieht sich „er“?
+</div>
 
-**Ein Wort wird nie allein bewertet — der bisherige Satz entscheidet mit.**
+<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 mb-3 text-xs space-y-2">
+  <div class="flex flex-wrap items-center gap-1 font-mono">
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">Die</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">Katze</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">sieht</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">den</span>
+    <span class="px-1.5 py-0.5 rounded bg-amber-100 border border-amber-400 font-bold text-amber-900">Hund</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-400">—</span>
+    <span class="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-bold">er</span>
+    <span class="px-1.5 py-0.5 rounded bg-slate-200 border border-dashed border-slate-400 text-slate-500">???</span>
+  </div>
+  <div class="text-indigo-900">
+    <strong>er</strong> schaut stark zurück auf <strong>Hund</strong> (kaum auf Katze) — <strong>???</strong> bleibt gesperrt.
+  </div>
+</div>
+
+- **Attention:** jedes Wort schaut auf frühere Wörter und gewichtet, welche gerade wichtig sind.
+- **Multi-Head:** mehrere Blickwinkel gleichzeitig (z. B. Satzbezug, Grammatik, Thema).
+- **Masked:** spätere Wörter bleiben verdeckt — beim Lernen kein „Spicken“ in der Zukunft.
 
 </div>
 <div>
@@ -142,16 +159,64 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 </div>
 
 <!--
-3:00–5:00. Grundlage: Kapitel 5–7.
+3:00–4:15. Grundlage: Kapitel 5 und 6.
 
-Grafik bewusst größer: Aufbau eines Transformer-Blocks im Stil von „Attention Is
-All You Need“, angepasst an rusty-mind-llm (Decoder-only, Pre-LayerNorm vor
-Attention/Feed-Forward, Residual-Verbindungen danach).
+Tonspur-Leitfaden:
+- Am Beispielsatz zeigen: Das Wort „er“ allein sagt fast nichts. Erst der
+  Rückblick auf „Hund“ macht klar, wer gemeint ist.
+- Multi-Head = das Modell macht diesen Rückblick nicht nur einmal, sondern mit
+  mehreren parallelen „Blickwinkeln“ (keine fix vorprogrammierten Rollen!).
+- Masked = alles rechts vom aktuellen Wort wird abgedeckt, damit das Modell
+  wirklich das nächste Wort vorhersagen lernt statt zu spicken.
+
+Hinweis: Das Satzbeispiel ist ein reines Anschauungsbeispiel (keine echte
+Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
+-->
+
+---
+
+# Verarbeiten, stabil halten, wiederholen
+
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
+<div>
+
+Nach dem Austausch zwischen den Wörtern folgen im Block noch drei Bausteine:
+
+<div class="my-3 space-y-2 text-xs">
+  <div class="p-2.5 rounded-lg bg-sky-50 border border-sky-200">
+    <strong class="text-sky-900">Feed-Forward:</strong> jedes Wort verarbeitet seinen neuen Kontext <strong>einzeln</strong> weiter — wie eine eigene kleine Recheneinheit pro Position.
+  </div>
+  <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+    <strong class="text-amber-900">LayerNorm:</strong> hält alle Zahlenwerte in einem gesunden Bereich, damit nichts nach oben oder unten ausbricht.
+  </div>
+  <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+    <strong class="text-slate-900">+ (Abkürzung / Residual):</strong> addiert den vorherigen Zustand wieder dazu — ursprüngliche Information geht unterwegs nicht verloren.
+  </div>
+</div>
+
+- **`N×` Durchläufe:** derselbe Block wird mehrfach gestapelt — das Ergebnis wird Schritt für Schritt feiner.
+
+</div>
+<div>
+  <LlmArchitecture :step="3" />
+</div>
+</div>
+
+<!--
+4:15–5:00. Grundlage: Kapitel 6 und 7.
+
+Tonspur-Leitfaden:
+- Attention tauscht Infos zwischen Wörtern aus; Feed-Forward verarbeitet danach
+  jedes Wort für sich weiter.
+- LayerNorm & + sind das „Sicherheitsnetz“: Ohne sie werden tiefe Netze
+  instabil oder vergessen den ursprünglichen Input.
+- In der Grafik steht N×: Dieser ganze Block läuft mehrfach hintereinander
+  (im Lernprojekt z. B. mehrere Schichten, in großen Modellen Dutzende).
 
 Hinweis bei Rückfragen:
 - Keine feste Rollenverteilung wie „Schicht 1 = Grammatik, letzte = Verständnis“.
-- Kurze Wörter oder Artikel sind nicht pauschal unwichtiger.
-- Keine Q/K/V-Formeln oder Tensorformen im Hauptteil.
+- In rusty-mind-llm liegt LayerNorm jeweils vor Attention und Feed-Forward
+  (Pre-LayerNorm), Residual + danach.
 -->
 
 ---
@@ -161,38 +226,46 @@ Hinweis bei Rückfragen:
 <div class="grid grid-cols-[1.15fr_0.85fr] gap-5 items-center mt-1">
 <div>
 
-<div class="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">
-  Rechenbeispiel zur Erklärung (keine echte Modellmessung)
+<div class="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1.5">
+  Rechenbeispiel: Mini-Wörterbuch mit 5 Wörtern (real: 50.257)
 </div>
 
-Bisheriger Text: **Der Hund**
+<div class="flex flex-wrap items-center gap-1.5 text-xs mb-2.5 p-2 rounded bg-slate-50 border border-slate-200">
+  <span class="font-semibold">„Der Hund“</span>
+  <span class="text-slate-400">→</span>
+  <span>Punkte pro Wort</span>
+  <span class="text-slate-400">→</span>
+  <span>Softmax (100 %)</span>
+  <span class="text-slate-400">→</span>
+  <span class="font-bold text-emerald-700">„rennt“</span>
+</div>
 
-<div class="my-3 space-y-2 text-xs">
-  <div class="grid grid-cols-[54px_48px_1fr_44px] items-center gap-2">
+<div class="my-2.5 space-y-1.5 text-xs">
+  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
     <span class="font-bold text-emerald-700">rennt</span>
-    <span class="text-slate-500">2.1 Pkt</span>
+    <span class="text-slate-500">+2.1 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-emerald-500 rounded" style="width: 51.9%"></div></div>
     <span class="font-bold text-emerald-700 text-right">51.9%</span>
   </div>
-  <div class="grid grid-cols-[54px_48px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
     <span>Der</span>
-    <span class="text-slate-500">1.2 Pkt</span>
+    <span class="text-slate-500">+1.2 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-400 rounded" style="width: 21.1%"></div></div>
     <span class="text-slate-600 text-right">21.1%</span>
   </div>
-  <div class="grid grid-cols-[54px_48px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
     <span>Katze</span>
-    <span class="text-slate-500">0.8 Pkt</span>
+    <span class="text-slate-500">+0.8 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-400 rounded" style="width: 14.2%"></div></div>
     <span class="text-slate-600 text-right">14.2%</span>
   </div>
-  <div class="grid grid-cols-[54px_48px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
     <span>.</span>
-    <span class="text-slate-500">0.3 Pkt</span>
+    <span class="text-slate-500">+0.3 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-400 rounded" style="width: 8.6%"></div></div>
     <span class="text-slate-600 text-right">8.6%</span>
   </div>
-  <div class="grid grid-cols-[54px_48px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
     <span>Hund</span>
     <span class="text-slate-500">-0.4 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-300 rounded" style="width: 4.3%"></div></div>
@@ -200,8 +273,8 @@ Bisheriger Text: **Der Hund**
   </div>
 </div>
 
-- Das Modell vergibt **Punkte (Logits)** für jedes bekannte Wort.
-- **Softmax** rechnet Punkte in **Prozentanteile** um — hier gewinnt **„rennt“**.
+- **Punkte (Logits):** hoch (`+2.1`) = passt gut, tief (`-0.4`) = passt schlecht.
+- **Softmax:** rechnet Rohpunkte in **Prozentanteile (Summe 100 %)** um.
 
 </div>
 <div>
@@ -216,26 +289,47 @@ Quellen: Kapitel 7 (Logits: 1.2, -0.4, 0.8, 2.1, 0.3), Kapitel 11 (künstliche
 Worttabelle IDs 0–4: Der, Hund, Katze, rennt, .). Softmax bei Temperatur 1:
 21.10%, 4.26%, 14.15%, 51.91%, 8.58%. Keine echten GPT-2-IDs, kein Maß für
 Faktentreue.
-Bei Greedy-Auswahl (argmax) gewinnt immer der höchste Logit — dafür wäre
-Softmax rechnerisch gar nicht nötig.
+Output-Projektion bildet die letzte Zahlenliste auf genau einen Punktwert pro
+bekanntem Wort ab. Bei Greedy-Auswahl (argmax) gewinnt immer der höchste Logit —
+dafür wäre Softmax rechnerisch gar nicht nötig.
 -->
 
 ---
 
 # Wort anhängen — und wieder von vorn
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
 <div>
 
-<div class="my-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200 space-y-2 text-sm">
-  <div><strong>Runde 1:</strong> „Der Hund“ → wählt <strong class="text-emerald-700">„rennt“</strong></div>
-  <div><strong>Runde 2:</strong> „Der Hund rennt“ → neu berechnen → nächstes Wort</div>
-  <div><strong>Runde 3:</strong> „Der Hund rennt …“ → immer so weiter</div>
+<div class="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1.5">
+  Fortsetzung des Beispiels — ein Token pro Durchlauf
 </div>
 
-- Das Modell schreibt **nie einen ganzen Absatz auf einmal**, sondern **ein Stück nach dem anderen**.
-- Es arbeitet nicht die alten Zweitplatzierten ab, sondern bewertet den neuen Satz **komplett neu**.
-- Dieses Anwenden mit **festen Einstellungen** heißt **Inferenz**.
+<div class="my-2.5 p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-2.5 text-xs">
+  <div class="flex flex-wrap items-center gap-1 font-mono">
+    <span class="font-sans font-bold text-slate-700 mr-1">Runde 1:</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300">Der</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300">Hund</span>
+    <span class="text-slate-400">→</span>
+    <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold">rennt</span>
+    <span class="font-sans text-emerald-800 ml-1">(51.9 %)</span>
+  </div>
+  <div class="flex flex-wrap items-center gap-1 font-mono">
+    <span class="font-sans font-bold text-slate-700 mr-1">Runde 2:</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300">Der</span>
+    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300">Hund</span>
+    <span class="px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">rennt</span>
+    <span class="text-slate-400">→</span>
+    <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold">.</span>
+    <span class="font-sans text-slate-600 ml-1">(neu berechnet)</span>
+  </div>
+  <div class="font-sans text-slate-600 pt-1 border-t border-emerald-200">
+    <strong>Stopp:</strong> bei Satzende oder Maximallänge — sonst Runde 3, 4, …
+  </div>
+</div>
+
+- Es nimmt **nicht Platz 2** aus Runde 1 („Der“, 21.1 %) — jede Runde berechnet für den neuen Satz **neue Punkte**.
+- **Inferenz:** Anwenden mit **eingefrorenen Einstellungen** — das Modell lernt hier nichts dazu.
 
 </div>
 <div>
