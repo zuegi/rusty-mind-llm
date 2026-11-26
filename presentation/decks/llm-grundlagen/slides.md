@@ -383,12 +383,58 @@ Hinweis bei Rückfragen: Praktische Systeme speichern Zwischenergebnisse
 </div>
 
 <!--
-7:00–10:00. Grundlage: Kapitel 2, 4, 8 und 9.
+7:00–8:15. Grundlage: Kapitel 2, 4, 8 und 9.
 
 Technisch: Cross-Entropy-Loss bewertet die Wahrscheinlichkeit des Zieltokens;
 Gradienten zeigen die Richtung, der Optimizer führt das Gewichtsupdate aus.
 „Richtig“ heißt nur: dieses Token steht im Trainingstext — andere Fortsetzungen
 wären sprachlich oft genauso sinnvoll.
+-->
+
+---
+
+<PhaseBadge phase="training" />
+
+# Wie werden Gewichte angepasst?
+
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div>
+
+<div class="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1.5">
+  Fehlerfunktion Loss(Gewichte) — „Bergab im Nebel“
+</div>
+
+<GradientDescentDiagram />
+
+<div class="mt-2.5 space-y-1.5 text-xs">
+  <div><strong>Welche Funktion?</strong> Die <strong>Fehlerfunktion (Cross-Entropy-Loss)</strong>: <code>Gewichte → Modell → % für „rennt“ → Fehlerzahl</code> (90 % = klein, 5 % = groß).</div>
+  <div><strong>1. Zufallsstart:</strong> Alle Gewichte in den Schichten starten zufällig.</div>
+  <div><strong>2. Richtung (Gradient):</strong> Per <strong>Kettenregel (Backpropagation)</strong> berechnet Autodiff rückwärts für jedes Gewicht, ob höher oder tiefer den Fehler senkt.</div>
+  <div><strong>3. Schritt (Optimizer):</strong> <code class="text-red-800">neu = alt − Lernrate × Gradient</code> — tausendfach wiederholt.</div>
+</div>
+
+</div>
+<div>
+  <LlmArchitecture :step="5" />
+</div>
+</div>
+
+<!--
+8:15–10:00. Grundlage: Kapitel 8 und 9.
+
+Tonspur-Leitfaden für die garantierte Rückfrage „Wie werden Gewichte berechnet /
+auf welcher Funktion?“:
+- Welche Funktion? Die Fehlerfunktion (Cross-Entropy-Loss) als Funktion aller
+  Gewichte bei festem Übungssatz („Der Hund → rennt“): im Kern -ln(p) für das
+  Zielwort (p = 90 % → Loss ≈ 0.11, p = 5 % → Loss ≈ 3.00).
+- Man kennt die gesamte Fehlerlandschaft (Millionen Dimensionen) nicht global,
+  aber weil jeder Rechenschritt im Modell differenzierbar ist, liefert
+  Backpropagation (Kettenregel via Burn/Autodiff) automatisch die lokale
+  Steigung (Gradient) am aktuellen Punkt.
+- Bild „Bergab im Nebel“: Man sieht nicht das ganze Tal, spürt aber unter den
+  Füßen, wo es bergab geht.
+- Der Optimizer (z. B. SGD oder Adam) macht pro Schritt nur eine winzige
+  Änderung (Lernrate): zu groß = springt übers Tal, zu klein = lernt ewig.
 -->
 
 ---
@@ -400,15 +446,17 @@ wären sprachlich oft genauso sinnvoll.
 <div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
 <div>
 
-<div class="text-xs font-semibold uppercase tracking-wide text-cyan-800 mb-1">
-  Echte Messung aus unserem Lernprojekt (kleiner Wert = besser)
+<div class="p-2 rounded bg-cyan-50 border border-cyan-200 text-xs leading-snug mb-2">
+  <strong>Wie bei einer Schulprüfung:</strong> Wer nur die Übungsaufgaben auswendig lernt, scheitert an neuen Aufgaben. Deshalb legen wir einen Teil der Texte <strong>beiseite</strong> — das Modell sieht sie beim Lernen nie.
 </div>
 
 <LossCurveChart />
 
-- **Prüfung (Validierung):** misst auf **fremdem Text** bei festem Modell.
-- Ab Epoche 16 lernt das Modell die Übungsdaten nur noch **auswendig**.
-- **Deshalb speichern wir Epoche 16 — nicht den letzten Stand.**
+<div class="text-xs leading-snug space-y-1 mt-1.5">
+  <div>• <strong>Bis Durchlauf 16:</strong> Fehler sinkt bei <strong class="text-blue-700">Übungstext</strong> und <strong class="text-red-700">Prüfungstext</strong> → Modell lernt <strong>echte Sprachmuster</strong>.</div>
+  <div>• <strong>Ab Durchlauf 16:</strong> nur <strong class="text-blue-700">Übungstext</strong> wird besser, <strong class="text-red-700">Prüfung</strong> schlechter → es lernt nur noch <strong>auswendig</strong>.</div>
+  <div>• <strong>Folge:</strong> Wir behalten Stand <strong>16</strong> (beste Prüfung), nicht den letzten Stand 20.</div>
+</div>
 
 </div>
 <div>
@@ -432,30 +480,25 @@ Testdaten.
 
 ---
 
-<PhaseBadge phase="inference" label="Praxis · Echte Inferenz" />
+<PhaseBadge phase="overview" label="Checkpoints · Speichern" />
 
-# Was unser kleines Modell wirklich schreibt
+# Zwei Speicherstände — zwei Zwecke
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-2">
 <div>
 
-<div class="text-xs font-semibold uppercase tracking-wide text-emerald-800 mb-1">
-  Echte Ausgabe unseres trainierten Mini-Modells
+Weil Training und Prüfung auseinanderlaufen (Epoche 16 vs. 20), speichern wir **zwei Stände**:
+
+<div class="my-3 space-y-3 text-sm">
+  <div class="p-3.5 rounded-lg bg-purple-50 border border-purple-200">
+    <div class="font-bold text-purple-900"><code>last/</code> — Weitertrainieren (z. B. Epoche 20)</div>
+    <div class="text-xs text-slate-700 mt-1">Speichert den letzten Stand inklusive Lernzustand, um später nahtlos weiterzumachen.</div>
+  </div>
+  <div class="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200">
+    <div class="font-bold text-emerald-900"><code>best/</code> — Anwenden (z. B. Epoche 16)</div>
+    <div class="text-xs text-slate-700 mt-1">Speichert den Stand mit dem kleinsten Prüfungsfehler — diesen laden wir für die Textgenerierung.</div>
+  </div>
 </div>
-
-Vorgegebener Starttext: `I HAD always`
-
-Vom Modell erzeugte Fortsetzung:
-
-```text
-.
-
-""I to-- to I to I to I to I
-```
-
-- Die Technik funktioniert — gute Sprache braucht aber **viel mehr Daten und Modellgröße**.
-- **Auswahlstrategie (z. B. Temperatur):** entscheidet nur, ob immer das Top-Wort oder auch Alternativen gewählt werden.
-- Das Modell selbst ändert sich dabei **nicht**.
 
 </div>
 <div>
@@ -464,10 +507,57 @@ Vom Modell erzeugte Fortsetzung:
 </div>
 
 <!--
-13:00–15:00. Grundlage: Kapitel 11, 12 und 16.
+13:00–14:00. Grundlage: Kapitel 17 und 18.
+
+Direkte Brücke von Folie 10 (Overfitting ab Epoche 16): Deshalb reicht ein
+einziger Speicherstand nicht.
+Technische Details bei Rückfragen:
+- last/ speichert Modellgewichte + Optimizer-Zustand für exaktes Resume.
+- best/ speichert den Stand mit bestem Validierungs-Loss.
+- Kapitel 18 verbindet die gesamte Pipeline auf nur 8 Trainings- und
+  2 Validierungsfenstern: vollständige Mechanik, kein Generalisierungsnachweis.
+-->
+
+---
+
+<PhaseBadge phase="inference" label="Praxis · Echte Inferenz" />
+
+# Was unser kleines Modell wirklich schreibt
+
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-1">
+<div>
+
+<div class="text-xs font-semibold uppercase tracking-wide text-emerald-800 mb-1">
+  Echter Test: geladenen <code>best/</code>-Stand anwenden
+</div>
+
+<div class="text-sm mb-1.5">Vorgegebener Starttext: <code>I HAD always</code></div>
+
+<div class="p-2.5 rounded bg-slate-100 border border-slate-200 font-mono text-xs mb-2.5">
+  <div class="font-sans text-slate-500 text-[11px] mb-1">Vom Modell erzeugte Fortsetzung:</div>
+  <div class="leading-snug">.<br /><br />""I to-- to I to I to I to I</div>
+</div>
+
+<div class="space-y-1.5 text-sm">
+  <div>• <strong>Was man sieht:</strong> echte englische Wörter & Satzzeichen statt Zufallssalat — aber schnelle Schleifen (<code>to I to I</code>).</div>
+  <div>• <strong>Warum?</strong> Das Lernmodell ist winzig und hat wenig Text gesehen — gute Sprache braucht <strong>Größe & Datenmenge</strong>.</div>
+  <div>• <strong>Temperatur:</strong> steuert nur die Abwechslung bei der Wortauswahl, <strong>nicht</strong> das gelernte Wissen.</div>
+</div>
+
+</div>
+<div>
+  <LlmArchitecture :step="8" />
+</div>
+</div>
+
+<!--
+14:00–15:30. Grundlage: Kapitel 11, 12 und 16.
 
 Quelle: Kapitel 16 („Gleicher Checkpoint, gleicher Prompt“), 16 neue Tokens mit
 Greedy/argmax. Prompt und Fortsetzung klar trennen.
+Wichtig für das Publikum: Das Ergebnis ist absichtlich ehrlich und ungeschönt.
+Der Ablauf funktioniert technisch End-to-End, aber für gute Sprache fehlen
+Größe und Daten.
 Temperatur gehört zur Inferenz: niedrige Temperatur konzentriert die Verteilung
 stärker auf Top-Kandidaten, höhere macht sie flacher — sie garantiert aber weder
 bessere Texte noch korrekte Fakten.
@@ -504,55 +594,16 @@ bessere Texte noch korrekte Fakten.
 
 </div>
 <div>
-  <LlmArchitecture :step="8" />
+  <LlmArchitecture :step="9" />
 </div>
 </div>
 
 <!--
-15:00–16:00. Grundlage: Kapitel 10, 14, 15, 17 und 18.
+15:30–17:00. Grundlage: Kapitel 10, 14, 15, 17 und 18.
 
 Diese vier Begriffe werden in Videos und Artikeln oft vermischt.
-Hier kurz auf die passenden Bereiche in der Grafik rechts zeigen.
--->
-
----
-
-<PhaseBadge phase="overview" />
-
-# Zwei Speicherstände — zwei Zwecke
-
-<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-2">
-<div>
-
-<div class="space-y-3 text-sm">
-  <div class="p-3.5 rounded-lg bg-purple-50 border border-purple-200">
-    <div class="font-bold text-purple-900"><code>last/</code> — Weitertrainieren</div>
-    <div class="text-xs text-slate-700 mt-1">Speichert den letzten Trainingsstand inklusive Lernzustand, um später nahtlos weiterzumachen.</div>
-  </div>
-  <div class="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200">
-    <div class="font-bold text-emerald-900"><code>best/</code> — Anwenden</div>
-    <div class="text-xs text-slate-700 mt-1">Speichert den Stand mit dem kleinsten Prüfungsfehler — für die Textgenerierung.</div>
-  </div>
-</div>
-
-<div class="mt-4 text-sm font-semibold text-slate-800">
-  Der komplette Ablauf funktioniert End-to-End — bleibt aber ein kleines Lernexperiment.
-</div>
-
-</div>
-<div>
-  <LlmArchitecture :step="8" />
-</div>
-</div>
-
-<!--
-16:00–17:00. Grundlage: Kapitel 17 und 18.
-
-Technische Details bei Rückfragen:
-- last/ speichert Modellgewichte + Optimizer-Zustand für exaktes Resume.
-- best/ speichert den Stand mit bestem Validierungs-Loss.
-- Kapitel 18 verbindet die gesamte Pipeline auf nur 8 Trainings- und
-  2 Validierungsfenstern: vollständige Mechanik, kein Generalisierungsnachweis.
+Perfekte Klammer vor dem Fazit: Hier kurz auf das komplette Gesamtbild rechts
+zeigen.
 -->
 
 ---
@@ -643,4 +694,69 @@ Was verändert sich beim **Training** — und was bei der **Anwendung (Inferenz)
 Verständnisfrage und Rückfragen. Stellschrauben/Gewichte ändern (Training)
 versus wachsende Wortfolge bei festem Modell (Inferenz) als zentrale
 Unterscheidung aufgreifen.
+-->
+
+---
+
+<PhaseBadge phase="overview" label="Backup · Q&A Mathe-Detail" />
+
+# Backup: Gradientenabstieg konkret
+
+<div class="grid grid-cols-[1.08fr_0.92fr] gap-5 items-start mt-2 text-xs">
+<div class="space-y-2.5">
+
+<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+  <div class="font-bold text-slate-800">Mini-Funktion (1 Gewicht <code>w</code>, Optimum bei 3)</div>
+  <div>Fehler: <code>Loss(w) = (w − 3)²</code> · Ableitung: <code>Loss'(w) = 2 · (w − 3)</code></div>
+  <div class="text-slate-600">Zufallsstart <strong>w = 1.0</strong> · Lernrate <strong>η = 0.2</strong></div>
+</div>
+
+<div class="p-3 rounded-lg bg-red-50 border border-red-200 space-y-1.5 font-mono">
+  <div class="font-sans font-bold text-red-900">Schritt 1 (w = 1.0 → Loss = 4.00)</div>
+  <div>Gradient = 2 · (1.0 − 3) = <strong>−4.0</strong></div>
+  <div>w_neu = 1.0 − 0.2 · (−4.0) = <strong>1.80</strong> → Loss = <strong>1.44</strong></div>
+</div>
+
+<div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1.5 font-mono">
+  <div class="font-sans font-bold text-emerald-900">Schritt 2 (w = 1.80 → Loss = 1.44)</div>
+  <div>Gradient = 2 · (1.80 − 3) = <strong>−2.4</strong></div>
+  <div>w_neu = 1.80 − 0.2 · (−2.4) = <strong>2.28</strong> → Loss = <strong>0.52</strong></div>
+</div>
+
+<div class="text-slate-600">
+  <strong>Gegenprobe (zu große Lernrate η = 1.2):</strong> <code>w = 1.0 → 5.80</code> → Loss steigt von <code>4.00</code> auf <strong>7.84</strong> (übers Tal gesprungen).
+</div>
+
+</div>
+<div class="space-y-2.5">
+
+<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 space-y-1.5">
+  <div class="font-bold text-indigo-900">Übertragung auf das Sprachmodell</div>
+  <div>Statt 1 Gewicht <code>w</code> hat ein LLM tausende bis Milliarden Gewichte gleichzeitig.</div>
+  <div>Statt <code>(w − 3)²</code> nutzt es <strong>Cross-Entropy-Loss</strong> auf der Wahrscheinlichkeit <code>p</code> des Zieltokens: <code>Loss = −ln(p)</code></div>
+</div>
+
+<div class="p-3 rounded-lg bg-white border border-slate-200 space-y-1">
+  <div class="font-bold text-slate-800">Beispiele für <code>Loss = −ln(p)</code></div>
+  <div>• <code>p = 90 %</code> → Loss <strong>0.11</strong> (sehr sicher & richtig)</div>
+  <div>• <code>p = 52 %</code> („rennt“-Beispiel) → Loss <strong>0.66</strong></div>
+  <div>• <code>p = 5 %</code> → Loss <strong>3.00</strong> (starke Korrektur nötig)</div>
+</div>
+
+<div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+  <strong class="text-amber-900">Backpropagation (Kettenregel):</strong> Ein LLM verkettet viele Einzelfunktionen (<code>Linear</code>, <code>GELU</code>, <code>Softmax</code>, <code>LayerNorm</code>, <code>Loss</code>). Weil jede für sich differenzierbar ist, verknüpft <strong>Burn / Autodiff</strong> ihre Ableitungen rückwärts automatisch für jedes Gewicht.
+</div>
+
+<div class="text-slate-600 pt-0.5">
+  <strong>Vertiefung im Buch (Exkurs Ableitungen):</strong><br />
+  <a href="https://zuegi.github.io/rusty-mind-llm/exkurse/ableitungen.html" target="_blank" class="text-indigo-700 underline">https://zuegi.github.io/rusty-mind-llm/exkurse/ableitungen.html</a>
+</div>
+
+</div>
+</div>
+
+<!--
+Backup-Folie für Q&A (nicht Teil der 18-Minuten-Kernzeit).
+Nur öffnen, falls im Publikum nach der konkreten mathematischen Funktion oder
+einem Zahlenbeispiel zum Gradientenabstieg gefragt wird.
 -->

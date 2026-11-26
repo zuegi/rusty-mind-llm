@@ -1,4 +1,16 @@
+<script lang="ts">
+let archUid = 0
+</script>
+
 <script setup lang="ts">
+const uid = `arch-${++archUid}`
+const arrowDarkId = `${uid}-arrow-dark`
+const arrowGreenId = `${uid}-arrow-green`
+const arrowRedId = `${uid}-arrow-red`
+const arrowDarkUrl = `url(#${arrowDarkId})`
+const arrowGreenUrl = `url(#${arrowGreenId})`
+const arrowRedUrl = `url(#${arrowRedId})`
+
 const props = withDefaults(
   defineProps<{
     step: number
@@ -18,19 +30,24 @@ const opacityFor = (steps: number[]) => (isActive(steps) ? 1 : 0.62)
 
 const strokeWidthFor = (steps: number[]) =>
   !isOverview() && steps.includes(props.step) ? 2.4 : 1.3
+
+const activeClassFor = (steps: number[]) =>
+  isActive(steps) && !isOverview() ? 'active-glow' : undefined
 </script>
 
 <template>
   <div class="llm-arch-wrapper">
     <svg
       viewBox="0 0 434 510"
+      width="434"
+      height="510"
       class="llm-arch-svg"
       role="img"
       :aria-label="`LLM-Architektur Schritt ${step}`"
     >
       <defs>
         <marker
-          id="arrow-dark"
+          :id="arrowDarkId"
           viewBox="0 0 10 10"
           refX="8"
           refY="5"
@@ -41,7 +58,7 @@ const strokeWidthFor = (steps: number[]) =>
           <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569" />
         </marker>
         <marker
-          id="arrow-green"
+          :id="arrowGreenId"
           viewBox="0 0 10 10"
           refX="8"
           refY="5"
@@ -52,7 +69,7 @@ const strokeWidthFor = (steps: number[]) =>
           <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
         </marker>
         <marker
-          id="arrow-red"
+          :id="arrowRedId"
           viewBox="0 0 10 10"
           refX="8"
           refY="5"
@@ -62,9 +79,6 @@ const strokeWidthFor = (steps: number[]) =>
         >
           <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626" />
         </marker>
-        <filter id="active-glow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0f172a" flood-opacity="0.16" />
-        </filter>
       </defs>
 
       <!-- STEP 1: BLACKBOX -->
@@ -73,7 +87,7 @@ const strokeWidthFor = (steps: number[]) =>
         <text x="217" y="446" text-anchor="middle" class="t-title" fill="#0f172a">Eingabetext</text>
         <text x="217" y="463" text-anchor="middle" class="t-sub" fill="#475569">„Der Hund …“</text>
 
-        <line x1="217" y1="425" x2="217" y2="342" stroke="#475569" stroke-width="2" marker-end="url(#arrow-dark)" />
+        <line x1="217" y1="425" x2="217" y2="342" stroke="#475569" stroke-width="2" :marker-end="arrowDarkUrl" />
 
         <rect
           x="75"
@@ -85,12 +99,12 @@ const strokeWidthFor = (steps: number[]) =>
           stroke="#334155"
           stroke-width="2.2"
           stroke-dasharray="7 5"
-          filter="url(#active-glow)"
+          class="active-glow"
         />
         <text x="217" y="238" text-anchor="middle" class="t-big" fill="#0f172a">Sprachmodell</text>
         <text x="217" y="264" text-anchor="middle" class="t-sub" fill="#64748b">(Blackbox — wird Schritt für Schritt geöffnet)</text>
 
-        <line x1="217" y1="165" x2="217" y2="94" stroke="#475569" stroke-width="2" marker-end="url(#arrow-dark)" />
+        <line x1="217" y1="165" x2="217" y2="94" stroke="#475569" stroke-width="2" :marker-end="arrowDarkUrl" />
 
         <rect x="75" y="38" width="284" height="48" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="1.8" />
         <text x="217" y="59" text-anchor="middle" class="t-title" fill="#065f46">Fortsetzung</text>
@@ -116,7 +130,7 @@ const strokeWidthFor = (steps: number[]) =>
         <!-- STEP 2: Tokenizer (outside) -->
         <g
           :opacity="opacityFor([2])"
-          :filter="isActive([2]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :class="activeClassFor([2])"
         >
           <rect
             x="24"
@@ -130,13 +144,13 @@ const strokeWidthFor = (steps: number[]) =>
           />
           <text x="138" y="473" text-anchor="middle" class="t-title" fill="#0f172a">Tokenizer (außerhalb)</text>
           <text x="138" y="489" text-anchor="middle" class="t-sub" fill="#475569">Text → Token-IDs</text>
-          <line x1="138" y1="456" x2="138" y2="429" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow-dark)" />
+          <line x1="138" y1="456" x2="138" y2="429" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
         </g>
 
         <!-- STEP 2: Token Embedding + Positional Embedding -->
         <g
           :opacity="opacityFor([2])"
-          :filter="isActive([2]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :class="activeClassFor([2])"
         >
           <rect
             x="44"
@@ -150,7 +164,7 @@ const strokeWidthFor = (steps: number[]) =>
           />
           <text x="138" y="413" text-anchor="middle" class="t-title" fill="#831843">Token Embedding</text>
 
-          <line x1="138" y1="393" x2="138" y2="375" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow-dark)" />
+          <line x1="138" y1="393" x2="138" y2="375" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
 
           <!-- Positional Addition Circle -->
           <circle cx="138" cy="363" r="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5" />
@@ -169,16 +183,16 @@ const strokeWidthFor = (steps: number[]) =>
           />
           <text x="203" y="361" text-anchor="middle" class="t-tiny" fill="#1f2937">Positional</text>
           <text x="203" y="372" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
-          <line x1="162" y1="363" x2="151" y2="363" stroke="#475569" stroke-width="1.4" marker-end="url(#arrow-dark)" />
+          <line x1="162" y1="363" x2="151" y2="363" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
         </g>
 
         <!-- STEP 3: N× Transformer-Block (Pre-LayerNorm) -->
         <g
           v-if="show(3)"
           :opacity="opacityFor([3])"
-          :filter="isActive([3]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :class="activeClassFor([3])"
         >
-          <line x1="138" y1="353" x2="138" y2="336" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow-dark)" />
+          <line x1="138" y1="353" x2="138" y2="336" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
 
           <!-- N× Frame -->
           <rect
@@ -196,13 +210,13 @@ const strokeWidthFor = (steps: number[]) =>
           <!-- LayerNorm 1 (Pre-LN) -->
           <rect x="56" y="308" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.3" />
           <text x="132" y="323" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
-          <line x1="132" y1="308" x2="132" y2="299" stroke="#475569" stroke-width="1.4" marker-end="url(#arrow-dark)" />
+          <line x1="132" y1="308" x2="132" y2="299" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
           <!-- Masked Multi-Head Attention -->
           <rect x="56" y="266" width="152" height="30" rx="6" fill="#ffedd5" stroke="#ea580c" stroke-width="1.4" />
           <text x="132" y="279" text-anchor="middle" class="t-small" fill="#7c2d12">Masked Multi-Head</text>
           <text x="132" y="291" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (+ Dropout)</text>
-          <line x1="132" y1="266" x2="132" y2="258" stroke="#475569" stroke-width="1.4" marker-end="url(#arrow-dark)" />
+          <line x1="132" y1="266" x2="132" y2="258" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
           <!-- Residual Add 1 -->
           <circle cx="132" cy="248" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
@@ -213,20 +227,20 @@ const strokeWidthFor = (steps: number[]) =>
             fill="none"
             stroke="#64748b"
             stroke-width="1.3"
-            marker-end="url(#arrow-dark)"
+            :marker-end="arrowDarkUrl"
           />
 
-          <line x1="132" y1="240" x2="132" y2="232" stroke="#475569" stroke-width="1.4" marker-end="url(#arrow-dark)" />
+          <line x1="132" y1="240" x2="132" y2="232" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
           <!-- LayerNorm 2 (Pre-LN) -->
           <rect x="56" y="207" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.3" />
           <text x="132" y="222" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
-          <line x1="132" y1="207" x2="132" y2="198" stroke="#475569" stroke-width="1.4" marker-end="url(#arrow-dark)" />
+          <line x1="132" y1="207" x2="132" y2="198" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
           <!-- Feed-Forward -->
           <rect x="56" y="170" width="152" height="25" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.4" />
           <text x="132" y="186" text-anchor="middle" class="t-small" fill="#0c4a6e">Feed-Forward (+ Dropout)</text>
-          <line x1="132" y1="170" x2="132" y2="162" stroke="#475569" stroke-width="1.4" marker-end="url(#arrow-dark)" />
+          <line x1="132" y1="170" x2="132" y2="162" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
           <!-- Residual Add 2 -->
           <circle cx="132" cy="153" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
@@ -237,7 +251,7 @@ const strokeWidthFor = (steps: number[]) =>
             fill="none"
             stroke="#64748b"
             stroke-width="1.3"
-            marker-end="url(#arrow-dark)"
+            :marker-end="arrowDarkUrl"
           />
         </g>
 
@@ -245,9 +259,9 @@ const strokeWidthFor = (steps: number[]) =>
         <g
           v-if="show(4)"
           :opacity="opacityFor([4])"
-          :filter="isActive([4]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :class="activeClassFor([4])"
         >
-          <line x1="132" y1="145" x2="132" y2="131" stroke="#475569" stroke-width="1.6" marker-end="url(#arrow-dark)" />
+          <line x1="132" y1="145" x2="132" y2="131" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
           <rect
             x="44"
             y="98"
@@ -262,13 +276,13 @@ const strokeWidthFor = (steps: number[]) =>
           <text x="138" y="123" text-anchor="middle" class="t-tiny" fill="#4338ca">→ Logits [V]</text>
         </g>
 
-        <!-- STEP 4 & 7: Inferenz (outside, top) + Autoregressive Loop -->
+        <!-- STEP 4 & 8: Inferenz (outside, top) + Autoregressive Loop -->
         <g
           v-if="show(4)"
-          :opacity="opacityFor([4, 7])"
-          :filter="isActive([4, 7]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :opacity="opacityFor([4, 8])"
+          :class="activeClassFor([4, 8])"
         >
-          <line x1="138" y1="98" x2="138" y2="67" stroke="#059669" stroke-width="1.7" marker-end="url(#arrow-green)" />
+          <line x1="138" y1="98" x2="138" y2="67" stroke="#059669" stroke-width="1.7" :marker-end="arrowGreenUrl" />
           <rect
             x="24"
             y="14"
@@ -277,7 +291,7 @@ const strokeWidthFor = (steps: number[]) =>
             rx="8"
             fill="#d1fae5"
             stroke="#059669"
-            :stroke-width="strokeWidthFor([4, 7])"
+            :stroke-width="strokeWidthFor([4, 8])"
           />
           <text x="138" y="33" text-anchor="middle" class="t-title" fill="#065f46">Inferenz (außerhalb)</text>
           <text x="138" y="48" text-anchor="middle" class="t-sub" fill="#047857">Softmax · Greedy / Sampling</text>
@@ -290,7 +304,7 @@ const strokeWidthFor = (steps: number[]) =>
             stroke="#059669"
             stroke-width="1.6"
             stroke-dasharray="4 3"
-            marker-end="url(#arrow-green)"
+            :marker-end="arrowGreenUrl"
           />
         </g>
 
@@ -298,9 +312,9 @@ const strokeWidthFor = (steps: number[]) =>
         <g
           v-if="show(5)"
           :opacity="opacityFor([5])"
-          :filter="isActive([5]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :class="activeClassFor([5])"
         >
-          <line x1="232" y1="113" x2="270" y2="113" stroke="#dc2626" stroke-width="1.6" marker-end="url(#arrow-red)" />
+          <line x1="232" y1="113" x2="270" y2="113" stroke="#dc2626" stroke-width="1.6" :marker-end="arrowRedUrl" />
           <rect
             x="274"
             y="84"
@@ -316,17 +330,17 @@ const strokeWidthFor = (steps: number[]) =>
           <text x="349" y="135" text-anchor="middle" class="t-sub" fill="#7f1d1d">↓ Cross-Entropy Loss</text>
           <text x="349" y="151" text-anchor="middle" class="t-sub" fill="#7f1d1d">↓ Gradienten</text>
           <text x="349" y="167" text-anchor="middle" class="t-sub" fill="#7f1d1d">↓ Optimizer</text>
-          <text x="349" y="183" text-anchor="middle" class="t-tiny-bold" fill="#991b1b">Gewichte ändern</text>
+          <text x="349" y="183" text-anchor="middle" class="t-tiny-bold" fill="#991b1b">← alle Modell-Gewichte ändern</text>
 
           <!-- Weight update arrow back into GptModel -->
-          <line x1="274" y1="176" x2="256" y2="176" stroke="#dc2626" stroke-width="1.7" marker-end="url(#arrow-red)" />
+          <line x1="274" y1="176" x2="256" y2="176" stroke="#dc2626" stroke-width="1.7" :marker-end="arrowRedUrl" />
         </g>
 
         <!-- STEP 6: Validierung (outside, right middle) -->
         <g
           v-if="show(6)"
           :opacity="opacityFor([6])"
-          :filter="isActive([6]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          :class="activeClassFor([6])"
         >
           <line
             x1="252"
@@ -336,7 +350,7 @@ const strokeWidthFor = (steps: number[]) =>
             stroke="#0891b2"
             stroke-width="1.5"
             stroke-dasharray="4 3"
-            marker-end="url(#arrow-dark)"
+            :marker-end="arrowDarkUrl"
           />
           <rect
             x="274"
@@ -354,11 +368,11 @@ const strokeWidthFor = (steps: number[]) =>
           <text x="349" y="284" text-anchor="middle" class="t-tiny-bold" fill="#155e75">Feste Gewichte · kein Update</text>
         </g>
 
-        <!-- STEP 8: Checkpoints (outside, right bottom) -->
+        <!-- STEP 7: Checkpoints (outside, right bottom) -->
         <g
-          v-if="show(8)"
-          :opacity="opacityFor([8])"
-          :filter="isActive([8]) && !isOverview() ? 'url(#active-glow)' : undefined"
+          v-if="show(7)"
+          :opacity="opacityFor([7])"
+          :class="activeClassFor([7])"
         >
           <line
             x1="252"
@@ -367,8 +381,8 @@ const strokeWidthFor = (steps: number[]) =>
             y2="376"
             stroke="#7c3aed"
             stroke-width="1.5"
-            marker-end="url(#arrow-dark)"
-            marker-start="url(#arrow-dark)"
+            :marker-end="arrowDarkUrl"
+            :marker-start="arrowDarkUrl"
           />
           <rect
             x="274"
@@ -378,7 +392,7 @@ const strokeWidthFor = (steps: number[]) =>
             rx="8"
             fill="#f3e8ff"
             stroke="#7c3aed"
-            :stroke-width="strokeWidthFor([8])"
+            :stroke-width="strokeWidthFor([7])"
           />
           <text x="349" y="339" text-anchor="middle" class="t-title" fill="#5b21b6">Checkpoints</text>
           <text x="349" y="359" text-anchor="middle" class="t-sub-bold" fill="#4c1d95">last/</text>
@@ -402,9 +416,14 @@ const strokeWidthFor = (steps: number[]) =>
 
 .llm-arch-svg {
   width: 100%;
-  max-height: 415px;
+  max-width: 353px;
   height: auto;
+  display: block;
   font-family: Arial, sans-serif;
+}
+
+.active-glow {
+  filter: drop-shadow(0 2px 2.5px rgba(15, 23, 42, 0.16));
 }
 
 .t-big {
