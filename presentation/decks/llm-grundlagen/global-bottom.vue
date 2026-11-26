@@ -1,4 +1,5 @@
 <template>
+  <div class="rust-stripe" aria-hidden="true" />
   <img
     src="/avatar.png"
     alt="René Weishaupt"
@@ -7,6 +8,17 @@
 </template>
 
 <style scoped>
+.rust-stripe {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(180deg, #b7410e 0%, #9a3412 55%, #7c2d12 100%);
+  z-index: 20;
+  pointer-events: none;
+}
+
 .slide-avatar {
   position: fixed;
   right: 1rem;
