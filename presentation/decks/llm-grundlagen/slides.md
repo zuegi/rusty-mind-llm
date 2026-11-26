@@ -87,7 +87,7 @@ Lernziel: nächste Wort-/Tokenvorhersage, Lernen und Grenzen der Auswertung vers
 <PhaseBadge phase="inference" />
 <SourceFooter chapter="Kap. 2" code="crates/training/src/tokenizer.rs" />
 
-# Schritt 1: Text in Stücke und Nummern
+# Schritt 1: Text in Token und Nummern
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
 <div>
@@ -105,7 +105,7 @@ Computer können nur rechnen — nicht lesen.
 </div>
 
 - Der **Tokenizer** (außerhalb des Modells) zerlegt Text in **Tokens**: Wörter, Wortteile oder Satzzeichen.
-- Jedes Stück bekommt eine **Nummer (ID)** — wie eine Artikelnummer, noch ohne Bedeutung.
+- Jedes Token bekommt eine **Nummer (ID)** — wie eine Artikelnummer, noch ohne Bedeutung.
 
 </div>
 <div>
@@ -703,7 +703,7 @@ Bisher umgesetzt: **Kapitel 1–18** (Basismodell bis vollständiger Trainingsab
 
 </div>
 <div>
-  <LlmArchitecture :step="13" />
+  <RoadmapArchitecture />
 </div>
 </div>
 
