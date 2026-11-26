@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1120" />
+      <stop offset="55%" stop-color="#131c31" />
+      <stop offset="100%" stop-color="#1c1917" />
+    </linearGradient>
+    <radialGradient id="rust-glow" cx="82%" cy="32%" r="48%">
+      <stop offset="0%" stop-color="#ea580c" stop-opacity="0.34" />
+      <stop offset="55%" stop-color="#c2410c" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#0b1120" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="emerald-glow" cx="72%" cy="85%" r="42%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.22" />
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#0b1120" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" stroke-opacity="0.06" stroke-width="1" />
+    </pattern>
+  </defs>
+
+  <!-- Base background & subtle grid -->
+  <rect width="1280" height="720" fill="url(#bg-grad)" />
+  <rect width="1280" height="720" fill="url(#grid)" />
+  <rect width="1280" height="720" fill="url(#rust-glow)" />
+  <rect width="1280" height="720" fill="url(#emerald-glow)" />
+
+  <!-- Subtle left accent bar -->
+  <rect x="0" y="0" width="8" height="720" fill="#ea580c" />
+
+  <!-- Stylized Transformer / Neural network constellation on the right -->
+  <g stroke-linecap="round" opacity="0.72">
+    <!-- Attention / layer edges -->
+    <g stroke="#f97316" stroke-opacity="0.24" stroke-width="1.4">
+      <line x1="780" y1="540" x2="860" y2="410" />
+      <line x1="780" y1="540" x2="960" y2="410" />
+      <line x1="780" y1="540" x2="1060" y2="410" />
+      <line x1="900" y1="540" x2="860" y2="410" />
+      <line x1="900" y1="540" x2="960" y2="410" />
+      <line x1="900" y1="540" x2="1060" y2="410" />
+      <line x1="900" y1="540" x2="1160" y2="410" />
+      <line x1="1020" y1="540" x2="960" y2="410" />
+      <line x1="1020" y1="540" x2="1060" y2="410" />
+      <line x1="1020" y1="540" x2="1160" y2="410" />
+      <line x1="1140" y1="540" x2="1060" y2="410" />
+      <line x1="1140" y1="540" x2="1160" y2="410" />
+    </g>
+
+    <g stroke="#38bdf8" stroke-opacity="0.22" stroke-width="1.4">
+      <line x1="860" y1="410" x2="830" y2="275" />
+      <line x1="860" y1="410" x2="950" y2="275" />
+      <line x1="960" y1="410" x2="830" y2="275" />
+      <line x1="960" y1="410" x2="950" y2="275" />
+      <line x1="960" y1="410" x2="1070" y2="275" />
+      <line x1="1060" y1="410" x2="950" y2="275" />
+      <line x1="1060" y1="410" x2="1070" y2="275" />
+      <line x1="1060" y1="410" x2="1180" y2="275" />
+      <line x1="1160" y1="410" x2="1070" y2="275" />
+      <line x1="1160" y1="410" x2="1180" y2="275" />
+    </g>
+
+    <g stroke="#34d399" stroke-opacity="0.28" stroke-width="1.6">
+      <line x1="830" y1="275" x2="990" y2="145" />
+      <line x1="950" y1="275" x2="990" y2="145" />
+      <line x1="1070" y1="275" x2="990" y2="145" />
+      <line x1="1180" y1="275" x2="990" y2="145" />
+    </g>
+
+    <!-- Highlighted active path -->
+    <g stroke="#fb923c" stroke-opacity="0.7" stroke-width="2.2">
+      <line x1="900" y1="540" x2="960" y2="410" />
+      <line x1="960" y1="410" x2="1070" y2="275" />
+      <line x1="1070" y1="275" x2="990" y2="145" />
+    </g>
+
+    <!-- Layer 1: Input token nodes -->
+    <g fill="#1e293b" stroke="#94a3b8" stroke-width="1.8">
+      <circle cx="780" cy="540" r="8" />
+      <circle cx="900" cy="540" r="9" fill="#ea580c" stroke="#fed7aa" />
+      <circle cx="1020" cy="540" r="8" />
+      <circle cx="1140" cy="540" r="8" />
+    </g>
+
+    <!-- Layer 2: Attention nodes -->
+    <g fill="#1e293b" stroke="#f97316" stroke-width="1.8">
+      <circle cx="860" cy="410" r="8" />
+      <circle cx="960" cy="410" r="10" fill="#f97316" stroke="#ffedd5" />
+      <circle cx="1060" cy="410" r="8" />
+      <circle cx="1160" cy="410" r="8" />
+    </g>
+
+    <!-- Layer 3: Feed-Forward nodes -->
+    <g fill="#1e293b" stroke="#38bdf8" stroke-width="1.8">
+      <circle cx="830" cy="275" r="8" />
+      <circle cx="950" cy="275" r="8" />
+      <circle cx="1070" cy="275" r="10" fill="#38bdf8" stroke="#e0f2fe" />
+      <circle cx="1180" cy="275" r="8" />
+    </g>
+
+    <!-- Output next-token node -->
+    <circle cx="990" cy="145" r="22" fill="#10b981" fill-opacity="0.16" />
+    <circle cx="990" cy="145" r="11" fill="#10b981" stroke="#d1fae5" stroke-width="2" />
+
+    <!-- Subtle floating token chips (purely decorative) -->
+    <g font-family="monospace" font-size="13" fill="#cbd5e1" fill-opacity="0.55">
+      <rect x="742" y="564" width="76" height="24" rx="5" fill="#0f172a" fill-opacity="0.65" stroke="#475569" stroke-opacity="0.5" />
+      <text x="780" y="580" text-anchor="middle">Der</text>
+
+      <rect x="862" y="564" width="76" height="24" rx="5" fill="#0f172a" fill-opacity="0.65" stroke="#f97316" stroke-opacity="0.65" />
+      <text x="900" y="580" text-anchor="middle" fill="#fed7aa">Hund</text>
+
+      <rect x="982" y="564" width="76" height="24" rx="5" fill="#0f172a" fill-opacity="0.65" stroke="#475569" stroke-opacity="0.5" />
+      <text x="1020" y="580" text-anchor="middle">...</text>
+
+      <rect x="944" y="92" width="92" height="26" rx="6" fill="#064e3b" fill-opacity="0.7" stroke="#34d399" stroke-opacity="0.7" />
+      <text x="990" y="109" text-anchor="middle" fill="#a7f3d0">→ rennt</text>
+    </g>
+  </g>
+</svg>

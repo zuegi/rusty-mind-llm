@@ -1,7 +1,9 @@
 ---
 theme: default
-layout: default
-title: Vom Text zum kleinen Sprachmodell
+layout: cover
+background: /cover-bg.svg
+class: text-left
+title: rusty-mind-llm — Vom Text zum kleinen Sprachmodell
 info: |
   Ein Lernprojekt in Rust mit Burn, basierend auf Kapitel 1 bis 18.
   18 Minuten Vortrag und 2 Minuten Fragen.
@@ -12,6 +14,35 @@ fonts:
   sans: Arial
   mono: monospace
   provider: none
+---
+
+<div class="max-w-xl">
+  <div class="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-orange-500/20 text-orange-300 border border-orange-400/40 mb-4">
+    Lernprojekt in Rust · Burn · Kapitel 1–18
+  </div>
+
+  <h1 class="!text-5xl !font-bold !text-white !leading-tight !mb-3">
+    rusty-mind-llm
+  </h1>
+
+  <p class="!text-xl !text-slate-200 !font-normal !leading-snug !mt-0 !mb-8">
+    Vom Text zum kleinen Sprachmodell —<br />
+    wie ein LLM lernt, bewertet wird und wo seine Grenzen liegen
+  </p>
+
+  <div class="text-sm text-slate-300 space-y-1">
+    <div class="font-semibold text-white">René Weishaupt</div>
+    <div class="text-xs text-slate-400">18 Minuten Vortrag · 2 Minuten Fragen · <span class="font-mono text-orange-300">github.com/zuegi/rusty-mind-llm</span></div>
+  </div>
+</div>
+
+<!--
+Startfolie (vor dem eigentlichen Zeitblock / beim Ankommen des Publikums).
+Titel: rusty-mind-llm — Ein eigenes kleines Sprachmodell von Grund auf in Rust mit Burn.
+-->
+
+---
+layout: default
 ---
 
 # Vom Text zum kleinen Sprachmodell
