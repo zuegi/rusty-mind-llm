@@ -54,6 +54,7 @@ Lernziel: nächste Wort-/Tokenvorhersage, Lernen und Grenzen der Auswertung vers
 ---
 
 <PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 2" code="crates/training/src/tokenizer.rs" />
 
 # Schritt 1: Text in Stücke und Nummern
 
@@ -92,6 +93,7 @@ Wichtig: Tokenizer und Sprachmodell sind getrennte Bausteine.
 ---
 
 <PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 3" code="crates/model/src/embedding.rs" />
 
 # Schritt 2: Nummern werden zu Zahlenlisten
 
@@ -128,6 +130,7 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 ---
 
 <PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 4–5" code="crates/model/src/attention.rs" />
 
 # Masked Attention: Wer gehört zu wem?
 
@@ -182,6 +185,7 @@ Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
 ---
 
 <PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 6" code="crates/model/src/transformer_block.rs" />
 
 # Verarbeiten, stabil halten, wiederholen
 
@@ -230,6 +234,7 @@ Hinweis bei Rückfragen:
 ---
 
 <PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
 
 # Ein nächstes Wort entsteht
 
@@ -307,6 +312,7 @@ dafür wäre Softmax rechnerisch gar nicht nötig.
 ---
 
 <PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 11 & 16" code="crates/training/src/generation.rs" />
 
 # Wort anhängen — und wieder von vorn
 
@@ -360,6 +366,7 @@ Hinweis bei Rückfragen: Praktische Systeme speichern Zwischenergebnisse
 ---
 
 <PhaseBadge phase="training" />
+<SourceFooter chapter="Kap. 8 & 12" code="crates/training/src/step.rs" />
 
 # Wie das Modell lernt
 
@@ -394,6 +401,7 @@ wären sprachlich oft genauso sinnvoll.
 ---
 
 <PhaseBadge phase="training" />
+<SourceFooter chapter="Kap. 8 & Exkurs Ableitungen" code="crates/training/src/loss.rs" />
 
 # Wie werden Gewichte angepasst?
 
@@ -440,14 +448,15 @@ auf welcher Funktion?“:
 ---
 
 <PhaseBadge phase="validation" />
+<SourceFooter chapter="Kap. 9 & 13" code="crates/training/src/runner.rs" />
 
 # Lernen oder Auswendiglernen?
 
 <div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
 <div>
 
-<div class="p-2 rounded bg-cyan-50 border border-cyan-200 text-xs leading-snug mb-2">
-  <strong>Wie bei einer Schulprüfung:</strong> Wer nur die Übungsaufgaben auswendig lernt, scheitert an neuen Aufgaben. Deshalb legen wir einen Teil der Texte <strong>beiseite</strong> — das Modell sieht sie beim Lernen nie.
+<div class="p-2 rounded bg-cyan-50 border border-cyan-200 text-xs leading-snug mb-1.5">
+  <strong>Wie bei einer Schulprüfung:</strong> Wer nur Übungsaufgaben paukt, scheitert an neuen Aufgaben. Deshalb legen wir Prüfungstexte <strong>beiseite</strong>. <span class="text-cyan-900"><strong>1 Epoche</strong> = 1× alle Übungstexte komplett durchgelernt.</span>
 </div>
 
 <LossCurveChart />
@@ -481,6 +490,7 @@ Testdaten.
 ---
 
 <PhaseBadge phase="overview" label="Checkpoints · Speichern" />
+<SourceFooter chapter="Kap. 17–18" code="crates/training/src/checkpoint.rs" />
 
 # Zwei Speicherstände — zwei Zwecke
 
@@ -521,6 +531,7 @@ Technische Details bei Rückfragen:
 ---
 
 <PhaseBadge phase="inference" label="Praxis · Echte Inferenz" />
+<SourceFooter chapter="Kap. 12 & 16" code="crates/training/src/sampling.rs" />
 
 # Was unser kleines Modell wirklich schreibt
 
@@ -531,17 +542,17 @@ Technische Details bei Rückfragen:
   Echter Test: geladenen <code>best/</code>-Stand anwenden
 </div>
 
-<div class="text-sm mb-1.5">Vorgegebener Starttext: <code>I HAD always</code></div>
+<div class="text-xs mb-1">Vorgegebener Starttext: <code>I HAD always</code></div>
 
-<div class="p-2.5 rounded bg-slate-100 border border-slate-200 font-mono text-xs mb-2.5">
-  <div class="font-sans text-slate-500 text-[11px] mb-1">Vom Modell erzeugte Fortsetzung:</div>
+<div class="p-2 rounded bg-slate-100 border border-slate-200 font-mono text-xs mb-2">
+  <div class="font-sans text-slate-500 text-[11px] mb-0.5">Vom Modell erzeugte Fortsetzung:</div>
   <div class="leading-snug">.<br /><br />""I to-- to I to I to I to I</div>
 </div>
 
-<div class="space-y-1.5 text-sm">
-  <div>• <strong>Was man sieht:</strong> echte englische Wörter & Satzzeichen statt Zufallssalat — aber schnelle Schleifen (<code>to I to I</code>).</div>
-  <div>• <strong>Warum?</strong> Das Lernmodell ist winzig und hat wenig Text gesehen — gute Sprache braucht <strong>Größe & Datenmenge</strong>.</div>
-  <div>• <strong>Temperatur:</strong> steuert nur die Abwechslung bei der Wortauswahl, <strong>nicht</strong> das gelernte Wissen.</div>
+<div class="space-y-1 text-xs leading-snug">
+  <div>• <strong>Was man sieht:</strong> echte englische Wörter statt Zufallssalat — aber schnelle Schleifen (<code>to I to I</code>).</div>
+  <div>• <strong>Temperatur:</strong> steuert nur Abwechslung bei der Wortauswahl, <strong>nicht</strong> das Wissen.</div>
+  <div>• <strong>Warum nicht produktiv deployen?</strong> Technisch startbar — aber winziges Modell, wenig Text, <strong>Laptop-Rechenleistung statt GPU-Cluster</strong> und <strong>kein Chat-/Anweisungs-Training</strong> (es setzt nur Text fort, beantwortet keine Fragen).</div>
 </div>
 
 </div>
@@ -566,6 +577,7 @@ bessere Texte noch korrekte Fakten.
 ---
 
 <PhaseBadge phase="overview" />
+<SourceFooter chapter="Kap. 10–18" code="crates/model + crates/training" />
 
 # Vier Begriffe klar getrennt
 
@@ -609,6 +621,7 @@ zeigen.
 ---
 
 <PhaseBadge phase="summary" />
+<SourceFooter chapter="Kap. 1–18" />
 
 # Was bleibt — und was nicht
 
@@ -641,6 +654,7 @@ Für eine unabhängige Schlussbewertung wäre ein unberührter Testdatensatz nö
 ---
 
 <PhaseBadge phase="summary" />
+<SourceFooter chapter="Ausblick Kap. 19–28" />
 
 # Wie es im Buch weitergeht
 
@@ -681,12 +695,18 @@ layout: center
 
 Was verändert sich beim **Training** — und was bei der **Anwendung (Inferenz)**?
 
-<div class="mt-6 text-sm text-slate-600 space-y-1">
-  <div>Projekt & Code: <code>https://github.com/zuegi/rusty-mind-llm</code></div>
-  <div>Begleitendes Buch: <code>https://zuegi.github.io/rusty-mind-llm/</code></div>
+<div class="mt-6 flex items-center justify-center gap-6">
+  <div class="p-2 bg-white rounded-lg border border-slate-200 shadow-sm text-center">
+    <img src="/book-qr.svg" alt="QR-Code zum begleitenden Buch" class="w-28 h-28 block mx-auto" />
+    <div class="text-[10px] text-slate-500 mt-1">Buch öffnen</div>
+  </div>
+  <div class="text-left text-sm text-slate-600 space-y-1.5">
+    <div><strong>Projekt & Code:</strong><br /><code>https://github.com/zuegi/rusty-mind-llm</code></div>
+    <div><strong>Begleitendes Buch:</strong><br /><code>https://zuegi.github.io/rusty-mind-llm/</code></div>
+  </div>
 </div>
 
-<div class="mt-4 text-xs text-slate-500">18 Minuten Vortrag · 2 Minuten Fragen</div>
+<div class="mt-5 text-xs text-slate-500">18 Minuten Vortrag · 2 Minuten Fragen</div>
 
 <!--
 18:00–20:00.
@@ -699,6 +719,7 @@ Unterscheidung aufgreifen.
 ---
 
 <PhaseBadge phase="overview" label="Backup · Q&A Mathe-Detail" />
+<SourceFooter chapter="Exkurs Ableitungen" code="crates/model + crates/training" />
 
 # Backup: Gradientenabstieg konkret
 
