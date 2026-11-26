@@ -145,7 +145,7 @@ Aus jeder ID schlägt das Modell eine **Zahlenliste** nach:
 
 </div>
 <div>
-  <LlmArchitecture :step="2" />
+  <LlmArchitecture :step="3" />
 </div>
 </div>
 
@@ -194,7 +194,7 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 
 </div>
 <div>
-  <LlmArchitecture :step="3" />
+  <LlmArchitecture :step="4" />
 </div>
 </div>
 
@@ -241,7 +241,7 @@ Nach dem Austausch zwischen den Wörtern folgen im Block noch drei Bausteine:
 
 </div>
 <div>
-  <LlmArchitecture :step="3" />
+  <LlmArchitecture :step="5" />
 </div>
 </div>
 
@@ -324,7 +324,7 @@ Hinweis bei Rückfragen:
 
 </div>
 <div>
-  <LlmArchitecture :step="4" />
+  <LlmArchitecture :step="6" />
 </div>
 </div>
 
@@ -382,7 +382,7 @@ dafür wäre Softmax rechnerisch gar nicht nötig.
 
 </div>
 <div>
-  <LlmArchitecture :step="4" />
+  <LlmArchitecture :step="7" />
 </div>
 </div>
 
@@ -416,7 +416,7 @@ Hinweis bei Rückfragen: Praktische Systeme speichern Zwischenergebnisse
 
 </div>
 <div>
-  <LlmArchitecture :step="5" />
+  <LlmArchitecture :step="8" />
 </div>
 </div>
 
@@ -454,7 +454,7 @@ wären sprachlich oft genauso sinnvoll.
 
 </div>
 <div>
-  <LlmArchitecture :step="5" />
+  <LlmArchitecture :step="9" />
 </div>
 </div>
 
@@ -500,7 +500,7 @@ auf welcher Funktion?“:
 
 </div>
 <div>
-  <LlmArchitecture :step="6" />
+  <LlmArchitecture :step="10" />
 </div>
 </div>
 
@@ -543,7 +543,7 @@ Weil Training und Prüfung auseinanderlaufen (Epoche 16 vs. 20), speichern wir *
 
 </div>
 <div>
-  <LlmArchitecture :step="7" />
+  <LlmArchitecture :step="11" />
 </div>
 </div>
 
@@ -588,7 +588,7 @@ Technische Details bei Rückfragen:
 
 </div>
 <div>
-  <LlmArchitecture :step="8" />
+  <LlmArchitecture :step="12" />
 </div>
 </div>
 
@@ -637,7 +637,7 @@ bessere Texte noch korrekte Fakten.
 
 </div>
 <div>
-  <LlmArchitecture :step="9" />
+  <LlmArchitecture :step="13" />
 </div>
 </div>
 
@@ -669,7 +669,7 @@ zeigen.
 
 </div>
 <div>
-  <LlmArchitecture :step="9" />
+  <LlmArchitecture :step="13" />
 </div>
 </div>
 
@@ -703,7 +703,7 @@ Bisher umgesetzt: **Kapitel 1–18** (Basismodell bis vollständiger Trainingsab
 
 </div>
 <div>
-  <LlmArchitecture :step="9" />
+  <LlmArchitecture :step="13" />
 </div>
 </div>
 
