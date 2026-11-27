@@ -177,7 +177,7 @@ const activeClassFor = (steps: number[]) =>
             :stroke-width="strokeWidthFor([3])"
           />
           <text x="138" y="433" text-anchor="middle" class="t-small" fill="#831843">Token-Embedding</text>
-          <text x="138" y="446" text-anchor="middle" class="t-tiny" fill="#9d174d">ID → Zahlenliste</text>
+          <text x="138" y="446" text-anchor="middle" class="t-tiny" fill="#9d174d">ID → Vektor</text>
 
           <line x1="138" y1="418" x2="138" y2="402" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
 
@@ -261,7 +261,7 @@ const activeClassFor = (steps: number[]) =>
               :stroke-width="strokeWidthFor([4])"
             />
             <text x="132" y="304" text-anchor="middle" class="t-small" fill="#7c2d12">Masked Multi-Head</text>
-            <text x="132" y="316" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (Wortbezüge)</text>
+            <text x="132" y="316" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (Token-Bezüge)</text>
           </g>
 
           <!-- Rest of Transformer-Block: Residual 1, LayerNorm 2, Feed-Forward, Residual 2 — step 5 -->
@@ -294,7 +294,7 @@ const activeClassFor = (steps: number[]) =>
             <!-- Feed-Forward -->
             <rect x="56" y="193" width="152" height="27" rx="6" fill="#e0f2fe" stroke="#0284c7" :stroke-width="strokeWidthFor([5])" />
             <text x="132" y="205" text-anchor="middle" class="t-small" fill="#0c4a6e">Feed-Forward</text>
-            <text x="132" y="216" text-anchor="middle" class="t-tiny" fill="#0369a1">pro Wort verarbeiten</text>
+            <text x="132" y="216" text-anchor="middle" class="t-tiny" fill="#0369a1">pro Token verarbeiten</text>
             <line x1="132" y1="193" x2="132" y2="186" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Residual Add 2 -->
@@ -329,7 +329,7 @@ const activeClassFor = (steps: number[]) =>
             :stroke-width="strokeWidthFor([6])"
           />
           <text x="138" y="111" text-anchor="middle" class="t-small" fill="#312e81">Ausgabeschicht (Linear)</text>
-          <text x="138" y="123" text-anchor="middle" class="t-tiny" fill="#4338ca">→ Punkte pro Wort (Logits)</text>
+          <text x="138" y="123" text-anchor="middle" class="t-tiny" fill="#4338ca">→ Punkte pro Token (Logits)</text>
         </g>
 
         <!-- STEP 6, 7 & 12: Inferenz (outside, top) -->
@@ -350,8 +350,8 @@ const activeClassFor = (steps: number[]) =>
             :stroke-width="strokeWidthFor([6, 7, 12])"
           />
           <text x="138" y="29" text-anchor="middle" class="t-title" fill="#065f46">Inferenz (außerhalb)</text>
-          <text x="138" y="44" text-anchor="middle" class="t-sub" fill="#047857">Softmax (100 %) · Wortwahl</text>
-          <text v-if="show(7)" x="138" y="55" text-anchor="middle" class="t-tiny" fill="#065f46">Wort anhängen → neu berechnen</text>
+          <text x="138" y="44" text-anchor="middle" class="t-sub" fill="#047857">Softmax (100 %) · Token-Wahl</text>
+          <text v-if="show(7)" x="138" y="55" text-anchor="middle" class="t-tiny" fill="#065f46">Token anhängen → neu berechnen</text>
         </g>
 
         <!-- STEP 7 & 12: Autoregressive feedback loop along far left -->
@@ -388,7 +388,7 @@ const activeClassFor = (steps: number[]) =>
             :stroke-width="strokeWidthFor([8, 9])"
           />
           <text x="349" y="102" text-anchor="middle" class="t-title" fill="#991b1b">Training</text>
-          <text x="349" y="119" text-anchor="middle" class="t-sub" fill="#7f1d1d">Zielwort + Punkte</text>
+          <text x="349" y="119" text-anchor="middle" class="t-sub" fill="#7f1d1d">Ziel-Token + Punkte</text>
           <text x="349" y="135" text-anchor="middle" class="t-sub" fill="#7f1d1d">↓ Fehlerzahl (Loss)</text>
           <text
             x="349"

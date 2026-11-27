@@ -126,22 +126,23 @@ Wichtig: Tokenizer und Sprachmodell sind getrennte Bausteine.
 <PhaseBadge phase="inference" />
 <SourceFooter chapter="Kap. 3" code="crates/model/src/embedding.rs" />
 
-# Schritt 2: Nummern werden zu Zahlenlisten
+# Schritt 2: Jedes Token wird zum Vektor
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
-<div>
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-1">
+<div class="text-sm leading-snug space-y-2.5">
 
-Aus jeder ID schlägt das Modell eine **Zahlenliste** nach:
+Aus jeder Token-ID wird ein **Embedding-Vektor** (feste Zahlenliste der Länge `embedding_dim`):
 
-<div class="my-4 p-3 rounded-lg bg-pink-50 border border-pink-200 text-xs space-y-2 font-mono">
-  <div><strong>Der</strong> (ID 0) → [ 0.12, -0.45, 0.88, … ] + <strong>Position 1</strong></div>
-  <div><strong>Hund</strong> (ID 1) → [ 0.74,  0.31, -0.19, … ] + <strong>Position 2</strong></div>
+<div class="p-3 rounded-lg bg-pink-50 border border-pink-200 text-xs space-y-1.5 font-mono">
+  <div class="text-[10px] font-sans font-semibold uppercase tracking-wide text-pink-800">Token-ID → Embedding-Vektor + Positions-Vektor</div>
+  <div><strong>Der</strong> &nbsp;(ID 0) → [ 0.12, -0.45, 0.88, … ] + <strong>Pos. 1</strong></div>
+  <div><strong>Hund</strong> (ID 1) → [ 0.74,  0.31, -0.19, … ] + <strong>Pos. 2</strong></div>
 </div>
 
-- **Token-Embedding:** lernbare Zahlenliste pro Textstück.
-- **Positions-Embedding:** markiert die Reihenfolge („Der Hund beißt …“ ≠ „… beißt den Hund“).
+- **Embedding = Vektor:** Koordinaten statt bloßer Nummer — erst mit Vektoren kann das Modell rechnen und Ähnlichkeit ausdrücken (z. B. „Hund“ nah bei „Katze“).
+- **Positions-Embedding:** eigener Vektor gleicher Länge — wird addiert, damit die Reihenfolge zählt („Der Hund beißt …“ ≠ „… beißt den Hund“).
 
-**Was ähnliche Wörter verbindet, lernt das Modell erst beim Training.**
+**Wo welcher Vektor liegt, lernt das Modell erst beim Training.**
 
 </div>
 <div>
@@ -211,6 +212,57 @@ Tonspur-Leitfaden:
 
 Hinweis: Das Satzbeispiel ist ein reines Anschauungsbeispiel (keine echte
 Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
+-->
+
+---
+
+<PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 5" code="crates/model/src/attention.rs" />
+
+# Multi-Head Attention: Warum parallel?
+
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
+<div class="space-y-2 text-sm leading-snug">
+
+- **Aufteilen statt verdoppeln:** `embedding_dim` wird durch `num_heads` geteilt (`head_dim = embedding_dim / num_heads`) — am Ende wieder zusammengefügt → **gleiche Länge**.
+- **Zwei Ebenen Parallelität (der Durchbruch):**
+  1. **Alle Heads gleichzeitig** auf ihren Teilvektoren.
+  2. **Alle Tokens gleichzeitig** beim Training als große Matrixrechnung auf der GPU (statt Token-für-Token).
+
+<div class="p-2.5 rounded-lg bg-orange-50 border border-orange-200 text-xs space-y-1">
+  <div class="font-semibold text-orange-900">Zahlen: <code>embedding_dim = Heads × head_dim</code></div>
+  <div class="font-mono text-[11px] text-slate-700 space-y-0.5">
+    <div><strong>rusty-mind-llm</strong> (Demo): 8 = 2 Heads × 4</div>
+    <div><strong>GPT-2</strong> (klein): &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 768 = 12 Heads × 64</div>
+    <div><strong>Große LLMs</strong>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 4.096+ = 32–96 Heads × 128</div>
+  </div>
+</div>
+
+<div class="text-xs text-slate-700 pt-0.5">
+  <strong>Merksatz:</strong> Innen (Heads &amp; Tokens) <strong>parallel</strong> → GPU-Tempo. Außen (<code>N×</code> Blöcke, nächste Folie) <strong>sequenziell</strong>.
+</div>
+
+</div>
+<div>
+  <MultiHeadParallel />
+</div>
+</div>
+
+<!--
+4:00–4:50. Grundlage: Kapitel 5 (crates/model/src/attention.rs).
+
+Tonspur-Leitfaden:
+- Warum waren Transformer 2017 („Attention Is All You Need“) der Durchbruch?
+  Vorherige Netze (RNNs/LSTMs) mussten Text streng Wort für Wort lesen.
+  Transformer verarbeiten im Training alle Wörter gleichzeitig als große
+  Matrixrechnung — perfekt für GPUs.
+- Und zusätzlich teilt Multi-Head Attention den Vektor eines Wortes in H gleich
+  große Stücke (embedding_dim % num_heads == 0 im Code). Alle Heads laufen
+  parallel, am Ende werden die Ergebnisse wieder zusammengeklebt.
+- Konkrete Zahlen: Im Mini-Demo-Code 8 = 2 × 4, bei GPT-2 768 = 12 × 64, bei
+  großen Modellen 32 bis 96 Heads.
+- Überleitung zur nächsten Folie: Heads laufen parallel — die N Blöcke danach
+  aber streng nacheinander.
 -->
 
 ---
