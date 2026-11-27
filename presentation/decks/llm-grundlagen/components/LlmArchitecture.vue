@@ -24,7 +24,7 @@ const isOverview = () => props.step >= 13
 
 const isCompact = () => props.step >= 2 && props.step <= 7
 
-const svgViewBox = () => (isCompact() ? '0 0 268 510' : '0 0 434 510')
+const svgViewBox = () => (isCompact() ? '0 0 268 536' : '0 0 434 536')
 const svgWidth = () => (isCompact() ? 268 : 434)
 
 const show = (minStep: number) => props.step >= minStep
@@ -45,7 +45,7 @@ const activeClassFor = (steps: number[]) =>
     <svg
       :viewBox="svgViewBox()"
       :width="svgWidth()"
-      height="510"
+      height="536"
       :class="['llm-arch-svg', { 'llm-arch-svg--compact': isCompact() }]"
       role="img"
       :aria-label="`LLM-Architektur Schritt ${step}`"
@@ -88,15 +88,15 @@ const activeClassFor = (steps: number[]) =>
 
       <!-- STEP 1: BLACKBOX -->
       <g v-if="step === 1">
-        <rect x="75" y="425" width="284" height="48" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.8" />
-        <text x="217" y="446" text-anchor="middle" class="t-title" fill="#0f172a">Eingabetext</text>
-        <text x="217" y="463" text-anchor="middle" class="t-sub" fill="#475569">„Der Hund …“</text>
+        <rect x="75" y="438" width="284" height="48" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.8" />
+        <text x="217" y="459" text-anchor="middle" class="t-title" fill="#0f172a">Eingabetext</text>
+        <text x="217" y="476" text-anchor="middle" class="t-sub" fill="#475569">„Der Hund …“</text>
 
-        <line x1="217" y1="425" x2="217" y2="342" stroke="#475569" stroke-width="2" :marker-end="arrowDarkUrl" />
+        <line x1="217" y1="438" x2="217" y2="355" stroke="#475569" stroke-width="2" :marker-end="arrowDarkUrl" />
 
         <rect
           x="75"
-          y="165"
+          y="178"
           width="284"
           height="170"
           rx="14"
@@ -106,14 +106,14 @@ const activeClassFor = (steps: number[]) =>
           stroke-dasharray="7 5"
           class="active-glow"
         />
-        <text x="217" y="238" text-anchor="middle" class="t-big" fill="#0f172a">Sprachmodell</text>
-        <text x="217" y="264" text-anchor="middle" class="t-sub" fill="#64748b">(Blackbox — wird Schritt für Schritt geöffnet)</text>
+        <text x="217" y="251" text-anchor="middle" class="t-big" fill="#0f172a">Sprachmodell</text>
+        <text x="217" y="277" text-anchor="middle" class="t-sub" fill="#64748b">(Blackbox — wird Schritt für Schritt geöffnet)</text>
 
-        <line x1="217" y1="165" x2="217" y2="94" stroke="#475569" stroke-width="2" :marker-end="arrowDarkUrl" />
+        <line x1="217" y1="178" x2="217" y2="107" stroke="#475569" stroke-width="2" :marker-end="arrowDarkUrl" />
 
-        <rect x="75" y="38" width="284" height="48" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="1.8" />
-        <text x="217" y="59" text-anchor="middle" class="t-title" fill="#065f46">Fortsetzung</text>
-        <text x="217" y="76" text-anchor="middle" class="t-sub" fill="#047857">„… rennt“ (ein Token nach dem anderen)</text>
+        <rect x="75" y="51" width="284" height="48" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="1.8" />
+        <text x="217" y="72" text-anchor="middle" class="t-title" fill="#065f46">Fortsetzung</text>
+        <text x="217" y="89" text-anchor="middle" class="t-sub" fill="#047857">„… rennt“ (ein Token nach dem anderen)</text>
       </g>
 
       <!-- STEPS 2..13: GROWING VASWANI-STYLE DECODER-ONLY ARCHITECTURE -->
@@ -121,9 +121,9 @@ const activeClassFor = (steps: number[]) =>
         <!-- Dashed GptModel Core Boundary -->
         <rect
           x="24"
-          y="78"
+          y="76"
           width="228"
-          height="362"
+          height="390"
           rx="12"
           :fill="step === 9 ? '#fff5f5' : '#ffffff'"
           :stroke="step === 9 ? '#dc2626' : '#475569'"
@@ -132,7 +132,7 @@ const activeClassFor = (steps: number[]) =>
         />
         <text
           x="244"
-          y="92"
+          y="91"
           text-anchor="end"
           class="t-badge"
           :fill="step === 9 ? '#b91c1c' : '#475569'"
@@ -147,7 +147,7 @@ const activeClassFor = (steps: number[]) =>
         >
           <rect
             x="24"
-            y="456"
+            y="484"
             width="228"
             height="42"
             rx="8"
@@ -155,9 +155,9 @@ const activeClassFor = (steps: number[]) =>
             stroke="#64748b"
             :stroke-width="strokeWidthFor([2, 12])"
           />
-          <text x="138" y="473" text-anchor="middle" class="t-title" fill="#0f172a">Tokenizer (außerhalb)</text>
-          <text x="138" y="489" text-anchor="middle" class="t-sub" fill="#475569">Text → Nummern (IDs)</text>
-          <line x1="138" y1="456" x2="138" y2="429" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
+          <text x="138" y="501" text-anchor="middle" class="t-title" fill="#0f172a">Tokenizer (außerhalb)</text>
+          <text x="138" y="517" text-anchor="middle" class="t-sub" fill="#475569">Text → Nummern (IDs)</text>
+          <line x1="138" y1="484" x2="138" y2="456" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
         </g>
 
         <!-- STEP 3: Token Embedding + Positional Embedding -->
@@ -168,7 +168,7 @@ const activeClassFor = (steps: number[]) =>
         >
           <rect
             x="44"
-            y="391"
+            y="418"
             width="188"
             height="34"
             rx="7"
@@ -176,19 +176,19 @@ const activeClassFor = (steps: number[]) =>
             stroke="#db2777"
             :stroke-width="strokeWidthFor([3])"
           />
-          <text x="138" y="406" text-anchor="middle" class="t-small" fill="#831843">Token-Embedding</text>
-          <text x="138" y="419" text-anchor="middle" class="t-tiny" fill="#9d174d">ID → Zahlenliste</text>
+          <text x="138" y="433" text-anchor="middle" class="t-small" fill="#831843">Token-Embedding</text>
+          <text x="138" y="446" text-anchor="middle" class="t-tiny" fill="#9d174d">ID → Zahlenliste</text>
 
-          <line x1="138" y1="391" x2="138" y2="375" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
+          <line x1="138" y1="418" x2="138" y2="402" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
 
           <!-- Positional Addition Circle -->
-          <circle cx="138" cy="363" r="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5" />
-          <text x="138" y="367" text-anchor="middle" class="t-plus" fill="#0f172a">+</text>
+          <circle cx="138" cy="390" r="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5" />
+          <text x="138" y="394" text-anchor="middle" class="t-plus" fill="#0f172a">+</text>
 
           <!-- Positional Embedding Box -->
           <rect
             x="162"
-            y="350"
+            y="377"
             width="82"
             height="26"
             rx="6"
@@ -196,14 +196,14 @@ const activeClassFor = (steps: number[]) =>
             stroke="#6b7280"
             :stroke-width="strokeWidthFor([3])"
           />
-          <text x="203" y="361" text-anchor="middle" class="t-tiny" fill="#1f2937">Positions-</text>
-          <text x="203" y="372" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
-          <line x1="162" y1="363" x2="151" y2="363" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+          <text x="203" y="388" text-anchor="middle" class="t-tiny" fill="#1f2937">Positions-</text>
+          <text x="203" y="399" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
+          <line x1="162" y1="390" x2="151" y2="390" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
         </g>
 
         <!-- STEP 4 & 5: N× Transformer-Block (Attention on step 4, full block on step 5) -->
         <g v-if="show(4)">
-          <!-- N× Frame (visible from step 5; dashed preview hint on step 4) -->
+          <!-- N× Frame (visible from step 5) -->
           <g
             v-if="show(5)"
             :opacity="opacityFor([5, 12])"
@@ -211,23 +211,23 @@ const activeClassFor = (steps: number[]) =>
           >
             <rect
               x="36"
-              y="142"
+              y="162"
               width="204"
-              height="198"
+              height="206"
               rx="10"
               fill="#f8fafc"
               stroke="#94a3b8"
               :stroke-width="strokeWidthFor([5])"
             />
-            <text x="41" y="156" class="t-nx" fill="#334155">N×</text>
+            <text x="238" y="156" text-anchor="end" class="t-badge" fill="#334155">N× Transformer-Block</text>
           </g>
 
           <!-- Entry arrow into block -->
           <line
             x1="138"
-            y1="353"
+            y1="380"
             x2="138"
-            :y2="show(5) ? 336 : 300"
+            :y2="show(5) ? 362 : 325"
             stroke="#475569"
             stroke-width="1.6"
             :marker-end="arrowDarkUrl"
@@ -240,9 +240,9 @@ const activeClassFor = (steps: number[]) =>
             :opacity="opacityFor([5, 12])"
             :class="activeClassFor([5])"
           >
-            <rect x="56" y="308" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
-            <text x="132" y="323" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
-            <line x1="132" y1="308" x2="132" y2="299" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <rect x="56" y="333" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
+            <text x="132" y="348" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
+            <line x1="132" y1="333" x2="132" y2="324" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
           </g>
 
           <!-- Masked Multi-Head Attention — step 4 -->
@@ -252,7 +252,7 @@ const activeClassFor = (steps: number[]) =>
           >
             <rect
               x="56"
-              y="266"
+              y="291"
               width="152"
               height="30"
               rx="6"
@@ -260,8 +260,8 @@ const activeClassFor = (steps: number[]) =>
               stroke="#ea580c"
               :stroke-width="strokeWidthFor([4])"
             />
-            <text x="132" y="279" text-anchor="middle" class="t-small" fill="#7c2d12">Masked Multi-Head</text>
-            <text x="132" y="291" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (Wortbezüge)</text>
+            <text x="132" y="304" text-anchor="middle" class="t-small" fill="#7c2d12">Masked Multi-Head</text>
+            <text x="132" y="316" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (Wortbezüge)</text>
           </g>
 
           <!-- Rest of Transformer-Block: Residual 1, LayerNorm 2, Feed-Forward, Residual 2 — step 5 -->
@@ -270,39 +270,39 @@ const activeClassFor = (steps: number[]) =>
             :opacity="opacityFor([5, 12])"
             :class="activeClassFor([5])"
           >
-            <line x1="132" y1="266" x2="132" y2="258" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <line x1="132" y1="291" x2="132" y2="283" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Residual Add 1 -->
-            <circle cx="132" cy="248" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
-            <text x="132" y="252" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
+            <circle cx="132" cy="273" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
+            <text x="132" y="277" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
             <!-- Residual Bypass 1 -->
             <path
-              d="M 138 336 L 224 336 L 224 248 L 143 248"
+              d="M 138 362 L 224 362 L 224 273 L 143 273"
               fill="none"
               stroke="#64748b"
               stroke-width="1.3"
               :marker-end="arrowDarkUrl"
             />
 
-            <line x1="132" y1="240" x2="132" y2="232" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <line x1="132" y1="265" x2="132" y2="257" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- LayerNorm 2 (Pre-LN) -->
-            <rect x="56" y="207" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
-            <text x="132" y="222" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
-            <line x1="132" y1="207" x2="132" y2="198" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <rect x="56" y="232" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
+            <text x="132" y="247" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
+            <line x1="132" y1="232" x2="132" y2="223" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Feed-Forward -->
-            <rect x="56" y="168" width="152" height="27" rx="6" fill="#e0f2fe" stroke="#0284c7" :stroke-width="strokeWidthFor([5])" />
-            <text x="132" y="180" text-anchor="middle" class="t-small" fill="#0c4a6e">Feed-Forward</text>
-            <text x="132" y="191" text-anchor="middle" class="t-tiny" fill="#0369a1">pro Wort verarbeiten</text>
-            <line x1="132" y1="168" x2="132" y2="162" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <rect x="56" y="193" width="152" height="27" rx="6" fill="#e0f2fe" stroke="#0284c7" :stroke-width="strokeWidthFor([5])" />
+            <text x="132" y="205" text-anchor="middle" class="t-small" fill="#0c4a6e">Feed-Forward</text>
+            <text x="132" y="216" text-anchor="middle" class="t-tiny" fill="#0369a1">pro Wort verarbeiten</text>
+            <line x1="132" y1="193" x2="132" y2="186" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Residual Add 2 -->
-            <circle cx="132" cy="153" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
-            <text x="132" y="157" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
+            <circle cx="132" cy="176" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
+            <text x="132" y="180" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
             <!-- Residual Bypass 2 -->
             <path
-              d="M 132 236 L 224 236 L 224 153 L 143 153"
+              d="M 132 260 L 224 260 L 224 176 L 143 176"
               fill="none"
               stroke="#64748b"
               stroke-width="1.3"
@@ -317,7 +317,7 @@ const activeClassFor = (steps: number[]) =>
           :opacity="opacityFor([6, 12])"
           :class="activeClassFor([6])"
         >
-          <line x1="132" y1="145" x2="132" y2="131" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
+          <line x1="132" y1="168" x2="132" y2="132" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
           <rect
             x="44"
             y="98"
@@ -338,10 +338,10 @@ const activeClassFor = (steps: number[]) =>
           :opacity="opacityFor([6, 7, 12])"
           :class="activeClassFor([6, 7, 12])"
         >
-          <line x1="138" y1="98" x2="138" y2="67" stroke="#059669" stroke-width="1.7" :marker-end="arrowGreenUrl" />
+          <line x1="138" y1="98" x2="138" y2="63" stroke="#059669" stroke-width="1.7" :marker-end="arrowGreenUrl" />
           <rect
             x="24"
-            y="14"
+            y="10"
             width="228"
             height="49"
             rx="8"
@@ -349,9 +349,9 @@ const activeClassFor = (steps: number[]) =>
             stroke="#059669"
             :stroke-width="strokeWidthFor([6, 7, 12])"
           />
-          <text x="138" y="33" text-anchor="middle" class="t-title" fill="#065f46">Inferenz (außerhalb)</text>
-          <text x="138" y="48" text-anchor="middle" class="t-sub" fill="#047857">Softmax (100 %) · Wortwahl</text>
-          <text v-if="show(7)" x="138" y="59" text-anchor="middle" class="t-tiny" fill="#065f46">Wort anhängen → neu berechnen</text>
+          <text x="138" y="29" text-anchor="middle" class="t-title" fill="#065f46">Inferenz (außerhalb)</text>
+          <text x="138" y="44" text-anchor="middle" class="t-sub" fill="#047857">Softmax (100 %) · Wortwahl</text>
+          <text v-if="show(7)" x="138" y="55" text-anchor="middle" class="t-tiny" fill="#065f46">Wort anhängen → neu berechnen</text>
         </g>
 
         <!-- STEP 7 & 12: Autoregressive feedback loop along far left -->
@@ -361,7 +361,7 @@ const activeClassFor = (steps: number[]) =>
           :class="activeClassFor([7, 12])"
         >
           <path
-            d="M 24 38 L 9 38 L 9 477 L 20 477"
+            d="M 24 34 L 9 34 L 9 505 L 20 505"
             fill="none"
             stroke="#059669"
             :stroke-width="strokeWidthFor([7, 12])"
@@ -426,9 +426,9 @@ const activeClassFor = (steps: number[]) =>
         >
           <line
             x1="252"
-            y1="256"
+            y1="266"
             x2="270"
-            y2="256"
+            y2="266"
             stroke="#0891b2"
             stroke-width="1.5"
             stroke-dasharray="4 3"
@@ -436,7 +436,7 @@ const activeClassFor = (steps: number[]) =>
           />
           <rect
             x="274"
-            y="214"
+            y="224"
             width="150"
             height="84"
             rx="8"
@@ -444,10 +444,10 @@ const activeClassFor = (steps: number[]) =>
             stroke="#0891b2"
             :stroke-width="strokeWidthFor([10])"
           />
-          <text x="349" y="233" text-anchor="middle" class="t-title" fill="#155e75">Validierung</text>
-          <text x="349" y="250" text-anchor="middle" class="t-sub" fill="#164e63">Prüfungstexte</text>
-          <text x="349" y="266" text-anchor="middle" class="t-sub" fill="#164e63">Fehler messen</text>
-          <text x="349" y="284" text-anchor="middle" class="t-tiny-bold" fill="#155e75">Gewichte fest · kein Update</text>
+          <text x="349" y="243" text-anchor="middle" class="t-title" fill="#155e75">Validierung</text>
+          <text x="349" y="260" text-anchor="middle" class="t-sub" fill="#164e63">Prüfungstexte</text>
+          <text x="349" y="276" text-anchor="middle" class="t-sub" fill="#164e63">Fehler messen</text>
+          <text x="349" y="294" text-anchor="middle" class="t-tiny-bold" fill="#155e75">Gewichte fest · kein Update</text>
         </g>
 
         <!-- STEP 11: Checkpoints (outside, right bottom) -->
@@ -458,9 +458,9 @@ const activeClassFor = (steps: number[]) =>
         >
           <line
             x1="252"
-            y1="376"
+            y1="396"
             x2="270"
-            y2="376"
+            y2="396"
             :stroke="step === 12 ? '#059669' : '#7c3aed'"
             :stroke-width="step === 12 ? 2 : 1.5"
             :marker-end="step === 12 ? undefined : arrowDarkUrl"
@@ -468,7 +468,7 @@ const activeClassFor = (steps: number[]) =>
           />
           <rect
             x="274"
-            y="320"
+            y="340"
             width="150"
             height="112"
             rx="8"
@@ -476,19 +476,19 @@ const activeClassFor = (steps: number[]) =>
             stroke="#7c3aed"
             :stroke-width="strokeWidthFor([11])"
           />
-          <text x="349" y="339" text-anchor="middle" class="t-title" fill="#5b21b6">Checkpoints</text>
-          <text x="349" y="359" text-anchor="middle" class="t-sub-bold" fill="#4c1d95">last/</text>
-          <text x="349" y="373" text-anchor="middle" class="t-tiny" fill="#5b21b6">Weitertrainieren (Resume)</text>
+          <text x="349" y="359" text-anchor="middle" class="t-title" fill="#5b21b6">Checkpoints</text>
+          <text x="349" y="379" text-anchor="middle" class="t-sub-bold" fill="#4c1d95">last/</text>
+          <text x="349" y="393" text-anchor="middle" class="t-tiny" fill="#5b21b6">Weitertrainieren (Resume)</text>
           <text
             x="349"
-            y="396"
+            y="416"
             text-anchor="middle"
             class="t-sub-bold"
             :fill="step === 12 ? '#047857' : '#4c1d95'"
           >best/</text>
           <text
             x="349"
-            y="410"
+            y="430"
             text-anchor="middle"
             class="t-tiny"
             :fill="step === 12 ? '#047857' : '#5b21b6'"
@@ -563,11 +563,6 @@ const activeClassFor = (steps: number[]) =>
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-}
-
-.t-nx {
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .t-plus {

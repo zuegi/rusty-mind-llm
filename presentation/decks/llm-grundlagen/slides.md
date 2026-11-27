@@ -225,19 +225,22 @@ Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
 
 Nach dem Austausch zwischen den Wörtern folgen im Block noch drei Bausteine:
 
-<div class="my-3 space-y-2 text-xs">
-  <div class="p-2.5 rounded-lg bg-sky-50 border border-sky-200">
+<div class="my-2.5 space-y-1.5 text-xs">
+  <div class="p-2 rounded-lg bg-sky-50 border border-sky-200">
     <strong class="text-sky-900">Feed-Forward:</strong> jedes Wort verarbeitet seinen neuen Kontext <strong>einzeln</strong> weiter — wie eine eigene kleine Recheneinheit pro Position.
   </div>
-  <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+  <div class="p-2 rounded-lg bg-amber-50 border border-amber-200">
     <strong class="text-amber-900">LayerNorm:</strong> hält alle Zahlenwerte in einem gesunden Bereich, damit nichts nach oben oder unten ausbricht.
   </div>
-  <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+  <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
     <strong class="text-slate-900">+ (Abkürzung / Residual):</strong> addiert den vorherigen Zustand wieder dazu — ursprüngliche Information geht unterwegs nicht verloren.
   </div>
 </div>
 
-- **`N×` Durchläufe:** derselbe Block wird mehrfach gestapelt — das Ergebnis wird Schritt für Schritt feiner.
+<div class="mt-2 space-y-1.5 text-xs leading-snug text-slate-800">
+  <div>• <strong><code>N×</code> Schichten hintereinander (sequenziell):</strong> Output von Block 1 = Input von Block 2 (jeder mit eigenen Gewichten).</div>
+  <div>• <strong>Wer bestimmt <code>N</code>?</strong> Wird vor dem Training als Einstellung (Hyperparameter: z. B. 2–4 im Lernprojekt, 12 bei GPT-2, 32–96+ bei großen LLMs).</div>
+</div>
 
 </div>
 <div>
@@ -253,8 +256,12 @@ Tonspur-Leitfaden:
   jedes Wort für sich weiter.
 - LayerNorm & + sind das „Sicherheitsnetz“: Ohne sie werden tiefe Netze
   instabil oder vergessen den ursprünglichen Input.
-- In der Grafik steht N×: Dieser ganze Block läuft mehrfach hintereinander
-  (im Lernprojekt z. B. mehrere Schichten, in großen Modellen Dutzende).
+- In der Grafik steht N×: N Blöcke laufen hintereinander (sequenziell, jeder mit
+  eigenen Gewichten). Parallel laufen dagegen die Heads in Multi-Head Attention
+  und die Token-Positionen innerhalb eines Blocks.
+- N ist ein Hyperparameter (num_blocks in crates/model/src/gpt.rs), den der
+  Entwickler vor dem Training festlegt — mehr Schichten = tieferes Modell, aber
+  mehr Speicher, Rechenzeit und Datenbedarf.
 
 Hinweis bei Rückfragen:
 - Keine feste Rollenverteilung wie „Schicht 1 = Grammatik, letzte = Verständnis“.
