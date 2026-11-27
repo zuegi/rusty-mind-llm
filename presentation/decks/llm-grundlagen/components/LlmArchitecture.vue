@@ -187,18 +187,18 @@ const activeClassFor = (steps: number[]) =>
 
           <!-- Positional Embedding Box -->
           <rect
-            x="162"
+            x="160"
             y="377"
-            width="82"
+            width="78"
             height="26"
             rx="6"
             fill="#f3f4f6"
             stroke="#6b7280"
             :stroke-width="strokeWidthFor([3])"
           />
-          <text x="203" y="388" text-anchor="middle" class="t-tiny" fill="#1f2937">Positions-</text>
-          <text x="203" y="399" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
-          <line x1="162" y1="390" x2="151" y2="390" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+          <text x="199" y="388" text-anchor="middle" class="t-tiny" fill="#1f2937">Positions-</text>
+          <text x="199" y="399" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
+          <line x1="160" y1="390" x2="151" y2="390" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
         </g>
 
         <!-- STEP 4 & 5: N× Transformer-Block (Attention on step 4, full block on step 5) -->
@@ -396,7 +396,7 @@ const activeClassFor = (steps: number[]) =>
             text-anchor="middle"
             :class="step === 9 ? 't-sub-bold' : 't-sub'"
             :fill="step === 9 ? '#991b1b' : '#7f1d1d'"
-          >↓ Richtung (Gradient)</text>
+          >↓ Backpropagation</text>
           <text
             x="349"
             y="167"
@@ -413,9 +413,29 @@ const activeClassFor = (steps: number[]) =>
             x2="256"
             y2="176"
             stroke="#dc2626"
-            :stroke-width="step === 9 ? 2.6 : 1.7"
+            :stroke-width="step === 9 ? 2.4 : 1.7"
             :marker-end="arrowRedUrl"
           />
+
+          <!-- Backpropagation downward flow through all layers inside GptModel (step 9) -->
+          <g v-if="step === 9">
+            <line
+              x1="245"
+              y1="113"
+              x2="245"
+              y2="435"
+              stroke="#dc2626"
+              stroke-width="2"
+              stroke-dasharray="4 2.5"
+              :marker-end="arrowRedUrl"
+            />
+            <line x1="245" y1="113" x2="236" y2="113" stroke="#dc2626" stroke-width="1.6" :marker-end="arrowRedUrl" />
+            <line x1="245" y1="266" x2="239" y2="266" stroke="#dc2626" stroke-width="1.6" :marker-end="arrowRedUrl" />
+            <line x1="245" y1="435" x2="236" y2="435" stroke="#dc2626" stroke-width="1.6" :marker-end="arrowRedUrl" />
+            <rect x="274" y="200" width="150" height="32" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.2" />
+            <text x="349" y="213" text-anchor="middle" class="t-tiny-bold" fill="#991b1b">↓ Backpropagation</text>
+            <text x="349" y="225" text-anchor="middle" class="t-tiny" fill="#7f1d1d">Fehler durch alle Schichten</text>
+          </g>
         </g>
 
         <!-- STEP 10: Validierung (outside, right middle) -->

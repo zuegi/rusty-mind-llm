@@ -491,6 +491,54 @@ wären sprachlich oft genauso sinnvoll.
 ---
 
 <PhaseBadge phase="training" />
+<SourceFooter chapter="Kap. 8 & Exkurs Ableitungen" code="crates/training/src/step.rs" />
+
+# Backpropagation: Wer hatte Anteil am Fehler?
+
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="text-sm leading-snug space-y-2.5">
+
+Ein Modell hat Millionen Gewichte in vielen Schichten — am Ende steht aber nur **eine einzige Fehlerzahl (Loss)**.
+
+<div class="space-y-2 text-xs">
+  <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+    <strong class="text-slate-900">↑ Vorwärts (Forward):</strong> Tokens laufen von unten nach oben durch alle Schichten → Vorhersage → <strong>Fehlerzahl (Loss)</strong>.
+  </div>
+  <div class="p-2.5 rounded-lg bg-red-50 border border-red-200">
+    <strong class="text-red-900">↓ Rückwärts (Backpropagation):</strong> Der Fehler wird <strong>Schicht für Schicht zurückgereicht</strong> (Kettenregel) — von der Ausgabeschicht bis zu den Embeddings.
+  </div>
+</div>
+
+- **Ergebnis:** Jedes einzelne Gewicht bekommt seinen **Gradienten** (Anteil am Fehler + Richtung).
+- **In der Praxis (Autodiff):** Niemand rechnet das von Hand — das Framework (`burn` / PyTorch) merkt sich die Rechenschritte und führt Backpropagation automatisch aus (`loss.backward()`).
+
+</div>
+<div>
+  <LlmArchitecture :step="9" />
+</div>
+</div>
+
+<!--
+8:00–8:50. Grundlage: Kapitel 8 und Exkurs Ableitungen.
+
+Tonspur-Leitfaden:
+- Kernfrage beim Training: Am Ende kennen wir nur den Gesamtfehler (Loss).
+  Woher weiß ein Gewicht ganz unten im Embedding oder in Block 1, ob es größer
+  oder kleiner werden muss?
+- Antwort: Backpropagation („Rückwärts-Weitergabe“). Wie eine Kette aus
+  Zahnrädern: Wenn das letzte Zahnrad zu weit gedreht hat, rechnet man
+  rückwärts durch die Kette (Kettenregel), welches Zahnrad wie viel Anteil
+  daran hatte.
+- In der Grafik rechts: Grau/Schwarz fließt vorwärts (unten → oben), Rot fließt
+  rückwärts (oben → unten) bis in alle Schichten.
+- Entwickler-Punkt: Dafür gibt es Autodiff-Frameworks (im Projekt: burn mit
+  Autodiff-Backend) — ein einziger Aufruf loss.backward() berechnet alle
+  Millionen Gradienten automatisch.
+-->
+
+---
+
+<PhaseBadge phase="training" />
 <SourceFooter chapter="Kap. 8 & Exkurs Ableitungen" code="crates/training/src/loss.rs" />
 
 # Wie werden Gewichte angepasst?
@@ -507,7 +555,7 @@ wären sprachlich oft genauso sinnvoll.
 <div class="mt-2.5 space-y-1.5 text-xs">
   <div><strong>Welche Funktion?</strong> Die <strong>Fehlerfunktion (Cross-Entropy-Loss)</strong>: <code>Gewichte → Modell → % für „rennt“ → Fehlerzahl</code> (90 % = klein, 5 % = groß).</div>
   <div><strong>1. Zufallsstart:</strong> Alle Gewichte in den Schichten starten zufällig.</div>
-  <div><strong>2. Richtung (Gradient):</strong> Per <strong>Kettenregel (Backpropagation)</strong> berechnet Autodiff rückwärts für jedes Gewicht, ob höher oder tiefer den Fehler senkt.</div>
+  <div><strong>2. Richtung (Gradient):</strong> Liefert <strong>Backpropagation</strong> (vorherige Folie) für jedes Gewicht: höher oder tiefer senkt den Fehler?</div>
   <div><strong>3. Schritt (Optimizer):</strong> <code class="text-red-800">neu = alt − Lernrate × Gradient</code> — tausendfach wiederholt.</div>
 </div>
 
