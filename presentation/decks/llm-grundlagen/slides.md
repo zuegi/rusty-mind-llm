@@ -326,6 +326,56 @@ Hinweis bei Rückfragen:
 <PhaseBadge phase="inference" />
 <SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
 
+# Das komplette GPT-Modell
+
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="space-y-2.5 text-xs">
+
+<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+  <div class="font-bold text-slate-900 text-sm mb-1">Wofür steht „GPT“?</div>
+  <div>• <strong class="text-emerald-800">G</strong>enerative — erzeugt Text Schritt für Schritt, Token für Token.</div>
+  <div>• <strong class="text-sky-800">P</strong>re-trained — Gewichte werden vorab auf viel Text trainiert.</div>
+  <div>• <strong class="text-orange-800">T</strong>ransformer — genau diese Architektur rechts (<strong>Decoder-only</strong>: blickt nur zurück).</div>
+</div>
+
+<div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-1">
+  <div class="font-bold text-emerald-950">Im Code sind es genau drei Bausteine (<code>GptModel</code>)</div>
+  <div>1. <code>gpt_embedding</code> — Token-ID + Position → Vektor</div>
+  <div>2. <code>blocks</code> — <code>N×</code> Transformer-Block hintereinander</div>
+  <div>3. <code>output_projection</code> — Vektor → Punkte (<strong>Logits</strong>) für jedes Token im Vokabular</div>
+</div>
+
+<div class="p-2 rounded-lg bg-amber-50 border border-amber-200 leading-snug">
+  <strong class="text-amber-950">Bauplan (<code>GptModelConfig</code>):</strong>
+  <code>vocab_size</code> · <code>max_context_length</code> · <code>embedding_dim</code> · <code>num_heads</code> · <code>num_blocks</code> · <code>dropout</code>
+</div>
+
+</div>
+<div>
+  <LlmArchitecture :step="6" />
+</div>
+</div>
+
+<!--
+5:00–5:45. Grundlage: Kapitel 7 (crates/model/src/gpt.rs).
+
+Tonspur-Leitfaden:
+- Jetzt schließt sich der Rahmen rechts: Mit der Ausgabeschicht oben drauf
+  haben wir das komplette GptModel — und genau das steckt hinter dem Namen GPT.
+- Generative (erzeugt Text), Pre-trained (auf viel Text vortrainiert),
+  Transformer (die Architektur, die wir gerade Baustein für Baustein aufgebaut
+  haben — als Decoder-only-Variante mit kausaler Maske).
+- Für Entwickler der Aha-Moment: In crates/model/src/gpt.rs hat GptModel genau
+  drei Felder (gpt_embedding, blocks, output_projection) und sechs Stellschrauben
+  in GptModelConfig. Große Modelle wie GPT-2 oder GPT-3 nutzen dasselbe Prinzip,
+  nur mit deutlich größeren Zahlen in dieser Konfiguration.
+-->
+
+---
+
+<PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
+
 # Ein nächstes Wort entsteht
 
 <div class="grid grid-cols-[1.15fr_0.85fr] gap-5 items-center mt-1">
