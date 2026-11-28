@@ -48,12 +48,12 @@ layout: default
 # Vom Text zum kleinen Sprachmodell
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
-<div>
+<div class="text-sm leading-snug space-y-3">
 
 Wie ein Sprachmodell Schritt für Schritt Text fortsetzt
 
-<div class="mt-5 p-4 rounded-lg bg-slate-100 border border-slate-300">
-  <div class="text-sm uppercase tracking-wide text-slate-500">Einstiegsfrage</div>
+<div class="p-4 rounded-lg bg-slate-100 border border-slate-300">
+  <div class="text-xs uppercase tracking-wide text-slate-500">Einstiegsfrage</div>
   <div class="text-xl font-bold mt-1">Wie geht „Der Hund …“ weiter?</div>
 </div>
 
@@ -90,11 +90,11 @@ Lernziel: nächste Wort-/Tokenvorhersage, Lernen und Grenzen der Auswertung vers
 # Schritt 1: Text in Token und Nummern
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
-<div>
+<div class="text-sm leading-snug space-y-3">
 
 Computer können nur rechnen — nicht lesen.
 
-<div class="my-5 flex items-center gap-2 text-sm font-mono">
+<div class="my-4 flex items-center gap-2 text-xs font-mono">
   <span class="px-3 py-1.5 rounded bg-slate-100 border border-slate-300">„Der Hund“</span>
   <span class="text-slate-400">→</span>
   <span class="px-2.5 py-1.5 rounded bg-blue-50 border border-blue-300">Der</span>
@@ -167,13 +167,13 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 # Masked Attention: Wer gehört zu wem?
 
 <div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
-<div>
+<div class="text-sm leading-snug space-y-2.5">
 
-<div class="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-1.5">
+<div class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
   Anschauungsbeispiel: Worauf bezieht sich „er“?
 </div>
 
-<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 mb-3 text-xs space-y-2">
+<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-xs space-y-2">
   <div class="flex flex-wrap items-center gap-1 font-mono">
     <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">Die</span>
     <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">Katze</span>
@@ -238,7 +238,7 @@ Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
   </div>
 </div>
 
-<div class="text-xs text-slate-700 pt-0.5">
+<div class="text-sm text-slate-700 pt-0.5">
   <strong>Merksatz:</strong> Innen (Heads &amp; Tokens) <strong>parallel</strong> → GPU-Tempo. Außen (<code>N×</code> Blöcke, nächste Folie) <strong>sequenziell</strong>.
 </div>
 
@@ -268,30 +268,28 @@ Tonspur-Leitfaden:
 ---
 
 <PhaseBadge phase="inference" />
-<SourceFooter chapter="Kap. 6–7" code="crates/model/src/transformer_block.rs" />
+<SourceFooter chapter="Kap. 6" code="crates/model/src/layer_norm.rs · feed_forward.rs" />
 
-# Verarbeiten, stabil halten, wiederholen
+# LayerNorm & Feed-Forward im Detail
 
-<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
-<div>
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="text-sm leading-snug space-y-2.5">
 
-Im Block arbeiten neben Attention drei weitere Bausteine:
-
-<div class="my-2.5 space-y-1.5 text-xs">
-  <div class="p-2 rounded-lg bg-amber-50 border border-amber-200">
-    <strong class="text-amber-900">LayerNorm:</strong> läuft <strong>vor</strong> Attention und Feed-Forward und hält alle Zahlenwerte in einem gesunden Bereich, damit nichts ausbricht.
-  </div>
-  <div class="p-2 rounded-lg bg-sky-50 border border-sky-200">
-    <strong class="text-sky-900">Feed-Forward:</strong> jedes Token verarbeitet seinen neuen Kontext <strong>einzeln</strong> weiter — wie eine eigene kleine Recheneinheit pro Position.
-  </div>
-  <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
-    <strong class="text-slate-900">+ (Abkürzung / Residual):</strong> addiert den vorherigen Zustand wieder dazu — ursprüngliche Information geht unterwegs nicht verloren.
-  </div>
+<div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs space-y-1">
+  <div class="font-bold text-amber-950 text-sm">LayerNorm (vor Attention &amp; Feed-Forward)</div>
+  <div>• Pro Token-Vektor: <strong>Mittelwert abziehen</strong> (um 0 zentrieren), durch <strong>Streuung teilen</strong>, mit gelernten <code>scale</code> &amp; <code>shift</code> nachjustieren.</div>
+  <div>• <strong>Warum?</strong> Ohne Normierung wachsen oder schrumpfen Zahlen über viele Schichten extrem → Training wird instabil.</div>
 </div>
 
-<div class="mt-2 space-y-1.5 text-xs leading-snug text-slate-800">
-  <div>• <strong><code>N×</code> Schichten hintereinander (sequenziell):</strong> Output von Block 1 = Input von Block 2 (jeder mit eigenen Gewichten).</div>
-  <div>• <strong>Wer bestimmt <code>N</code>?</strong> Wird vor dem Training als Einstellung (Hyperparameter: <code>num_blocks</code>, 1–3 im Lernprojekt, 12 bei GPT-2, 32–96+ bei großen LLMs).</div>
+<div class="p-2.5 rounded-lg bg-sky-50 border border-sky-200 text-xs space-y-1.5">
+  <div class="font-bold text-sky-950 text-sm">Feed-Forward (jedes Token für sich)</div>
+  <div><strong>Idee:</strong> Attention sammelt Hinweise (z. B. <em>„Bank“ + „Fluss“</em>). Feed-Forward verarbeitet diese Kombination <strong>pro Token</strong> zu neuen Merkmalen.</div>
+  <div class="font-mono text-[11px] bg-white/80 px-2 py-1 rounded border border-sky-200 text-slate-800">
+    [8] → Aufweiten (4×) → [32] → GELU → Verdichten → [8]
+  </div>
+  <div>• <strong>Aufweiten (<code>expand</code>):</strong> 4× mehr Arbeitsfläche (GPT-2: <code>768 → 3.072</code>) für viele Muster.</div>
+  <div>• <strong>Filter (<code>GELU</code>):</strong> verstärkt passende Kombinationen, dämpft unwichtige ab.</div>
+  <div>• <strong>Verdichten (<code>contract</code>):</strong> fasst das Ergebnis zurück auf die normale Vektorlänge.</div>
 </div>
 
 </div>
@@ -301,24 +299,65 @@ Im Block arbeiten neben Attention drei weitere Bausteine:
 </div>
 
 <!--
-4:15–5:00. Grundlage: Kapitel 6 und 7.
+4:15–5:00. Grundlage: Kapitel 6 (layer_norm.rs, feed_forward.rs).
 
 Tonspur-Leitfaden:
-- Attention tauscht Infos zwischen Wörtern aus; Feed-Forward verarbeitet danach
-  jedes Wort für sich weiter.
-- LayerNorm & + sind das „Sicherheitsnetz“: Ohne sie werden tiefe Netze
-  instabil oder vergessen den ursprünglichen Input.
-- In der Grafik steht N×: N Blöcke laufen hintereinander (sequenziell, jeder mit
-  eigenen Gewichten). Parallel laufen dagegen die Heads in Multi-Head Attention
-  und die Token-Positionen innerhalb eines Blocks.
-- N ist ein Hyperparameter (num_blocks in crates/model/src/gpt.rs), den der
-  Entwickler vor dem Training festlegt — mehr Schichten = tieferes Modell, aber
-  mehr Speicher, Rechenzeit und Datenbedarf.
+- LayerNorm läuft in rusty-mind-llm jeweils vor Attention und vor Feed-Forward
+  (Pre-LayerNorm). Pro Token-Vektor: Mittelwert abziehen, durch Standardabweichung
+  teilen, danach mit zwei gelernten Vektoren (scale, shift) wieder leicht anpassen.
+- Feed-Forward läuft für jedes Token separat — kein Austausch zwischen Tokens.
+  Der Vektor wird auf das 4-Fache aufgeblasen (EXPANSION_FACTOR = 4), durch die
+  nicht-lineare Aktivierung GELU geschickt und wieder auf embedding_dim
+  komprimiert.
+- Warum GELU? Zwei lineare Matrizen hintereinander wären mathematisch nur eine
+  einzige lineare Matrix — erst die Nicht-Linearität ermöglicht komplexe Muster.
+-->
 
-Hinweis bei Rückfragen:
-- Keine feste Rollenverteilung wie „Schicht 1 = Grammatik, letzte = Verständnis“.
-- In rusty-mind-llm liegt LayerNorm jeweils vor Attention und Feed-Forward
-  (Pre-LayerNorm), Residual + danach.
+---
+
+<PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 6–7" code="crates/model/src/transformer_block.rs" />
+
+# Abkürzung (+) & N× Blöcke stapeln
+
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-1">
+<div class="text-sm leading-snug space-y-3">
+
+Damit tiefe Modelle überhaupt trainierbar sind, braucht jeder Block noch eine **Abkürzung** — und wird **mehrfach gestapelt**:
+
+<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+  <div class="font-bold text-slate-900 text-sm">+ (Abkürzung / Residual Connection)</div>
+  <div class="font-mono text-[11px] bg-white px-2 py-1 rounded border border-slate-200 text-slate-800">
+    Output = Input + Schicht(Input)
+  </div>
+  <div>• <strong>Kein Vergessen:</strong> ursprüngliche Token-Info bleibt erhalten; die Schicht lernt nur die <em>Veränderung</em> (Delta).</div>
+  <div>• <strong>Stabiles Lernen:</strong> beim Rückwärtsrechnen (Backpropagation) fließt das Fehlersignal direkt durch <code>+</code> bis in frühe Schichten.</div>
+</div>
+
+<div class="p-3 rounded-lg bg-indigo-50/70 border border-indigo-200 text-xs space-y-1">
+  <div class="font-bold text-indigo-950 text-sm"><code>N×</code> Blöcke hintereinander (sequenziell)</div>
+  <div>• Output von Block 1 = Input von Block 2 — jeder Block hat <strong>eigene Gewichte</strong> und verfeinert die Vektoren weiter.</div>
+  <div>• <strong>Wer bestimmt <code>N</code>?</strong> Einstellung vor dem Training (<code>num_blocks</code>): <strong>1–3</strong> im Lernprojekt · <strong>12</strong> bei GPT-2 · <strong>32–96+</strong> bei großen LLMs.</div>
+</div>
+
+</div>
+<div>
+  <LlmArchitecture :step="5" />
+</div>
+</div>
+
+<!--
+5:00–5:35. Grundlage: Kapitel 6 und 7 (transformer_block.rs, gpt.rs).
+
+Tonspur-Leitfaden:
+- Residual Connection (+): Nach Attention und nach Feed-Forward wird der Input
+  wieder auf das Ergebnis addiert (input + attention, after_attention + ff).
+  Bild für Entwickler: wie ein Diff/Delta statt alles neu zu schreiben — und
+  gleichzeitig eine Autobahn für das Lernsignal im Training.
+- N× Blöcke: Während Attention Heads und Tokens innerhalb eines Blocks parallel
+  laufen, laufen die N Blöcke streng nacheinander (sequenziell).
+- N ist ein Hyperparameter (num_blocks in GptModelConfig): mehr Schichten =
+  tieferes Modell, aber mehr Speicher, Rechenzeit und Datenbedarf.
 -->
 
 ---
@@ -329,17 +368,17 @@ Hinweis bei Rückfragen:
 # Ausgabeschicht: Vom Vektor zu Logits
 
 <div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
-<div class="space-y-3 text-xs">
+<div class="text-sm leading-snug space-y-3">
 
 Nach den `N×` Transformer-Blöcken haben wir für jedes Token einen angereicherten **Vektor** (`embedding_dim` Zahlen) — aber noch keine Bewertung für das nächste Token.
 
-<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 space-y-1.5">
+<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-xs space-y-1.5">
   <div class="font-bold text-indigo-950 text-sm">Ausgabeschicht (<code>output_projection</code>, Linear)</div>
   <div>• Eine gelernte Matrix rechnet den Vektor (<code>embedding_dim</code>) auf <strong>alle <code>vocab_size</code> Tokens</strong> im Vokabular hoch.</div>
   <div>• Ergebnis: ein Zahlen-Array mit <strong>1 Rohpunkt (Logit) pro Vokabular-Eintrag</strong> (<code>Array-Index = Token-ID</code>).</div>
 </div>
 
-<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
   <div class="font-mono text-[11px] text-slate-700">
     Vektor [8] &nbsp;→&nbsp; Linear (8 × 50.257) &nbsp;→&nbsp; Logits [50.257]
   </div>
@@ -389,14 +428,14 @@ Tonspur-Leitfaden:
 </div>
 
 <div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-1">
-  <div class="font-bold text-emerald-950">Alle 3 Bausteine im Code (<code>GptModel</code>)</div>
+  <div class="font-bold text-emerald-950 text-sm">Alle 3 Bausteine im Code (<code>GptModel</code>)</div>
   <div>1. <code>gpt_embedding</code> — Token-ID + Position → Vektor</div>
   <div>2. <code>blocks</code> — <code>N×</code> Transformer-Block hintereinander</div>
   <div>3. <code>output_projection</code> — Vektor → Logits für jedes Vokabular-Token</div>
 </div>
 
 <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 space-y-1">
-  <div class="font-bold text-amber-950">Bauplan (<code>GptModelConfig</code>)</div>
+  <div class="font-bold text-amber-950 text-sm">Bauplan (<code>GptModelConfig</code>)</div>
   <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] leading-snug">
     <div><code>vocab_size</code> — Vokabulargröße</div>
     <div><code>max_context_length</code> — Sichtfenster</div>
@@ -498,10 +537,10 @@ Tonspur-Leitfaden:
   </div>
 </div>
 
-<div class="mt-2.5 space-y-1.5 text-xs leading-snug text-slate-800">
-  <div>• <strong>Punkte (Logits):</strong> 1 Zahl pro Vokabular-Eintrag (<strong>Array-Index = Token-ID</strong>, z. B. <code>#3</code> → „rennt“).</div>
+<div class="mt-2.5 space-y-1 text-sm leading-snug text-slate-800">
+  <div>• <strong>Logits:</strong> 1 Zahl pro Vokabular-Eintrag (<strong>Index = Token-ID</strong>, z. B. <code>#3</code> → „rennt“).</div>
   <div>• <strong>Softmax:</strong> rechnet Rohpunkte in <strong>Prozentanteile (Summe 100 %)</strong> um.</div>
-  <div>• <strong>Token-Wahl:</strong> immer das höchste (<strong>Greedy</strong>, hier „rennt“) oder gewichtet ziehen (<strong>Sampling / Temperatur</strong>).</div>
+  <div>• <strong>Token-Wahl:</strong> höchster Wert (<strong>Greedy</strong>) oder gewichtet ziehen (<strong>Sampling / Temperatur</strong>).</div>
 </div>
 
 </div>
@@ -530,13 +569,13 @@ dafür wäre Softmax rechnerisch gar nicht nötig.
 # Wort anhängen — und wieder von vorn
 
 <div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
-<div>
+<div class="text-sm leading-snug space-y-2.5">
 
-<div class="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1.5">
+<div class="text-xs font-semibold uppercase tracking-wide text-emerald-700">
   Fortsetzung des Beispiels — ein Token pro Durchlauf
 </div>
 
-<div class="my-2.5 p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-2.5 text-xs">
+<div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-2.5 text-xs">
   <div class="flex flex-wrap items-center gap-1 font-mono">
     <span class="font-sans font-bold text-slate-700 mr-1">Runde 1:</span>
     <span class="px-1.5 py-0.5 rounded bg-white border border-slate-300">Der</span>
@@ -584,11 +623,11 @@ Hinweis bei Rückfragen: Praktische Systeme speichern Zwischenergebnisse
 # Wie das Modell lernt
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
-<div>
+<div class="text-sm leading-snug space-y-3">
 
 Übungssatz aus dem Trainingstext: **„Der Hund rennt“**
 
-<div class="my-4 space-y-2 text-sm">
+<div class="space-y-2 text-xs">
   <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong>1. Schätzen:</strong> Eingabe „Der Hund“ → Modell vergibt Punkte.</div>
   <div class="p-2.5 rounded bg-red-50 border border-red-200"><strong>2. Fehler messen (Loss):</strong> Wie weit lag es vom Ziel <strong>„rennt“</strong> weg?</div>
   <div class="p-2.5 rounded bg-red-50 border border-red-200"><strong>3. Anpassen:</strong> Stellschrauben (Gewichte) minimal drehen → Fehler sinkt.</div>
@@ -675,10 +714,10 @@ Tonspur-Leitfaden:
 
 <GradientDescentDiagram />
 
-<div class="mt-2.5 space-y-1.5 text-xs">
-  <div><strong>Welche Funktion?</strong> Die <strong>Fehlerfunktion (Cross-Entropy-Loss)</strong>: <code>Gewichte → Modell → % für „rennt“ → Fehlerzahl</code> (90 % = klein, 5 % = groß).</div>
-  <div><strong>1. Zufallsstart:</strong> Alle Gewichte in den Schichten starten zufällig.</div>
-  <div><strong>2. Richtung (Gradient):</strong> Liefert <strong>Backpropagation</strong> (vorherige Folie) für jedes Gewicht: höher oder tiefer senkt den Fehler?</div>
+<div class="mt-2 space-y-1 text-sm leading-snug">
+  <div><strong>Welche Funktion?</strong> <strong>Cross-Entropy-Loss</strong>: <code>Gewichte → % für „rennt“ → Fehlerzahl</code> (90 % = klein, 5 % = groß).</div>
+  <div><strong>1. Zufallsstart:</strong> Alle Gewichte starten zufällig.</div>
+  <div><strong>2. Richtung (Gradient):</strong> Liefert <strong>Backpropagation</strong> für jedes Gewicht (höher oder tiefer?).</div>
   <div><strong>3. Schritt (Optimizer):</strong> <code class="text-red-800">neu = alt − Lernrate × Gradient</code> — tausendfach wiederholt.</div>
 </div>
 
@@ -722,10 +761,10 @@ auf welcher Funktion?“:
 
 <LossCurveChart />
 
-<div class="text-xs leading-snug space-y-1 mt-1.5">
-  <div>• <strong>Bis Durchlauf 16:</strong> Fehler sinkt bei <strong class="text-blue-700">Übungstext</strong> und <strong class="text-red-700">Prüfungstext</strong> → Modell lernt <strong>echte Sprachmuster</strong>.</div>
-  <div>• <strong>Ab Durchlauf 16:</strong> nur <strong class="text-blue-700">Übungstext</strong> wird besser, <strong class="text-red-700">Prüfung</strong> schlechter → es lernt nur noch <strong>auswendig</strong>.</div>
-  <div>• <strong>Folge:</strong> Wir behalten Stand <strong>16</strong> (beste Prüfung), nicht den letzten Stand 20.</div>
+<div class="text-sm leading-snug space-y-1 mt-1.5">
+  <div>• <strong>Bis Durchlauf 16:</strong> <strong class="text-blue-700">Übung</strong> &amp; <strong class="text-red-700">Prüfung</strong> sinken → echte Muster.</div>
+  <div>• <strong>Ab Durchlauf 16:</strong> <strong class="text-blue-700">Übung</strong> besser, <strong class="text-red-700">Prüfung</strong> schlechter → <strong>Auswendiglernen</strong>.</div>
+  <div>• <strong>Folge:</strong> Stand <strong>16</strong> behalten (beste Prüfung), nicht Stand 20.</div>
 </div>
 
 </div>
@@ -756,11 +795,11 @@ Testdaten.
 # Zwei Speicherstände — zwei Zwecke
 
 <div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-2">
-<div>
+<div class="text-sm leading-snug space-y-3">
 
 Weil Training und Prüfung auseinanderlaufen (Epoche 16 vs. 20), speichern wir **zwei Stände**:
 
-<div class="my-3 space-y-3 text-sm">
+<div class="space-y-3 text-sm">
   <div class="p-3.5 rounded-lg bg-purple-50 border border-purple-200">
     <div class="font-bold text-purple-900"><code>last/</code> — Weitertrainieren (z. B. Epoche 20)</div>
     <div class="text-xs text-slate-700 mt-1">Speichert den letzten Stand inklusive Lernzustand, um später nahtlos weiterzumachen.</div>
@@ -810,10 +849,10 @@ Technische Details bei Rückfragen:
   <div class="leading-snug">.<br /><br />""I to-- to I to I to I to I</div>
 </div>
 
-<div class="space-y-1 text-xs leading-snug">
+<div class="space-y-1.5 text-sm leading-snug">
   <div>• <strong>Was man sieht:</strong> echte englische Wörter statt Zufallssalat — aber schnelle Schleifen (<code>to I to I</code>).</div>
   <div>• <strong>Temperatur:</strong> steuert nur Abwechslung bei der Wortauswahl, <strong>nicht</strong> das Wissen.</div>
-  <div>• <strong>Warum nicht produktiv deployen?</strong> Technisch startbar — aber winziges Modell, wenig Text, <strong>Laptop-Rechenleistung statt GPU-Cluster</strong> und <strong>kein Chat-/Anweisungs-Training</strong> (es setzt nur Text fort, beantwortet keine Fragen).</div>
+  <div>• <strong>Warum nicht produktiv?</strong> Winziges Modell, wenig Text, <strong>Laptop statt GPU-Cluster</strong> und <strong>kein Chat-Training</strong> (setzt nur Text fort, beantwortet keine Fragen).</div>
 </div>
 
 </div>
@@ -887,9 +926,9 @@ zeigen.
 # Was bleibt — und was nicht
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
-<div>
+<div class="text-sm leading-snug space-y-3">
 
-<div class="p-4 rounded-lg bg-slate-100 border border-slate-300 text-base font-bold text-slate-900 mb-4">
+<div class="p-4 rounded-lg bg-slate-100 border border-slate-300 text-base font-bold text-slate-900">
   Ein Sprachmodell lernt Textfortsetzung. Ob seine Antworten verlässlich sind, muss man zusätzlich prüfen.
 </div>
 
@@ -920,15 +959,15 @@ Für eine unabhängige Schlussbewertung wäre ein unberührter Testdatensatz nö
 # Wie es im Buch weitergeht
 
 <div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
-<div>
+<div class="text-sm leading-snug space-y-3">
 
 Bisher umgesetzt: **Kapitel 1–18** (Basismodell bis vollständiger Trainingsablauf).
 
-<div class="mt-4 space-y-2.5 text-sm">
-  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong>Bessere Daten & Tempo:</strong> sauberere Texte, unabhängige Tests, Effizienz</div>
-  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong>Fertiges Wissen laden:</strong> echtes vortrainiertes GPT-2 importieren</div>
-  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong>Eigener Chat:</strong> lokal im Terminal und im Browser</div>
-  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong>Praxis-Einsatz:</strong> eigenes Wissen einbinden (RAG), Feinschliff & Betrieb</div>
+<div class="space-y-2 text-xs">
+  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong class="text-sm">Bessere Daten &amp; Tempo:</strong> sauberere Texte, unabhängige Tests, Effizienz</div>
+  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong class="text-sm">Fertiges Wissen laden:</strong> echtes vortrainiertes GPT-2 importieren</div>
+  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong class="text-sm">Eigener Chat:</strong> lokal im Terminal und im Browser</div>
+  <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong class="text-sm">Praxis-Einsatz:</strong> eigenes Wissen einbinden (RAG), Feinschliff &amp; Betrieb</div>
 </div>
 
 </div>
