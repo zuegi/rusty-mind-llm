@@ -326,6 +326,56 @@ Hinweis bei Rückfragen:
 <PhaseBadge phase="inference" />
 <SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
 
+# Ausgabeschicht: Vom Vektor zu Logits
+
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="space-y-3 text-xs">
+
+Nach den `N×` Transformer-Blöcken haben wir für jedes Token einen angereicherten **Vektor** (`embedding_dim` Zahlen) — aber noch keine Bewertung für das nächste Token.
+
+<div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 space-y-1.5">
+  <div class="font-bold text-indigo-950 text-sm">Ausgabeschicht (<code>output_projection</code>, Linear)</div>
+  <div>• Eine gelernte Matrix rechnet den Vektor (<code>embedding_dim</code>) auf <strong>alle <code>vocab_size</code> Tokens</strong> im Vokabular hoch.</div>
+  <div>• Ergebnis: ein Zahlen-Array mit <strong>1 Rohpunkt (Logit) pro Vokabular-Eintrag</strong> (<code>Array-Index = Token-ID</code>).</div>
+</div>
+
+<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+  <div class="font-mono text-[11px] text-slate-700">
+    Vektor [8] &nbsp;→&nbsp; Linear (8 × 50.257) &nbsp;→&nbsp; Logits [50.257]
+  </div>
+  <div class="text-slate-600">
+    Hoher Wert = passt gut als nächstes Token · tiefer Wert = passt schlecht.
+  </div>
+</div>
+
+<div class="text-slate-700">
+  <strong>Wichtig:</strong> Hier entsteht noch <strong>kein fertiges Wort</strong> und noch keine Auswahl — das Modell bewertet erst alle bekannten Tokens.
+</div>
+
+</div>
+<div>
+  <LlmArchitecture :step="6" hide-inference />
+</div>
+</div>
+
+<!--
+5:00–5:35. Grundlage: Kapitel 7 (crates/model/src/gpt.rs).
+
+Tonspur-Leitfaden:
+- Letzter fehlender Baustein im Modell: Nach N Transformer-Blöcken liegt oben
+  immer noch ein interner Zahlenvektor (embedding_dim, z. B. 8 im Lernprojekt).
+- Die Ausgabeschicht (output_projection, eine einfache Linear-Schicht) projiziert
+  diesen Vektor auf die Größe des gesamten Vokabulars (vocab_size).
+- Ergebnis: Ein Array von Rohpunkten (Logits) — genau eine Zahl pro bekanntem
+  Token, verknüpft über den Array-Index = Token-ID.
+- Damit ist der letzte Baustein im Modell komplett!
+-->
+
+---
+
+<PhaseBadge phase="inference" />
+<SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
+
 # Das komplette GPT-Modell
 
 <div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
@@ -339,88 +389,108 @@ Hinweis bei Rückfragen:
 </div>
 
 <div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-1">
-  <div class="font-bold text-emerald-950">Im Code sind es genau drei Bausteine (<code>GptModel</code>)</div>
+  <div class="font-bold text-emerald-950">Alle 3 Bausteine im Code (<code>GptModel</code>)</div>
   <div>1. <code>gpt_embedding</code> — Token-ID + Position → Vektor</div>
   <div>2. <code>blocks</code> — <code>N×</code> Transformer-Block hintereinander</div>
-  <div>3. <code>output_projection</code> — Vektor → Punkte (<strong>Logits</strong>) für jedes Token im Vokabular</div>
+  <div>3. <code>output_projection</code> — Vektor → Logits für jedes Vokabular-Token</div>
 </div>
 
-<div class="p-2 rounded-lg bg-amber-50 border border-amber-200 leading-snug">
-  <strong class="text-amber-950">Bauplan (<code>GptModelConfig</code>):</strong>
-  <code>vocab_size</code> · <code>max_context_length</code> · <code>embedding_dim</code> · <code>num_heads</code> · <code>num_blocks</code> · <code>dropout</code>
+<div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 space-y-1">
+  <div class="font-bold text-amber-950">Bauplan (<code>GptModelConfig</code>)</div>
+  <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] leading-snug">
+    <div><code>vocab_size</code> — Vokabulargröße</div>
+    <div><code>max_context_length</code> — Sichtfenster</div>
+    <div><code>embedding_dim</code> — Vektorlänge</div>
+    <div><code>num_heads</code> — parallele Heads</div>
+    <div><code>num_blocks</code> — Tiefe (<code>N×</code>)</div>
+    <div><code>dropout</code> — gegen Auswendiglernen</div>
+  </div>
 </div>
 
 </div>
 <div>
-  <LlmArchitecture :step="6" />
+  <LlmArchitecture :step="6" hide-inference highlight-model />
 </div>
 </div>
 
 <!--
-5:00–5:45. Grundlage: Kapitel 7 (crates/model/src/gpt.rs).
+5:35–6:15. Grundlage: Kapitel 7 (crates/model/src/gpt.rs).
 
 Tonspur-Leitfaden:
-- Jetzt schließt sich der Rahmen rechts: Mit der Ausgabeschicht oben drauf
-  haben wir das komplette GptModel — und genau das steckt hinter dem Namen GPT.
+- Jetzt Zoom-out: Der gestrichelte Rahmen rechts ist komplett — alle drei
+  Bausteine sind drin, und genau das steckt hinter dem bekannten Namen GPT.
 - Generative (erzeugt Text), Pre-trained (auf viel Text vortrainiert),
-  Transformer (die Architektur, die wir gerade Baustein für Baustein aufgebaut
+  Transformer (die Architektur, die wir gerade Schritt für Schritt aufgebaut
   haben — als Decoder-only-Variante mit kausaler Maske).
 - Für Entwickler der Aha-Moment: In crates/model/src/gpt.rs hat GptModel genau
-  drei Felder (gpt_embedding, blocks, output_projection) und sechs Stellschrauben
-  in GptModelConfig. Große Modelle wie GPT-2 oder GPT-3 nutzen dasselbe Prinzip,
-  nur mit deutlich größeren Zahlen in dieser Konfiguration.
+  drei Felder und sechs Stellschrauben in GptModelConfig. Große Modelle wie
+  GPT-2 oder GPT-3 nutzen dasselbe Prinzip, nur mit deutlich größeren Zahlen.
 -->
 
 ---
 
 <PhaseBadge phase="inference" />
-<SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
+<SourceFooter chapter="Kap. 7, 16" code="crates/model/src/gpt.rs" />
 
-# Ein nächstes Wort entsteht
+# Ein nächstes Token entsteht
 
 <div class="grid grid-cols-[1.15fr_0.85fr] gap-5 items-center mt-1">
 <div>
 
 <div class="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1.5">
-  Rechenbeispiel: Mini-Wörterbuch mit 5 Wörtern (real: 50.257)
+  Illustratives Beispiel: 5 mögliche Tokens (GPT-2-Tokenizer: 50.257)
 </div>
 
 <div class="flex flex-wrap items-center gap-1.5 text-xs mb-2.5 p-2 rounded bg-slate-50 border border-slate-200">
+  <span class="text-slate-500">Eingabe:</span>
   <span class="font-semibold">„Der Hund“</span>
   <span class="text-slate-400">→</span>
-  <span>Punkte pro Wort</span>
+  <span>Logits</span>
   <span class="text-slate-400">→</span>
-  <span>Softmax (100 %)</span>
+  <span>Softmax</span>
   <span class="text-slate-400">→</span>
+  <span class="text-slate-500">Nächstes Token:</span>
   <span class="font-bold text-emerald-700">„rennt“</span>
 </div>
 
 <div class="my-2.5 space-y-1.5 text-xs">
-  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[24px_72px_54px_1fr_44px] items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 pb-0.5 border-b border-slate-200">
+    <span>ID</span>
+    <span>Vokabular</span>
+    <span>Logit</span>
+    <span>Bewertung aller bekannten Tokens</span>
+    <span class="text-right">Chance</span>
+  </div>
+  <div class="grid grid-cols-[24px_72px_54px_1fr_44px] items-center gap-2">
+    <span class="font-mono text-[11px] text-emerald-700">#3</span>
     <span class="font-bold text-emerald-700">rennt</span>
     <span class="text-slate-500">+2.1 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-emerald-500 rounded" style="width: 51.9%"></div></div>
     <span class="font-bold text-emerald-700 text-right">51.9%</span>
   </div>
-  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[24px_72px_54px_1fr_44px] items-center gap-2">
+    <span class="font-mono text-[11px] text-slate-400">#0</span>
     <span>Der</span>
     <span class="text-slate-500">+1.2 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-400 rounded" style="width: 21.1%"></div></div>
     <span class="text-slate-600 text-right">21.1%</span>
   </div>
-  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[24px_72px_54px_1fr_44px] items-center gap-2">
+    <span class="font-mono text-[11px] text-slate-400">#2</span>
     <span>Katze</span>
     <span class="text-slate-500">+0.8 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-400 rounded" style="width: 14.2%"></div></div>
     <span class="text-slate-600 text-right">14.2%</span>
   </div>
-  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[24px_72px_54px_1fr_44px] items-center gap-2">
+    <span class="font-mono text-[11px] text-slate-400">#4</span>
     <span>.</span>
     <span class="text-slate-500">+0.3 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-400 rounded" style="width: 8.6%"></div></div>
     <span class="text-slate-600 text-right">8.6%</span>
   </div>
-  <div class="grid grid-cols-[54px_54px_1fr_44px] items-center gap-2">
+  <div class="grid grid-cols-[24px_72px_54px_1fr_44px] items-center gap-2">
+    <span class="font-mono text-[11px] text-slate-400">#1</span>
     <span>Hund</span>
     <span class="text-slate-500">-0.4 Pkt</span>
     <div class="h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full bg-slate-300 rounded" style="width: 4.3%"></div></div>
@@ -428,8 +498,11 @@ Tonspur-Leitfaden:
   </div>
 </div>
 
-- **Punkte (Logits):** hoch (`+2.1`) = passt gut, tief (`-0.4`) = passt schlecht.
-- **Softmax:** rechnet Rohpunkte in **Prozentanteile (Summe 100 %)** um.
+<div class="mt-2.5 space-y-1.5 text-xs leading-snug text-slate-800">
+  <div>• <strong>Punkte (Logits):</strong> 1 Zahl pro Vokabular-Eintrag (<strong>Array-Index = Token-ID</strong>, z. B. <code>#3</code> → „rennt“).</div>
+  <div>• <strong>Softmax:</strong> rechnet Rohpunkte in <strong>Prozentanteile (Summe 100 %)</strong> um.</div>
+  <div>• <strong>Token-Wahl:</strong> immer das höchste (<strong>Greedy</strong>, hier „rennt“) oder gewichtet ziehen (<strong>Sampling / Temperatur</strong>).</div>
+</div>
 
 </div>
 <div>

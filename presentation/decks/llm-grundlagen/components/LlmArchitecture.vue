@@ -14,9 +14,13 @@ const arrowRedUrl = `url(#${arrowRedId})`
 const props = withDefaults(
   defineProps<{
     step: number
+    hideInference?: boolean
+    highlightModel?: boolean
   }>(),
   {
     step: 13,
+    hideInference: false,
+    highlightModel: false,
   },
 )
 
@@ -29,15 +33,21 @@ const svgWidth = () => (isCompact() ? 268 : 434)
 
 const show = (minStep: number) => props.step >= minStep
 
-const isActive = (steps: number[]) => isOverview() || steps.includes(props.step)
+const isModelPart = (steps: number[]) =>
+  steps.some((s) => s >= 3 && s <= 6) && !steps.includes(2) && !steps.includes(7)
+
+const isActive = (steps: number[]) =>
+  isOverview() ||
+  steps.includes(props.step) ||
+  (props.highlightModel && isModelPart(steps))
 
 const opacityFor = (steps: number[]) => (isActive(steps) ? 1 : 0.48)
 
 const strokeWidthFor = (steps: number[]) =>
-  !isOverview() && steps.includes(props.step) ? 2.4 : 1.3
+  !isOverview() && !props.highlightModel && steps.includes(props.step) ? 2.4 : 1.3
 
 const activeClassFor = (steps: number[]) =>
-  isActive(steps) && !isOverview() ? 'active-glow' : undefined
+  !props.highlightModel && isActive(steps) && !isOverview() ? 'active-glow' : undefined
 </script>
 
 <template>
@@ -125,9 +135,9 @@ const activeClassFor = (steps: number[]) =>
           width="228"
           height="390"
           rx="12"
-          :fill="step === 9 ? '#fff5f5' : '#ffffff'"
-          :stroke="step === 9 ? '#dc2626' : '#475569'"
-          :stroke-width="step === 9 ? 2.2 : 1.5"
+          :fill="step === 9 ? '#fff5f5' : props.highlightModel ? '#f0fdf4' : '#ffffff'"
+          :stroke="step === 9 ? '#dc2626' : props.highlightModel ? '#059669' : '#475569'"
+          :stroke-width="step === 9 || props.highlightModel ? 2.2 : 1.5"
           stroke-dasharray="6 4"
         />
         <text
@@ -135,9 +145,15 @@ const activeClassFor = (steps: number[]) =>
           y="91"
           text-anchor="end"
           class="t-badge"
-          :fill="step === 9 ? '#b91c1c' : '#475569'"
+          :fill="step === 9 ? '#b91c1c' : props.highlightModel ? '#065f46' : '#475569'"
         >
-          {{ step === 9 ? 'GptModel (Gewichte ändern)' : 'GptModel (Kern)' }}
+          {{
+            step === 9
+              ? 'GptModel (Gewichte ändern)'
+              : props.highlightModel
+                ? 'GptModel (Kern) — komplett'
+                : 'GptModel (Kern)'
+          }}
         </text>
 
         <!-- STEP 2: Tokenizer (outside) -->
@@ -334,7 +350,7 @@ const activeClassFor = (steps: number[]) =>
 
         <!-- STEP 6, 7 & 12: Inferenz (outside, top) -->
         <g
-          v-if="show(6)"
+          v-if="show(6) && !props.hideInference"
           :opacity="opacityFor([6, 7, 12])"
           :class="activeClassFor([6, 7, 12])"
         >
