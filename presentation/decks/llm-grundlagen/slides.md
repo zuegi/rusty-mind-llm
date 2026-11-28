@@ -46,11 +46,10 @@ layout: default
 ---
 
 # Vom Text zum kleinen Sprachmodell
+<div class="text-sm text-slate-500 -mt-3 mb-1">Wie ein Sprachmodell Schritt für Schritt Text fortsetzt — ohne fertige Sätze nachzuschlagen.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center">
 <div class="text-sm leading-snug space-y-3">
-
-Wie ein Sprachmodell Schritt für Schritt Text fortsetzt
 
 <div class="p-4 rounded-lg bg-slate-100 border border-slate-300">
   <div class="text-xs uppercase tracking-wide text-slate-500">Einstiegsfrage</div>
@@ -88,11 +87,10 @@ Lernziel: nächste Wort-/Tokenvorhersage, Lernen und Grenzen der Auswertung vers
 <SourceFooter chapter="Kap. 2" code="crates/training/src/tokenizer.rs" />
 
 # Schritt 1: Text in Token und Nummern
+<div class="text-sm text-slate-500 -mt-3 mb-1">Computer können nur rechnen — der Tokenizer übersetzt Text zuerst in Tokens und Nummern (IDs).</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-2">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center">
 <div class="text-sm leading-snug space-y-3">
-
-Computer können nur rechnen — nicht lesen.
 
 <div class="my-4 flex items-center gap-2 text-xs font-mono">
   <span class="px-3 py-1.5 rounded bg-slate-100 border border-slate-300">„Der Hund“</span>
@@ -127,11 +125,10 @@ Wichtig: Tokenizer und Sprachmodell sind getrennte Bausteine.
 <SourceFooter chapter="Kap. 3" code="crates/model/src/embedding.rs" />
 
 # Schritt 2: Jedes Token wird zum Vektor
+<div class="text-sm text-slate-500 -mt-3 mb-1">Aus jeder Token-ID plus ihrer Position entsteht ein Zahlenvektor, mit dem das Modell rechnen kann.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center mt-1">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-6 items-center">
 <div class="text-sm leading-snug space-y-2.5">
-
-Aus jeder Token-ID wird ein **Embedding-Vektor** (feste Zahlenliste der Länge `embedding_dim`):
 
 <div class="p-3 rounded-lg bg-pink-50 border border-pink-200 text-xs space-y-1.5 font-mono">
   <div class="text-[10px] font-sans font-semibold uppercase tracking-wide text-pink-800">Token-ID → Embedding-Vektor + Positions-Vektor</div>
@@ -165,8 +162,9 @@ Im Projekt sind sowohl Token- als auch Positions-Embeddings lernbar.
 <SourceFooter chapter="Kap. 4–5" code="crates/model/src/attention.rs" />
 
 # Masked Attention: Wer gehört zu wem?
+<div class="text-sm text-slate-500 -mt-3 mb-1">Jedes Token gewichtet frühere Tokens im Satz, um Zusammenhänge zu erkennen — ohne vorzuspicken.</div>
 
-<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-2.5">
 
 <div class="text-xs font-semibold uppercase tracking-wide text-indigo-700">
@@ -220,8 +218,9 @@ Attention-Messung aus dem Modell). Keine Q/K/V-Formeln im Hauptteil.
 <SourceFooter chapter="Kap. 5" code="crates/model/src/attention.rs" />
 
 # Multi-Head Attention: Warum parallel?
+<div class="text-sm text-slate-500 -mt-3 mb-1">Mehrere Heads und alle Tokens laufen parallel — das bringt GPUs auf Tempo.</div>
 
-<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center">
 <div class="space-y-2 text-sm leading-snug">
 
 - **Aufteilen statt verdoppeln:** `embedding_dim` wird durch `num_heads` geteilt (`head_dim = embedding_dim / num_heads`) — am Ende wieder zusammengefügt → **gleiche Länge**.
@@ -271,8 +270,9 @@ Tonspur-Leitfaden:
 <SourceFooter chapter="Kap. 6" code="crates/model/src/layer_norm.rs · feed_forward.rs" />
 
 # LayerNorm & Feed-Forward im Detail
+<div class="text-sm text-slate-500 -mt-3 mb-1">LayerNorm hält die Zahlenwerte stabil, Feed-Forward verarbeitet die Hinweise für jedes Token einzeln.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-2.5">
 
 <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs space-y-1">
@@ -319,11 +319,10 @@ Tonspur-Leitfaden:
 <SourceFooter chapter="Kap. 6–7" code="crates/model/src/transformer_block.rs" />
 
 # Abkürzung (+) & N× Blöcke stapeln
+<div class="text-sm text-slate-500 -mt-3 mb-1">Abkürzungen (+) verhindern Vergessen und ermöglichen viele gestapelte Transformer-Blöcke.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-3">
-
-Damit tiefe Modelle überhaupt trainierbar sind, braucht jeder Block noch eine **Abkürzung** — und wird **mehrfach gestapelt**:
 
 <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
   <div class="font-bold text-slate-900 text-sm">+ (Abkürzung / Residual Connection)</div>
@@ -366,11 +365,10 @@ Tonspur-Leitfaden:
 <SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
 
 # Ausgabeschicht: Vom Vektor zu Logits
+<div class="text-sm text-slate-500 -mt-3 mb-1">Die Ausgabeschicht übersetzt den internen Token-Vektor in Rohpunkte (Logits) für jedes bekannte Vokabular-Token.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-3">
-
-Nach den `N×` Transformer-Blöcken haben wir für jedes Token einen angereicherten **Vektor** (`embedding_dim` Zahlen) — aber noch keine Bewertung für das nächste Token.
 
 <div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-xs space-y-1.5">
   <div class="font-bold text-indigo-950 text-sm">Ausgabeschicht (<code>output_projection</code>, Linear)</div>
@@ -416,8 +414,9 @@ Tonspur-Leitfaden:
 <SourceFooter chapter="Kap. 7" code="crates/model/src/gpt.rs" />
 
 # Das komplette GPT-Modell
+<div class="text-sm text-slate-500 -mt-3 mb-1">Alle drei Bausteine zusammen bilden ein komplettes GPT-Modell — konfiguriert über sechs Kennzahlen.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div class="space-y-2.5 text-xs">
 
 <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
@@ -435,7 +434,7 @@ Tonspur-Leitfaden:
 </div>
 
 <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 space-y-1">
-  <div class="font-bold text-amber-950 text-sm">Bauplan (<code>GptModelConfig</code>)</div>
+  <div class="font-bold text-amber-950 text-sm">Bauplan (<code>GptModelConfig</code>) → Parameterzahl</div>
   <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] leading-snug">
     <div><code>vocab_size</code> — Vokabulargröße</div>
     <div><code>max_context_length</code> — Sichtfenster</div>
@@ -443,6 +442,14 @@ Tonspur-Leitfaden:
     <div><code>num_heads</code> — parallele Heads</div>
     <div><code>num_blocks</code> — Tiefe (<code>N×</code>)</div>
     <div><code>dropout</code> — gegen Auswendiglernen</div>
+  </div>
+  <div class="pt-1 mt-1 border-t border-amber-200/80 text-[11px] leading-snug text-amber-950">
+    <strong>Parameter = alle lernbaren Zahlen</strong> in den Matrizen der 3 Bausteine (wachsen mit <code>embedding_dim²</code> × <code>num_blocks</code>):
+    <div class="text-[11px] mt-0.5 flex justify-between gap-2">
+      <span class="whitespace-nowrap"><strong>rusty-mind-llm</strong> (8, 1×): <strong>~0,8 Mio.</strong></span>
+      <span class="whitespace-nowrap"><strong>GPT-2</strong> (768, 12×): <strong>124 Mio.</strong></span>
+      <span class="whitespace-nowrap"><strong>Große LLMs</strong>: <strong>Mrd.–Bio.</strong></span>
+    </div>
   </div>
 </div>
 
@@ -453,7 +460,7 @@ Tonspur-Leitfaden:
 </div>
 
 <!--
-5:35–6:15. Grundlage: Kapitel 7 (crates/model/src/gpt.rs).
+5:35–6:15. Grundlage: Kapitel 7 (crates/model/src/gpt.rs) & Kapitel 18.
 
 Tonspur-Leitfaden:
 - Jetzt Zoom-out: Der gestrichelte Rahmen rechts ist komplett — alle drei
@@ -462,8 +469,15 @@ Tonspur-Leitfaden:
   Transformer (die Architektur, die wir gerade Schritt für Schritt aufgebaut
   haben — als Decoder-only-Variante mit kausaler Maske).
 - Für Entwickler der Aha-Moment: In crates/model/src/gpt.rs hat GptModel genau
-  drei Felder und sechs Stellschrauben in GptModelConfig. Große Modelle wie
-  GPT-2 oder GPT-3 nutzen dasselbe Prinzip, nur mit deutlich größeren Zahlen.
+  drei Felder und sechs Stellschrauben in GptModelConfig.
+- Zur häufigen Frage „Woher kommen Millionen/Milliarden/Billionen Parameter?“:
+  Jede einzelne Zahl in den Tabellen und Matrizen der 3 Bausteine ist ein
+  lernbarer Parameter (Gewicht). Schon unser winziges ch18-Modell
+  (vocab 50.257, dim 8, 1 Block) hat exakt 805.016 (~0,8 Mio.) Parameter:
+  402.056 Token-Embedding + 64 Positions-Embedding + 840 im Transformer-Block
+  + 402.056 Ausgabeschicht. Bei GPT-2 (dim 768, 12 Blöcke, Weight Tying) sind
+  es 124 Mio., bei modernen Frontier-LLMs dutzende Milliarden bis über eine
+  Billion — gleiches Prinzip, nur deutlich größere Matrizen und mehr Blöcke.
 -->
 
 ---
@@ -472,8 +486,9 @@ Tonspur-Leitfaden:
 <SourceFooter chapter="Kap. 7, 16" code="crates/model/src/gpt.rs" />
 
 # Ein nächstes Token entsteht
+<div class="text-sm text-slate-500 -mt-3 mb-1">Aus Rohpunkten (Logits) werden per Softmax Wahrscheinlichkeiten — daraus wählt Decoding das nächste Token.</div>
 
-<div class="grid grid-cols-[1.15fr_0.85fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.15fr_0.85fr] gap-5 items-center">
 <div>
 
 <div class="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1.5">
@@ -567,8 +582,9 @@ dafür wäre Softmax rechnerisch gar nicht nötig.
 <SourceFooter chapter="Kap. 11 & 16" code="crates/training/src/generation.rs" />
 
 # Wort anhängen — und wieder von vorn
+<div class="text-sm text-slate-500 -mt-3 mb-1">Das gewählte Token wird angehängt und der gesamte Durchlauf startet neu — mit eingefrorenen Gewichten.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-2.5">
 
 <div class="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -621,8 +637,9 @@ Hinweis bei Rückfragen: Praktische Systeme speichern Zwischenergebnisse
 <SourceFooter chapter="Kap. 8 & 12" code="crates/training/src/step.rs" />
 
 # Wie das Modell lernt
+<div class="text-sm text-slate-500 -mt-3 mb-1">Beim Training vergleicht das Modell seine Vorhersage mit dem echten nächsten Token und korrigiert Gewichte.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-3">
 
 Übungssatz aus dem Trainingstext: **„Der Hund rennt“**
@@ -656,11 +673,10 @@ wären sprachlich oft genauso sinnvoll.
 <SourceFooter chapter="Kap. 8 & Exkurs Ableitungen" code="crates/training/src/step.rs" />
 
 # Backpropagation: Wer hatte Anteil am Fehler?
+<div class="text-sm text-slate-500 -mt-3 mb-1">Backpropagation rechnet eine einzelne Fehlerzahl (Loss) rückwärts auf jedes einzelne Gewicht herunter.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-2.5">
-
-Ein Modell hat Millionen Gewichte in vielen Schichten — am Ende steht aber nur **eine einzige Fehlerzahl (Loss)**.
 
 <div class="space-y-2 text-xs">
   <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
@@ -704,8 +720,9 @@ Tonspur-Leitfaden:
 <SourceFooter chapter="Kap. 8 & Exkurs Ableitungen" code="crates/training/src/loss.rs" />
 
 # Wie werden Gewichte angepasst?
+<div class="text-sm text-slate-500 -mt-3 mb-1">Der Optimizer verschiebt jedes Gewicht in kleinen Schritten bergab Richtung kleinerem Fehler.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div>
 
 <div class="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1.5">
@@ -751,12 +768,13 @@ auf welcher Funktion?“:
 <SourceFooter chapter="Kap. 9 & 13" code="crates/training/src/runner.rs" />
 
 # Lernen oder Auswendiglernen?
+<div class="text-sm text-slate-500 -mt-3 mb-1">Prüfungstexte zeigen, ob das Modell echte Muster lernt oder nur Übungstexte auswendig paukt.</div>
 
-<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.12fr_0.88fr] gap-5 items-center">
 <div>
 
-<div class="p-2 rounded bg-cyan-50 border border-cyan-200 text-xs leading-snug mb-1.5">
-  <strong>Wie bei einer Schulprüfung:</strong> Wer nur Übungsaufgaben paukt, scheitert an neuen Aufgaben. Deshalb legen wir Prüfungstexte <strong>beiseite</strong>. <span class="text-cyan-900"><strong>1 Epoche</strong> = 1× alle Übungstexte komplett durchgelernt.</span>
+<div class="p-1.5 px-2.5 rounded bg-cyan-50 border border-cyan-200 text-xs leading-snug mb-1">
+  <strong>Schulprüfung-Prinzip:</strong> Prüfungstexte bleiben fürs Lernen <strong>beiseite</strong>. <span class="text-cyan-900"><strong>1 Epoche</strong> = 1× alle Übungstexte durch.</span>
 </div>
 
 <LossCurveChart />
@@ -793,11 +811,10 @@ Testdaten.
 <SourceFooter chapter="Kap. 17–18" code="crates/training/src/checkpoint.rs" />
 
 # Zwei Speicherstände — zwei Zwecke
+<div class="text-sm text-slate-500 -mt-3 mb-1">Weil Training und Prüfung auseinanderlaufen, speichern wir last/ zum Weiterlernen und best/ zum Anwenden.</div>
 
-<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-3">
-
-Weil Training und Prüfung auseinanderlaufen (Epoche 16 vs. 20), speichern wir **zwei Stände**:
 
 <div class="space-y-3 text-sm">
   <div class="p-3.5 rounded-lg bg-purple-50 border border-purple-200">
@@ -834,8 +851,9 @@ Technische Details bei Rückfragen:
 <SourceFooter chapter="Kap. 12 & 16" code="crates/training/src/sampling.rs" />
 
 # Was unser kleines Modell wirklich schreibt
+<div class="text-sm text-slate-500 -mt-3 mb-1">Der Ablauf funktioniert End-to-End — doch ohne Größe, Daten und Chat-Training bleiben die Texte simpel.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-1">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center">
 <div>
 
 <div class="text-xs font-semibold uppercase tracking-wide text-emerald-800 mb-1">
@@ -880,8 +898,9 @@ bessere Texte noch korrekte Fakten.
 <SourceFooter chapter="Kap. 10–18" code="crates/model + crates/training" />
 
 # Vier Begriffe klar getrennt
+<div class="text-sm text-slate-500 -mt-3 mb-1">Modell, Training, Validierung und Inferenz haben im Ablauf vier sauber getrennte Rollen.</div>
 
-<div class="grid grid-cols-[1.05fr_0.95fr] gap-4 items-center mt-2">
+<div class="grid grid-cols-[1.05fr_0.95fr] gap-4 items-center">
 <div>
 
 <table class="w-full text-xs border-collapse">
@@ -924,8 +943,9 @@ zeigen.
 <SourceFooter chapter="Kap. 1–18" />
 
 # Was bleibt — und was nicht
+<div class="text-sm text-slate-500 -mt-3 mb-1">Ein Sprachmodell ist kein Zauber, sondern nachvollziehbare Mechanik — mit klaren Grenzen.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-3">
 
 <div class="p-4 rounded-lg bg-slate-100 border border-slate-300 text-base font-bold text-slate-900">
@@ -957,11 +977,10 @@ Für eine unabhängige Schlussbewertung wäre ein unberührter Testdatensatz nö
 <SourceFooter chapter="Ausblick Kap. 19–28" />
 
 # Wie es im Buch weitergeht
+<div class="text-sm text-slate-500 -mt-3 mb-1">Nach dem Basismodell (Kapitel 1–18) folgen im Buch Datenqualität, GPT-2-Import, Chat und Praxis-Einsatz.</div>
 
-<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center mt-2">
+<div class="grid grid-cols-[1.1fr_0.9fr] gap-5 items-center">
 <div class="text-sm leading-snug space-y-3">
-
-Bisher umgesetzt: **Kapitel 1–18** (Basismodell bis vollständiger Trainingsablauf).
 
 <div class="space-y-2 text-xs">
   <div class="p-2.5 rounded bg-slate-50 border border-slate-200"><strong class="text-sm">Bessere Daten &amp; Tempo:</strong> sauberere Texte, unabhängige Tests, Effizienz</div>
@@ -988,25 +1007,37 @@ noch nicht umgesetzt):
 -->
 
 ---
-layout: center
+layout: default
+class: flex items-center text-left !bg-cover !bg-center
+style: "background-image: url('/cover-bg.svg')"
 ---
 
-# Fragen & Diskussion
-
-Was verändert sich beim **Training** — und was bei der **Anwendung (Inferenz)**?
-
-<div class="mt-6 flex items-center justify-center gap-6">
-  <div class="p-2 bg-white rounded-lg border border-slate-200 shadow-sm text-center">
-    <img src="/book-qr.svg" alt="QR-Code zum begleitenden Buch" class="w-28 h-28 block mx-auto" />
-    <div class="text-[10px] text-slate-500 mt-1">Buch öffnen</div>
+<div class="max-w-xl">
+  <div class="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-orange-100 text-orange-800 border border-orange-300 mb-4">
+    Vielen Dank · Fragen &amp; Diskussion
   </div>
-  <div class="text-left text-sm text-slate-600 space-y-1.5">
-    <div><strong>Projekt & Code:</strong><br /><code>https://github.com/zuegi/rusty-mind-llm</code></div>
-    <div><strong>Begleitendes Buch:</strong><br /><code>https://zuegi.github.io/rusty-mind-llm/</code></div>
+
+  <h1 class="!text-5xl !font-bold !text-slate-900 !leading-tight !mb-3">
+    rusty-mind-llm
+  </h1>
+
+  <p class="!text-xl !text-slate-600 !font-normal !leading-snug !mt-0 !mb-6">
+    Vom Text zum kleinen Sprachmodell —<br />
+    wie ein LLM lernt, bewertet wird und wo seine Grenzen liegen
+  </p>
+
+  <div class="flex items-center gap-5">
+    <div class="p-2 bg-white rounded-lg border border-slate-200 shadow-sm text-center shrink-0">
+      <img src="/book-qr.svg" alt="QR-Code zum begleitenden Buch" class="w-24 h-24 block mx-auto" />
+      <div class="text-[10px] text-slate-500 mt-1">Buch öffnen</div>
+    </div>
+    <div class="text-left text-sm text-slate-700 space-y-1.5">
+      <div class="font-semibold text-slate-900">René Weishaupt</div>
+      <div class="text-xs"><strong>Projekt &amp; Code:</strong> <code class="text-orange-700">github.com/zuegi/rusty-mind-llm</code></div>
+      <div class="text-xs"><strong>Begleitendes Buch:</strong> <code class="text-orange-700">zuegi.github.io/rusty-mind-llm</code></div>
+    </div>
   </div>
 </div>
-
-<div class="mt-5 text-xs text-slate-500">18 Minuten Vortrag · 2 Minuten Fragen</div>
 
 <!--
 18:00–20:00.

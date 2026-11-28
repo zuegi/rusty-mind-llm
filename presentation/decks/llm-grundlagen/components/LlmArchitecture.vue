@@ -41,6 +41,12 @@ const isActive = (steps: number[]) =>
   steps.includes(props.step) ||
   (props.highlightModel && isModelPart(steps))
 
+const isOutputActive = () =>
+  isOverview() ||
+  props.step === 12 ||
+  props.highlightModel ||
+  (props.step === 6 && props.hideInference)
+
 const opacityFor = (steps: number[]) => (isActive(steps) ? 1 : 0.48)
 
 const strokeWidthFor = (steps: number[]) =>
@@ -176,12 +182,25 @@ const activeClassFor = (steps: number[]) =>
           <line x1="138" y1="484" x2="138" y2="456" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
         </g>
 
-        <!-- STEP 3: Token Embedding + Positional Embedding -->
+        <!-- STEP 3: GptEmbedding (Token Embedding + Positional Embedding) -->
         <g
           v-if="show(3)"
           :opacity="opacityFor([3, 12])"
           :class="activeClassFor([3])"
         >
+          <rect
+            x="36"
+            y="372"
+            width="204"
+            height="86"
+            rx="10"
+            fill="#fdf2f8"
+            fill-opacity="0.45"
+            stroke="#94a3b8"
+            :stroke-width="strokeWidthFor([3])"
+          />
+          <text x="44" y="387" text-anchor="start" class="t-badge" fill="#334155">GptEmbedding</text>
+
           <rect
             x="44"
             y="418"
@@ -203,18 +222,18 @@ const activeClassFor = (steps: number[]) =>
 
           <!-- Positional Embedding Box -->
           <rect
-            x="160"
+            x="156"
             y="377"
-            width="78"
+            width="76"
             height="26"
             rx="6"
             fill="#f3f4f6"
             stroke="#6b7280"
             :stroke-width="strokeWidthFor([3])"
           />
-          <text x="199" y="388" text-anchor="middle" class="t-tiny" fill="#1f2937">Positions-</text>
-          <text x="199" y="399" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
-          <line x1="160" y1="390" x2="151" y2="390" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+          <text x="194" y="388" text-anchor="middle" class="t-tiny" fill="#1f2937">Positions-</text>
+          <text x="194" y="399" text-anchor="middle" class="t-tiny" fill="#1f2937">Embedding</text>
+          <line x1="156" y1="390" x2="150" y2="390" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
         </g>
 
         <!-- STEP 4 & 5: N× Transformer-Block (Attention on step 4, full block on step 5) -->
@@ -227,15 +246,15 @@ const activeClassFor = (steps: number[]) =>
           >
             <rect
               x="36"
-              y="162"
+              y="148"
               width="204"
-              height="206"
+              height="204"
               rx="10"
               fill="#f8fafc"
               stroke="#94a3b8"
               :stroke-width="strokeWidthFor([5])"
             />
-            <text x="238" y="156" text-anchor="end" class="t-badge" fill="#334155">N× Transformer-Block</text>
+            <text x="240" y="144" text-anchor="end" class="t-badge" style="font-size: 8.5px" fill="#334155">N× Transformer-Block</text>
           </g>
 
           <!-- Entry arrow into block -->
@@ -243,7 +262,7 @@ const activeClassFor = (steps: number[]) =>
             x1="138"
             y1="380"
             x2="138"
-            :y2="show(5) ? 362 : 325"
+            :y2="show(5) ? 344 : 311"
             stroke="#475569"
             stroke-width="1.6"
             :marker-end="arrowDarkUrl"
@@ -256,9 +275,9 @@ const activeClassFor = (steps: number[]) =>
             :opacity="opacityFor([5, 12])"
             :class="activeClassFor([5])"
           >
-            <rect x="56" y="333" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
-            <text x="132" y="348" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
-            <line x1="132" y1="333" x2="132" y2="324" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <rect x="56" y="319" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
+            <text x="132" y="334" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
+            <line x1="132" y1="319" x2="132" y2="310" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
           </g>
 
           <!-- Masked Multi-Head Attention — step 4 -->
@@ -268,7 +287,7 @@ const activeClassFor = (steps: number[]) =>
           >
             <rect
               x="56"
-              y="291"
+              y="277"
               width="152"
               height="30"
               rx="6"
@@ -276,8 +295,8 @@ const activeClassFor = (steps: number[]) =>
               stroke="#ea580c"
               :stroke-width="strokeWidthFor([4])"
             />
-            <text x="132" y="304" text-anchor="middle" class="t-small" fill="#7c2d12">Masked Multi-Head</text>
-            <text x="132" y="316" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (Token-Bezüge)</text>
+            <text x="132" y="290" text-anchor="middle" class="t-small" fill="#7c2d12">Masked Multi-Head</text>
+            <text x="132" y="302" text-anchor="middle" class="t-tiny" fill="#9a3412">Attention (Token-Bezüge)</text>
           </g>
 
           <!-- Rest of Transformer-Block: Residual 1, LayerNorm 2, Feed-Forward, Residual 2 — step 5 -->
@@ -286,39 +305,39 @@ const activeClassFor = (steps: number[]) =>
             :opacity="opacityFor([5, 12])"
             :class="activeClassFor([5])"
           >
-            <line x1="132" y1="291" x2="132" y2="283" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <line x1="132" y1="277" x2="132" y2="269" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Residual Add 1 -->
-            <circle cx="132" cy="273" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
-            <text x="132" y="277" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
+            <circle cx="132" cy="259" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
+            <text x="132" y="263" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
             <!-- Residual Bypass 1 -->
             <path
-              d="M 138 362 L 224 362 L 224 273 L 143 273"
+              d="M 138 347 L 224 347 L 224 259 L 143 259"
               fill="none"
               stroke="#64748b"
               stroke-width="1.3"
               :marker-end="arrowDarkUrl"
             />
 
-            <line x1="132" y1="265" x2="132" y2="257" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <line x1="132" y1="251" x2="132" y2="243" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- LayerNorm 2 (Pre-LN) -->
-            <rect x="56" y="232" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
-            <text x="132" y="247" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
-            <line x1="132" y1="232" x2="132" y2="223" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <rect x="56" y="218" width="152" height="22" rx="6" fill="#fef9c3" stroke="#ca8a04" :stroke-width="strokeWidthFor([5])" />
+            <text x="132" y="233" text-anchor="middle" class="t-small" fill="#713f12">LayerNorm</text>
+            <line x1="132" y1="218" x2="132" y2="209" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Feed-Forward -->
-            <rect x="56" y="193" width="152" height="27" rx="6" fill="#e0f2fe" stroke="#0284c7" :stroke-width="strokeWidthFor([5])" />
-            <text x="132" y="205" text-anchor="middle" class="t-small" fill="#0c4a6e">Feed-Forward</text>
-            <text x="132" y="216" text-anchor="middle" class="t-tiny" fill="#0369a1">pro Token verarbeiten</text>
-            <line x1="132" y1="193" x2="132" y2="186" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
+            <rect x="56" y="179" width="152" height="27" rx="6" fill="#e0f2fe" stroke="#0284c7" :stroke-width="strokeWidthFor([5])" />
+            <text x="132" y="191" text-anchor="middle" class="t-small" fill="#0c4a6e">Feed-Forward</text>
+            <text x="132" y="202" text-anchor="middle" class="t-tiny" fill="#0369a1">pro Token verarbeiten</text>
+            <line x1="132" y1="179" x2="132" y2="172" stroke="#475569" stroke-width="1.4" :marker-end="arrowDarkUrl" />
 
             <!-- Residual Add 2 -->
-            <circle cx="132" cy="176" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
-            <text x="132" y="180" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
+            <circle cx="132" cy="162" r="8" fill="#ffffff" stroke="#475569" stroke-width="1.4" />
+            <text x="132" y="166" text-anchor="middle" class="t-plus-sm" fill="#0f172a">+</text>
             <!-- Residual Bypass 2 -->
             <path
-              d="M 132 260 L 224 260 L 224 176 L 143 176"
+              d="M 132 246 L 224 246 L 224 162 L 143 162"
               fill="none"
               stroke="#64748b"
               stroke-width="1.3"
@@ -330,10 +349,10 @@ const activeClassFor = (steps: number[]) =>
         <!-- STEP 6: Ausgabeschicht (Linear) -> Punkte (Logits) -->
         <g
           v-if="show(6)"
-          :opacity="opacityFor([6, 12])"
-          :class="activeClassFor([6])"
+          :opacity="isOutputActive() ? 1 : 0.48"
+          :class="!props.highlightModel && isOutputActive() && !isOverview() ? 'active-glow' : undefined"
         >
-          <line x1="132" y1="168" x2="132" y2="132" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
+          <line x1="132" y1="154" x2="132" y2="132" stroke="#475569" stroke-width="1.6" :marker-end="arrowDarkUrl" />
           <rect
             x="44"
             y="98"
@@ -342,7 +361,7 @@ const activeClassFor = (steps: number[]) =>
             rx="7"
             fill="#e0e7ff"
             stroke="#4f46e5"
-            :stroke-width="strokeWidthFor([6])"
+            :stroke-width="!isOverview() && !props.highlightModel && props.step === 6 && props.hideInference ? 2.4 : 1.3"
           />
           <text x="138" y="111" text-anchor="middle" class="t-small" fill="#312e81">Ausgabeschicht (Linear)</text>
           <text x="138" y="123" text-anchor="middle" class="t-tiny" fill="#4338ca">→ Punkte pro Token (Logits)</text>
@@ -365,9 +384,9 @@ const activeClassFor = (steps: number[]) =>
             stroke="#059669"
             :stroke-width="strokeWidthFor([6, 7, 12])"
           />
-          <text x="138" y="29" text-anchor="middle" class="t-title" fill="#065f46">Inferenz (außerhalb)</text>
-          <text x="138" y="44" text-anchor="middle" class="t-sub" fill="#047857">Softmax (100 %) · Token-Wahl</text>
-          <text v-if="show(7)" x="138" y="55" text-anchor="middle" class="t-tiny" fill="#065f46">Token anhängen → neu berechnen</text>
+          <text x="138" y="29" text-anchor="middle" class="t-small" fill="#065f46">Decoding / Token-Wahl (außerhalb)</text>
+          <text x="138" y="43" text-anchor="middle" class="t-tiny" fill="#047857">Softmax (100 %) · Greedy / Sampling</text>
+          <text v-if="show(7)" x="138" y="54" text-anchor="middle" class="t-tiny" fill="#065f46">Token anhängen → neu berechnen</text>
         </g>
 
         <!-- STEP 7 & 12: Autoregressive feedback loop along far left -->
@@ -546,13 +565,15 @@ const activeClassFor = (steps: number[]) =>
 
 .llm-arch-svg {
   width: 100%;
-  max-width: 353px;
+  max-width: 324px;
+  max-height: 396px;
   height: auto;
   display: block;
 }
 
 .llm-arch-svg--compact {
-  max-width: 218px;
+  max-width: 198px;
+  max-height: 396px;
   font-family: Arial, sans-serif;
 }
 
