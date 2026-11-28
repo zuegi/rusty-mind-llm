@@ -268,21 +268,21 @@ Tonspur-Leitfaden:
 ---
 
 <PhaseBadge phase="inference" />
-<SourceFooter chapter="Kap. 6" code="crates/model/src/transformer_block.rs" />
+<SourceFooter chapter="Kap. 6–7" code="crates/model/src/transformer_block.rs" />
 
 # Verarbeiten, stabil halten, wiederholen
 
 <div class="grid grid-cols-[1.05fr_0.95fr] gap-5 items-center mt-1">
 <div>
 
-Nach dem Austausch zwischen den Wörtern folgen im Block noch drei Bausteine:
+Im Block arbeiten neben Attention drei weitere Bausteine:
 
 <div class="my-2.5 space-y-1.5 text-xs">
-  <div class="p-2 rounded-lg bg-sky-50 border border-sky-200">
-    <strong class="text-sky-900">Feed-Forward:</strong> jedes Wort verarbeitet seinen neuen Kontext <strong>einzeln</strong> weiter — wie eine eigene kleine Recheneinheit pro Position.
-  </div>
   <div class="p-2 rounded-lg bg-amber-50 border border-amber-200">
-    <strong class="text-amber-900">LayerNorm:</strong> hält alle Zahlenwerte in einem gesunden Bereich, damit nichts nach oben oder unten ausbricht.
+    <strong class="text-amber-900">LayerNorm:</strong> läuft <strong>vor</strong> Attention und Feed-Forward und hält alle Zahlenwerte in einem gesunden Bereich, damit nichts ausbricht.
+  </div>
+  <div class="p-2 rounded-lg bg-sky-50 border border-sky-200">
+    <strong class="text-sky-900">Feed-Forward:</strong> jedes Token verarbeitet seinen neuen Kontext <strong>einzeln</strong> weiter — wie eine eigene kleine Recheneinheit pro Position.
   </div>
   <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
     <strong class="text-slate-900">+ (Abkürzung / Residual):</strong> addiert den vorherigen Zustand wieder dazu — ursprüngliche Information geht unterwegs nicht verloren.
@@ -291,7 +291,7 @@ Nach dem Austausch zwischen den Wörtern folgen im Block noch drei Bausteine:
 
 <div class="mt-2 space-y-1.5 text-xs leading-snug text-slate-800">
   <div>• <strong><code>N×</code> Schichten hintereinander (sequenziell):</strong> Output von Block 1 = Input von Block 2 (jeder mit eigenen Gewichten).</div>
-  <div>• <strong>Wer bestimmt <code>N</code>?</strong> Wird vor dem Training als Einstellung (Hyperparameter: z. B. 2–4 im Lernprojekt, 12 bei GPT-2, 32–96+ bei großen LLMs).</div>
+  <div>• <strong>Wer bestimmt <code>N</code>?</strong> Wird vor dem Training als Einstellung (Hyperparameter: <code>num_blocks</code>, 1–3 im Lernprojekt, 12 bei GPT-2, 32–96+ bei großen LLMs).</div>
 </div>
 
 </div>
@@ -918,4 +918,61 @@ Unterscheidung aufgreifen.
 Backup-Folie für Q&A (nicht Teil der 18-Minuten-Kernzeit).
 Nur öffnen, falls im Publikum nach der konkreten mathematischen Funktion oder
 einem Zahlenbeispiel zum Gradientenabstieg gefragt wird.
+-->
+
+---
+
+<PhaseBadge phase="overview" label="Backup · Q&A Architektur" />
+<SourceFooter chapter="Einordnung · Dense vs. MoE" code="crates/model/src/transformer_block.rs" />
+
+# Backup: Attention Head ≠ Experte (MoE)
+
+<div class="grid grid-cols-2 gap-5 items-stretch mt-2 text-xs">
+<div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
+  <div class="font-bold text-sm text-slate-900">Dense Transformer <span class="font-normal text-slate-500">(rusty-mind-llm, GPT-2)</span></div>
+
+  <div class="p-2.5 rounded bg-orange-50 border border-orange-200 space-y-1">
+    <div class="font-bold text-orange-900">1. Multi-Head Attention</div>
+    <div><strong>Alle Heads</strong> rechnen bei jedem Token gleichzeitig mit (verschiedene Kontext-Blickwinkel).</div>
+  </div>
+
+  <div class="p-2.5 rounded bg-sky-50 border border-sky-200 space-y-1">
+    <div class="font-bold text-sky-900">2. Ein Feed-Forward-Block</div>
+    <div>Jedes Token durchläuft <strong>dasselbe</strong> Feed-Forward-Netz → <strong>100 %</strong> der Gewichte pro Token aktiv.</div>
+  </div>
+
+  <div class="text-slate-600 pt-0.5">
+    <strong>Vorteil:</strong> einfach, stabil, überschaubar.<br />
+    <strong>Grenze:</strong> doppeltes Wissen ≈ doppelte Rechenzeit.
+  </div>
+</div>
+
+<div class="p-3.5 rounded-lg bg-violet-50/60 border border-violet-200 space-y-2.5">
+  <div class="font-bold text-sm text-violet-950">Mixture of Experts / MoE <span class="font-normal text-violet-700">(z. B. Mixtral, DeepSeek)</span></div>
+
+  <div class="p-2.5 rounded bg-orange-50 border border-orange-200 space-y-1">
+    <div class="font-bold text-orange-900">1. Multi-Head Attention (unverändert)</div>
+    <div>Heads sind <strong>keine</strong> Experten — Attention läuft weiterhin für alle Tokens.</div>
+  </div>
+
+  <div class="p-2.5 rounded bg-violet-100 border border-violet-300 space-y-1">
+    <div class="font-bold text-violet-950">2. Router + viele Feed-Forward-„Experten“</div>
+    <div>Statt 1 Block gibt es viele (z. B. 8–64) — ein <strong>Router</strong> aktiviert pro Token nur <strong>1–2 Experten</strong> (sparse).</div>
+  </div>
+
+  <div class="text-violet-900 pt-0.5">
+    <strong>Vorteil:</strong> sehr viele Parameter (Wissen) bei schneller Inferenz.<br />
+    <strong>Preis:</strong> hoher RAM-Bedarf &amp; komplexeres Training.
+  </div>
+</div>
+</div>
+
+<div class="mt-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-950">
+  <strong>Merksatz:</strong> <strong>Attention Heads</strong> laufen <strong>immer alle</strong> (Kontext). <strong>MoE-Experten</strong> ersetzen den Feed-Forward-Teil — ein Router wählt wenige pro Token (Rechenzeit sparen). <code>rusty-mind-llm</code> ist ein klassisches <strong>Dense</strong>-Modell.
+</div>
+
+<!--
+Backup-Folie für Q&A (nicht Teil der 18-Minuten-Kernzeit).
+Nur öffnen, falls im Publikum nach „Mixture of Experts“ (MoE), Mixtral oder
+DeepSeek gefragt wird oder Attention Heads mit Experten verwechselt werden.
 -->

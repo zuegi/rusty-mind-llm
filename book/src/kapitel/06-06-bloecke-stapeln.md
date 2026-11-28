@@ -12,6 +12,13 @@ Bisher haben wir einen Block betrachtet. Ein GPT stapelt viele davon
 (GPT-2 small: 12). Das geht, weil jeder Block `[B, T, E]` annimmt und
 `[B, T, E]` zurückgibt: Die Ausgabe des einen ist die Eingabe des nächsten.
 
+In Architekturdiagrammen steht dafür meist **`N×`** — im Code heißt dieser
+Wert `num_blocks` (ab Kapitel 7 in `GptModelConfig`). `N` ist ein
+Hyperparameter, der vor dem Training festgelegt wird: in diesem Buch 1 bis 3
+Blöcke für schnelle, nachvollziehbare Läufe, 12 bei GPT-2 small und 32 bis
+96+ bei großen Sprachmodellen. Mehr Blöcke bedeuten ein tieferes Modell,
+aber auch mehr Parameter, Speicher und Rechenzeit.
+
 ```mermaid
 flowchart LR
     ids["Token-IDs [B, T]"] --> emb["GptEmbedding"]
